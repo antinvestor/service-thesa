@@ -48,14 +48,6 @@ dependencies:
   url_launcher: ^6.3.2
   web: ^1.1.1
 
-dependency_overrides:
-  antinvestor_api_common:
-    path: /home/j/code/antinvestor/apis/dart/common
-  antinvestor_api_partition:
-    path: /home/j/code/antinvestor/apis/dart/partition
-  antinvestor_api_profile:
-    path: /home/j/code/antinvestor/apis/dart/profile
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
