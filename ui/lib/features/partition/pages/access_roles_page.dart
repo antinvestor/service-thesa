@@ -45,7 +45,7 @@ class AccessRolesPage extends ConsumerWidget {
             return null;
           }),
           cells: [
-            DataCell(Text(accessRole.id,
+            DataCell(Text(accessRole.accessRoleId,
                 style:
                     const TextStyle(fontFamily: 'monospace', fontSize: 12))),
             DataCell(Text(accessRole.accessId,
@@ -108,7 +108,7 @@ class _AccessRoleDetail extends StatelessWidget {
                           .textTheme
                           .titleMedium
                           ?.copyWith(fontWeight: FontWeight.w600)),
-                  Text(accessRole.id,
+                  Text(accessRole.accessRoleId,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.onSurfaceMuted,
                           fontFamily: 'monospace')),

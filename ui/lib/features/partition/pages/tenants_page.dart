@@ -31,7 +31,6 @@ class TenantsPage extends ConsumerWidget {
       columns: const [
         DataColumn(label: Text('TENANT NAME')),
         DataColumn(label: Text('IDENTIFIER')),
-        DataColumn(label: Text('ENVIRONMENT')),
         DataColumn(label: Text('STATE')),
         DataColumn(label: Text('CREATED')),
       ],
@@ -71,7 +70,6 @@ class TenantsPage extends ConsumerWidget {
             DataCell(Text(tenant.id,
                 style:
                     const TextStyle(fontFamily: 'monospace', fontSize: 12))),
-            DataCell(EnvironmentBadge(tenant.environment.name)),
             DataCell(StateBadge(tenant.state)),
             DataCell(Text(createdAt)),
           ],
@@ -87,12 +85,6 @@ class TenantsPage extends ConsumerWidget {
           maxLines: 3,
         ),
         EditField(
-          label: 'Environment',
-          key: 'environment',
-          type: EditFieldType.dropdown,
-          options: ['PRODUCTION', 'STAGING'],
-        ),
-        EditField(
           label: 'State',
           key: 'state',
           type: EditFieldType.dropdown,
@@ -103,8 +95,6 @@ class TenantsPage extends ConsumerWidget {
       editValuesExtractor: (tenant) => {
         'name': tenant.name,
         'description': tenant.description,
-        'environment': tenant.environment.name
-            .replaceAll('TENANT_ENVIRONMENT_', ''),
         'state': tenant.state.name,
       },
       onSave: (tenant, values) {
@@ -161,8 +151,6 @@ class _TenantDetail extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
-        _DetailRow(label: 'Environment', value: tenant.environment.name
-            .replaceAll('TENANT_ENVIRONMENT_', '')),
         _DetailRow(label: 'State', value: tenant.state.name),
         _DetailRow(label: 'Created', value: createdAt),
         const SizedBox(height: 16),
