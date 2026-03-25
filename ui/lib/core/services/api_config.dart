@@ -1,0 +1,35 @@
+/// API endpoint and OAuth2 configuration for Antinvestor Admin Console.
+///
+/// Endpoints and credentials are configurable via `--dart-define`, e.g.:
+/// ```
+/// flutter run --dart-define=API_BASE_URL=https://api.antinvestor.com
+/// ```
+class ApiConfig {
+  const ApiConfig._();
+
+  // Service endpoints (configurable via --dart-define)
+  static const String partitionBaseUrl = String.fromEnvironment(
+    'PARTITION_URL',
+    defaultValue: 'https://partition.antinvestor.com',
+  );
+
+  static const String profileBaseUrl = String.fromEnvironment(
+    'PROFILE_URL',
+    defaultValue: 'https://profile.antinvestor.com',
+  );
+
+  // OAuth2 configuration
+  static const String oauth2IssuerUrl = String.fromEnvironment(
+    'OAUTH2_ISSUER_URL',
+    defaultValue: 'https://oauth2.stawi.org',
+  );
+  static const String oauth2ClientId = String.fromEnvironment(
+    'OAUTH2_CLIENT_ID',
+    defaultValue: 'd6qbqdkpf2t52mcunf3g',
+  );
+
+  // Connection settings
+  static const Duration connectionTimeout = Duration(seconds: 30);
+  static const Duration receiveTimeout = Duration(seconds: 60);
+  static const Duration idleTimeout = Duration(seconds: 120);
+}

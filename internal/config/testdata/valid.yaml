@@ -1,0 +1,33 @@
+server:
+  port: 9090
+  read_timeout: 15s
+  write_timeout: 15s
+
+definitions:
+  directories:
+    - "/definitions"
+  hot_reload: true
+
+specs:
+  directory: "/specs"
+  sources:
+    - service_id: "orders-svc"
+      spec_file: "orders-svc.yaml"
+
+services:
+  orders-svc:
+    base_url: "https://orders.internal"
+    timeout: 10s
+    auth:
+      strategy: "forward_token"
+    retry:
+      max_attempts: 3
+      backoff_initial: 100ms
+      backoff_max: 2s
+
+capability:
+  cache:
+    ttl: 5m
+
+observability:
+  log_level: "debug"

@@ -1,0 +1,20 @@
+# Go
+bin/
+*.exe
+*.test
+.tmp/
+
+# Flutter
+ui/build/
+ui/.dart_tool/
+ui/.flutter-plugins
+ui/.flutter-plugins-dependencies
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
