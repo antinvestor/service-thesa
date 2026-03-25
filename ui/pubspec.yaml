@@ -42,6 +42,7 @@ dependencies:
   connectrpc: ^1.0.0
   antinvestor_api_common: ^1.52.0
   antinvestor_api_partition: ^1.52.0
+  fixnum: ^1.1.0
   antinvestor_api_profile: ^1.52.0
   openid_client: ^0.4.9+2
   flutter_secure_storage: ^10.0.0

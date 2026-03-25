@@ -25,17 +25,17 @@ final partitionRolesProvider =
 });
 
 /// Pages list provider.
+/// TODO: Implement when ListPage RPC is available in the API.
 final pagesProvider =
     FutureProvider.autoDispose<List<PageObject>>((ref) async {
-  final repo = await ref.watch(partitionRepositoryProvider.future);
-  return repo.listPages();
+  return <PageObject>[];
 });
 
 /// Access list provider.
+/// TODO: Implement when ListAccess RPC is available in the API.
 final accessListProvider =
     FutureProvider.autoDispose<List<AccessObject>>((ref) async {
-  final repo = await ref.watch(partitionRepositoryProvider.future);
-  return repo.listAccess();
+  return <AccessObject>[];
 });
 
 /// Access roles list provider.
@@ -43,18 +43,4 @@ final accessRolesProvider =
     FutureProvider.autoDispose<List<AccessRoleObject>>((ref) async {
   final repo = await ref.watch(partitionRepositoryProvider.future);
   return repo.listAccessRoles();
-});
-
-/// Service accounts list provider.
-final serviceAccountsProvider =
-    FutureProvider.autoDispose<List<ServiceAccountObject>>((ref) async {
-  final repo = await ref.watch(partitionRepositoryProvider.future);
-  return repo.listServiceAccounts();
-});
-
-/// OAuth2 clients list provider.
-final clientsProvider =
-    FutureProvider.autoDispose<List<ClientObject>>((ref) async {
-  final repo = await ref.watch(partitionRepositoryProvider.future);
-  return repo.listClients();
 });

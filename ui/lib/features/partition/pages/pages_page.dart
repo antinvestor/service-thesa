@@ -31,7 +31,6 @@ class PagesPage extends ConsumerWidget {
       columns: const [
         DataColumn(label: Text('NAME')),
         DataColumn(label: Text('ID')),
-        DataColumn(label: Text('PARTITION ID')),
         DataColumn(label: Text('STATE')),
       ],
       rowBuilder: (page, selected, onSelect) {
@@ -56,9 +55,6 @@ class PagesPage extends ConsumerWidget {
               ],
             )),
             DataCell(Text(page.id,
-                style:
-                    const TextStyle(fontFamily: 'monospace', fontSize: 12))),
-            DataCell(Text(page.partitionId,
                 style:
                     const TextStyle(fontFamily: 'monospace', fontSize: 12))),
             DataCell(StateBadge(page.state)),
@@ -146,7 +142,7 @@ class _PageDetail extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
-        _DetailRow(label: 'Partition ID', value: page.partitionId),
+        _DetailRow(label: 'Page ID', value: page.id),
         _DetailRow(label: 'State', value: page.state.name),
         _DetailRow(label: 'Created', value: createdAt),
         const SizedBox(height: 16),

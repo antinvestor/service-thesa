@@ -350,8 +350,6 @@ class _PartitionDetailPanel extends StatelessWidget {
                 _DetailField('Tenant ID', partition.tenantId),
                 if (partition.parentId.isNotEmpty)
                   _DetailField('Parent ID', partition.parentId),
-                if (partition.domain.isNotEmpty)
-                  _DetailField('Domain', partition.domain),
                 if (partition.description.isNotEmpty)
                   _DetailField('Description', partition.description),
                 _DetailField('State', partition.state.name),
