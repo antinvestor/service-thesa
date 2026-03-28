@@ -108,8 +108,8 @@ github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsI
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
 github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761/go.mod h1:5TJZWKEWniPve33vlWYSoGYefn3gLQRzjfDlhSJ9ZKM=
-github.com/jackc/pgx/v5 v5.9.0 h1:T/dI+2TvmI2H8s/KH1/lXIbz1CUFk3gn5oTjr0/mBsE=
-github.com/jackc/pgx/v5 v5.9.0/go.mod h1:mal1tBGAFfLHvZzaYh77YS/eC6IX9OWbRV1QIIM0Jn4=
+github.com/jackc/pgx/v5 v5.9.1 h1:uwrxJXBnx76nyISkhr33kQLlUqjv7et7b9FjCen/tdc=
+github.com/jackc/pgx/v5 v5.9.1/go.mod h1:mal1tBGAFfLHvZzaYh77YS/eC6IX9OWbRV1QIIM0Jn4=
 github.com/jackc/puddle/v2 v2.2.2 h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo=
 github.com/jackc/puddle/v2 v2.2.2/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
 github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=
@@ -188,12 +188,12 @@ github.com/panjf2000/ants/v2 v2.12.0 h1:u9JhESo83i/GkZnhfTNuFMMWcNt7mnV1bGJ6FT4w
 github.com/panjf2000/ants/v2 v2.12.0/go.mod h1:tSQuaNQ6r6NRhPt+IZVUevvDyFMTs+eS4ztZc52uJTY=
 github.com/perimeterx/marshmallow v1.1.5 h1:a2LALqQ1BlHM8PZblsDdidgv1mWi1DgC2UmX50IvK2s=
 github.com/perimeterx/marshmallow v1.1.5/go.mod h1:dsXbUu8CRzfYP5a87xpp0xq9S3u0Vchtcl8we9tYaXw=
-github.com/pitabwire/frame v1.81.1 h1:Z4hsvYJnyybpARzajLMFX2b2VGWB5aFQaeS8lhFlU84=
-github.com/pitabwire/frame v1.81.1/go.mod h1:ahOzZruNLhErO0C7Q2JOopkEnTbHVfIhvU3AgL1pcKo=
+github.com/pitabwire/frame v1.83.0 h1:T/Qnw9vlFal/YK/bJkwztKvnbnWpHCxCpKgYJlURBOo=
+github.com/pitabwire/frame v1.83.0/go.mod h1:K4phA2bqdZJhHqX0SNvbtBaS8ojwUkh6ScEWALHstfM=
 github.com/pitabwire/natspubsub v0.8.0 h1:Z3cevthjRVmGhqycGYm6KxvVIiXYNNklBi2Ig2jd8UM=
 github.com/pitabwire/natspubsub v0.8.0/go.mod h1:ytLmmd6CZ5m2ackMRDDvF5gmXHDuTG+1vcjiLRUKSgs=
-github.com/pitabwire/util v0.6.1 h1:aXk3gp3qbs/gTSiqSbA8mcNn0So+7mNXrTBt1DJI9Ok=
-github.com/pitabwire/util v0.6.1/go.mod h1:JrLiS3K4VXsLZE38LLvq1N0X2j0fs33QLz/zMXf3zc4=
+github.com/pitabwire/util v0.7.0 h1:37QUftcS/h9cPwSUJTU2gx/JWUfg4HXSPoejKE0Pqn4=
+github.com/pitabwire/util v0.7.0/go.mod h1:JrLiS3K4VXsLZE38LLvq1N0X2j0fs33QLz/zMXf3zc4=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
