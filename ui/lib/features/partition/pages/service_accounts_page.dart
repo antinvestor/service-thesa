@@ -7,7 +7,7 @@ import '../../../core/theme/app_colors.dart';
 /// Placeholder page for Service Accounts management.
 ///
 /// The ServiceAccount RPCs are not yet available in the current version
-/// of `antinvestor_api_partition`. This page will be implemented once
+/// of `antinvestor_api_tenancy`. This page will be implemented once
 /// the API is updated.
 class ServiceAccountsPage extends ConsumerWidget {
   const ServiceAccountsPage({

@@ -1,4 +1,4 @@
-import 'package:antinvestor_api_partition/antinvestor_api_partition.dart';
+import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';

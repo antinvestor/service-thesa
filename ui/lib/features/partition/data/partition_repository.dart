@@ -1,6 +1,6 @@
 import 'package:antinvestor_api_common/antinvestor_api_common.dart'
     show STATE, Struct;
-import 'package:antinvestor_api_partition/antinvestor_api_partition.dart';
+import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/connect_client.dart';

@@ -1,7 +1,7 @@
 import 'dart:io' as io;
 
 import 'package:antinvestor_api_common/antinvestor_api_common.dart';
-import 'package:antinvestor_api_partition/antinvestor_api_partition.dart';
+import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:antinvestor_api_profile/antinvestor_api_profile.dart';
 import 'package:connectrpc/connect.dart' as connect;
 import 'package:connectrpc/io.dart' as connect_io;

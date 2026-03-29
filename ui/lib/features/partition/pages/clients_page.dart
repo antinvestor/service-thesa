@@ -7,7 +7,7 @@ import '../../../core/theme/app_colors.dart';
 /// Placeholder page for OAuth2 Clients management.
 ///
 /// The Client and ServiceAccount RPCs are not yet available in the
-/// current version of `antinvestor_api_partition`. This page will be
+/// current version of `antinvestor_api_tenancy`. This page will be
 /// implemented once the API is updated.
 class ClientsPage extends ConsumerWidget {
   const ClientsPage({
