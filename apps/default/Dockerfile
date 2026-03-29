@@ -18,7 +18,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
     -ldflags="-s -w \
       -X github.com/pitabwire/frame/version.Version=${VERSION} \
       -X github.com/pitabwire/frame/version.Commit=${COMMIT}" \
-    -o /thesa-bff ./cmd/bff
+    -o /thesa-bff ./apps/default/cmd/bff
 
 # Stage 2: Runtime
 FROM cgr.dev/chainguard/static:latest
