@@ -26,7 +26,7 @@ FROM cgr.dev/chainguard/static:latest
 COPY --from=builder /thesa-bff /thesa-bff
 COPY definitions/ /definitions/
 COPY specs/ /specs/
-COPY config/ /config/
+COPY apps/default/config/ /config/
 
 USER 65532:65532
 EXPOSE 80
