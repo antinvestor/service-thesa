@@ -13,9 +13,9 @@ import 'pages/service_accounts_page.dart';
 import 'pages/tenants_page.dart';
 
 /// Partition Service definition for the admin sidebar.
-const partitionServiceDef = ServiceDefinition(
-  id: 'partition',
-  label: 'Partition Service',
+const tenancyServiceDef = ServiceDefinition(
+  id: 'tenancy',
+  label: 'Tenancy Service',
   icon: Icons.hub_outlined,
   description: 'Manage tenants, partitions, and access control',
   subFeatures: [
@@ -70,11 +70,11 @@ const partitionServiceDef = ServiceDefinition(
   ],
 );
 
-/// Register the Partition Service with the global service registry.
-void registerPartitionService() {
+/// Register the Tenancy Service with the global service registry.
+void registerTenancyService() {
   ServiceRegistry.instance.register(
     ServiceRegistration(
-      definition: partitionServiceDef,
+      definition: tenancyServiceDef,
       analyticsBuilder: (context, service) =>
           PartitionAnalyticsPage(service: service),
       featureBuilders: {

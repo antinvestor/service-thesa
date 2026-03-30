@@ -21,36 +21,36 @@ import (
 	"github.com/antinvestor/service-thesa/model"
 )
 
-// servicePartitionOPL defines the OPL namespace for the partition service.
-// Relations use underscores (OPL-compatible). SubjectSet<service_partition, "admin">
+// serviceTenancyOPL defines the OPL namespace for the partition service.
+// Relations use underscores (OPL-compatible). SubjectSet<service_tenancy, "admin">
 // allows the admin role to grant all permissions via Keto's graph traversal.
-const servicePartitionOPL = `import { Namespace, Context } from "@ory/keto-namespace-types"
+const serviceTenancyOPL = `import { Namespace, Context } from "@ory/keto-namespace-types"
 
 class User implements Namespace {}
 class profile_user implements Namespace {}
 
-class service_partition implements Namespace {
+class service_tenancy implements Namespace {
   related: {
-    tenants_view: (profile_user | SubjectSet<service_partition, "admin">)[]
-    tenants_create: (profile_user | SubjectSet<service_partition, "admin">)[]
-    tenants_edit: (profile_user | SubjectSet<service_partition, "admin">)[]
-    partitions_view: (profile_user | SubjectSet<service_partition, "admin">)[]
-    partitions_create: (profile_user | SubjectSet<service_partition, "admin">)[]
-    roles_view: (profile_user | SubjectSet<service_partition, "admin">)[]
-    roles_create: (profile_user | SubjectSet<service_partition, "admin">)[]
-    roles_delete: (profile_user | SubjectSet<service_partition, "admin">)[]
-    access_view: (profile_user | SubjectSet<service_partition, "admin">)[]
-    access_create: (profile_user | SubjectSet<service_partition, "admin">)[]
-    access_delete: (profile_user | SubjectSet<service_partition, "admin">)[]
-    access_edit: (profile_user | SubjectSet<service_partition, "admin">)[]
+    tenants_view: (profile_user | SubjectSet<service_tenancy, "admin">)[]
+    tenants_create: (profile_user | SubjectSet<service_tenancy, "admin">)[]
+    tenants_edit: (profile_user | SubjectSet<service_tenancy, "admin">)[]
+    partitions_view: (profile_user | SubjectSet<service_tenancy, "admin">)[]
+    partitions_create: (profile_user | SubjectSet<service_tenancy, "admin">)[]
+    roles_view: (profile_user | SubjectSet<service_tenancy, "admin">)[]
+    roles_create: (profile_user | SubjectSet<service_tenancy, "admin">)[]
+    roles_delete: (profile_user | SubjectSet<service_tenancy, "admin">)[]
+    access_view: (profile_user | SubjectSet<service_tenancy, "admin">)[]
+    access_create: (profile_user | SubjectSet<service_tenancy, "admin">)[]
+    access_delete: (profile_user | SubjectSet<service_tenancy, "admin">)[]
+    access_edit: (profile_user | SubjectSet<service_tenancy, "admin">)[]
     admin: (profile_user)[]
   }
 }
 `
 
-// allPartitionPermissions lists all Keto permission names (underscore format)
+// allTenancyPermissions lists all Keto permission names (underscore format)
 // for the partition service.
-var allPartitionPermissions = []string{
+var allTenancyPermissions = []string{
 	"tenants_view", "tenants_create", "tenants_edit",
 	"partitions_view", "partitions_create",
 	"roles_view", "roles_create", "roles_delete",
@@ -71,7 +71,7 @@ func initKetoResources(_ context.Context) []definition.TestResource {
 			[]testoryketo.NamespaceFile{
 				{
 					ContainerPath: "/home/ory/namespaces/namespaces.ts",
-					Content:       servicePartitionOPL,
+					Content:       serviceTenancyOPL,
 				},
 			},
 			definition.WithEnableLogging(false),
@@ -149,11 +149,11 @@ func (s *CapabilityTestSuite) provisionAdminRole(tenancyPath, subjectID string) 
 	s.T().Helper()
 
 	// Grant admin role to user.
-	s.writeTuple("service_partition", tenancyPath, "admin", subjectID)
+	s.writeTuple("service_tenancy", tenancyPath, "admin", subjectID)
 
 	// Map admin role → every permission via SubjectSet.
-	for _, perm := range allPartitionPermissions {
-		s.writeSubjectSetTuple("service_partition", tenancyPath, perm, "admin")
+	for _, perm := range allTenancyPermissions {
+		s.writeSubjectSetTuple("service_tenancy", tenancyPath, perm, "admin")
 	}
 }
 
@@ -163,18 +163,18 @@ func (s *CapabilityTestSuite) newEvaluator(checks []CapabilityCheck) *KetoPolicy
 
 func (s *CapabilityTestSuite) allPartitionChecks() []CapabilityCheck {
 	return []CapabilityCheck{
-		{Capability: "tenants:view", Namespace: "service_partition"},
-		{Capability: "tenants:create", Namespace: "service_partition"},
-		{Capability: "tenants:edit", Namespace: "service_partition"},
-		{Capability: "partitions:view", Namespace: "service_partition"},
-		{Capability: "partitions:create", Namespace: "service_partition"},
-		{Capability: "roles:view", Namespace: "service_partition"},
-		{Capability: "roles:create", Namespace: "service_partition"},
-		{Capability: "roles:delete", Namespace: "service_partition"},
-		{Capability: "access:view", Namespace: "service_partition"},
-		{Capability: "access:create", Namespace: "service_partition"},
-		{Capability: "access:delete", Namespace: "service_partition"},
-		{Capability: "access:edit", Namespace: "service_partition"},
+		{Capability: "tenants:view", Namespace: "service_tenancy"},
+		{Capability: "tenants:create", Namespace: "service_tenancy"},
+		{Capability: "tenants:edit", Namespace: "service_tenancy"},
+		{Capability: "partitions:view", Namespace: "service_tenancy"},
+		{Capability: "partitions:create", Namespace: "service_tenancy"},
+		{Capability: "roles:view", Namespace: "service_tenancy"},
+		{Capability: "roles:create", Namespace: "service_tenancy"},
+		{Capability: "roles:delete", Namespace: "service_tenancy"},
+		{Capability: "access:view", Namespace: "service_tenancy"},
+		{Capability: "access:create", Namespace: "service_tenancy"},
+		{Capability: "access:delete", Namespace: "service_tenancy"},
+		{Capability: "access:edit", Namespace: "service_tenancy"},
 	}
 }
 
@@ -184,8 +184,8 @@ func (s *CapabilityTestSuite) TestDirectPermission() {
 	ctx := s.T().Context()
 	tenancyPath := "tenant-direct/part-1"
 
-	s.writeTuple("service_partition", tenancyPath, "tenants_view", "user-viewer")
-	s.writeTuple("service_partition", tenancyPath, "partitions_view", "user-viewer")
+	s.writeTuple("service_tenancy", tenancyPath, "tenants_view", "user-viewer")
+	s.writeTuple("service_tenancy", tenancyPath, "partitions_view", "user-viewer")
 
 	eval := s.newEvaluator(s.allPartitionChecks())
 	rctx := &model.RequestContext{
@@ -259,7 +259,7 @@ func (s *CapabilityTestSuite) TestTenantIsolation() {
 func (s *CapabilityTestSuite) TestPartitionIsolation() {
 	ctx := s.T().Context()
 
-	s.writeTuple("service_partition", "tenant-pi/part-main", "tenants_view", "user-part")
+	s.writeTuple("service_tenancy", "tenant-pi/part-main", "tenants_view", "user-part")
 
 	eval := s.newEvaluator(s.allPartitionChecks())
 
@@ -282,11 +282,11 @@ func (s *CapabilityTestSuite) TestMixedPermissions() {
 	ctx := s.T().Context()
 	tenancyPath := "tenant-mixed/part-1"
 
-	s.writeTuple("service_partition", tenancyPath, "tenants_view", "user-mgr")
-	s.writeTuple("service_partition", tenancyPath, "tenants_create", "user-mgr")
-	s.writeTuple("service_partition", tenancyPath, "tenants_edit", "user-mgr")
-	s.writeTuple("service_partition", tenancyPath, "partitions_view", "user-mgr")
-	s.writeTuple("service_partition", tenancyPath, "partitions_create", "user-mgr")
+	s.writeTuple("service_tenancy", tenancyPath, "tenants_view", "user-mgr")
+	s.writeTuple("service_tenancy", tenancyPath, "tenants_create", "user-mgr")
+	s.writeTuple("service_tenancy", tenancyPath, "tenants_edit", "user-mgr")
+	s.writeTuple("service_tenancy", tenancyPath, "partitions_view", "user-mgr")
+	s.writeTuple("service_tenancy", tenancyPath, "partitions_create", "user-mgr")
 
 	eval := s.newEvaluator(s.allPartitionChecks())
 	rctx := &model.RequestContext{
@@ -335,7 +335,7 @@ func (s *CapabilityTestSuite) TestEmptyChecks() {
 func (s *CapabilityTestSuite) TestResolverCaching() {
 	ctx := s.T().Context()
 
-	s.writeTuple("service_partition", "tenant-cache/part-1", "tenants_view", "user-cache")
+	s.writeTuple("service_tenancy", "tenant-cache/part-1", "tenants_view", "user-cache")
 
 	eval := s.newEvaluator(s.allPartitionChecks())
 	resolver := NewResolver(eval, 5*time.Minute)
@@ -356,7 +356,7 @@ func (s *CapabilityTestSuite) TestResolverCaching() {
 func (s *CapabilityTestSuite) TestResolverInvalidate() {
 	ctx := s.T().Context()
 
-	s.writeTuple("service_partition", "tenant-inv/part-1", "tenants_view", "user-inv")
+	s.writeTuple("service_tenancy", "tenant-inv/part-1", "tenants_view", "user-inv")
 
 	eval := s.newEvaluator(s.allPartitionChecks())
 	resolver := NewResolver(eval, 5*time.Minute)
@@ -393,7 +393,7 @@ func (s *CapabilityTestSuite) TestCollectCapabilityChecks_AccessControlDomain() 
 	s.Require().NotNil(accessControl, "access-control domain not found")
 
 	services := map[string]thesaconfig.ServiceConfig{
-		"partition-svc": {AuthorizationNamespace: "service_partition"},
+		"tenancy-svc": {AuthorizationNamespace: "service_tenancy"},
 	}
 
 	checks := CollectCapabilityChecks([]model.DomainDefinition{*accessControl}, services)
@@ -414,7 +414,7 @@ func (s *CapabilityTestSuite) TestCollectCapabilityChecks_AccessControlDomain() 
 		ns, ok := found[cap]
 		s.True(ok, "missing capability %q", cap)
 		if ok {
-			s.Equal("service_partition", ns, "capability %q namespace", cap)
+			s.Equal("service_tenancy", ns, "capability %q namespace", cap)
 		}
 	}
 

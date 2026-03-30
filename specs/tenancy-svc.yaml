@@ -1,11 +1,11 @@
 openapi: 3.0.3
 info:
-  title: Partition Service (ConnectRPC)
+  title: Tenancy Service (ConnectRPC)
   description: Tenant, partition, role, and access management via ConnectRPC HTTP/JSON.
   version: 1.52.1
 
 paths:
-  /partition.partition.v1.PartitionService/ListTenant:
+  /tenancy.v1.TenancyService/ListTenant:
     post:
       operationId: listTenants
       summary: List tenants
@@ -22,7 +22,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListTenantResponse'
 
-  /partition.partition.v1.PartitionService/GetTenant:
+  /tenancy.v1.TenancyService/GetTenant:
     post:
       operationId: getTenant
       summary: Get tenant by ID
@@ -39,7 +39,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/TenantObject'
 
-  /partition.partition.v1.PartitionService/CreateTenant:
+  /tenancy.v1.TenancyService/CreateTenant:
     post:
       operationId: createTenant
       summary: Create a new tenant
@@ -56,7 +56,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/TenantObject'
 
-  /partition.partition.v1.PartitionService/UpdateTenant:
+  /tenancy.v1.TenancyService/UpdateTenant:
     post:
       operationId: updateTenant
       summary: Update tenant
@@ -73,7 +73,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/TenantObject'
 
-  /partition.partition.v1.PartitionService/ListPartition:
+  /tenancy.v1.TenancyService/ListPartition:
     post:
       operationId: listPartitions
       summary: List partitions
@@ -90,7 +90,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListPartitionResponse'
 
-  /partition.partition.v1.PartitionService/GetPartition:
+  /tenancy.v1.TenancyService/GetPartition:
     post:
       operationId: getPartition
       summary: Get partition by ID
@@ -107,7 +107,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PartitionObject'
 
-  /partition.partition.v1.PartitionService/CreatePartition:
+  /tenancy.v1.TenancyService/CreatePartition:
     post:
       operationId: createPartition
       summary: Create partition
@@ -124,7 +124,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PartitionObject'
 
-  /partition.partition.v1.PartitionService/UpdatePartition:
+  /tenancy.v1.TenancyService/UpdatePartition:
     post:
       operationId: updatePartition
       summary: Update partition
@@ -141,7 +141,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PartitionObject'
 
-  /partition.partition.v1.PartitionService/ListPartitionRole:
+  /tenancy.v1.TenancyService/ListPartitionRole:
     post:
       operationId: listPartitionRoles
       summary: List roles for a partition
@@ -158,7 +158,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListPartitionRoleResponse'
 
-  /partition.partition.v1.PartitionService/CreatePartitionRole:
+  /tenancy.v1.TenancyService/CreatePartitionRole:
     post:
       operationId: createPartitionRole
       summary: Create a partition role
@@ -175,7 +175,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PartitionRoleObject'
 
-  /partition.partition.v1.PartitionService/RemovePartitionRole:
+  /tenancy.v1.TenancyService/RemovePartitionRole:
     post:
       operationId: removePartitionRole
       summary: Remove a partition role
@@ -192,7 +192,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/StatusResponse'
 
-  /partition.partition.v1.PartitionService/GetAccess:
+  /tenancy.v1.TenancyService/GetAccess:
     post:
       operationId: getAccess
       summary: Get access grant
@@ -209,7 +209,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AccessObject'
 
-  /partition.partition.v1.PartitionService/CreateAccess:
+  /tenancy.v1.TenancyService/CreateAccess:
     post:
       operationId: createAccess
       summary: Grant access to a partition
@@ -226,7 +226,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AccessObject'
 
-  /partition.partition.v1.PartitionService/RemoveAccess:
+  /tenancy.v1.TenancyService/RemoveAccess:
     post:
       operationId: removeAccess
       summary: Revoke access from a partition
@@ -243,7 +243,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/StatusResponse'
 
-  /partition.partition.v1.PartitionService/ListAccessRole:
+  /tenancy.v1.TenancyService/ListAccessRole:
     post:
       operationId: listAccessRoles
       summary: List roles for an access grant
@@ -260,7 +260,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListAccessRoleResponse'
 
-  /partition.partition.v1.PartitionService/CreateAccessRole:
+  /tenancy.v1.TenancyService/CreateAccessRole:
     post:
       operationId: createAccessRole
       summary: Assign a role to an access grant
@@ -277,7 +277,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AccessRoleObject'
 
-  /partition.partition.v1.PartitionService/RemoveAccessRole:
+  /tenancy.v1.TenancyService/RemoveAccessRole:
     post:
       operationId: removeAccessRole
       summary: Remove a role from an access grant

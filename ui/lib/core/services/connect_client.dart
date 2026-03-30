@@ -115,27 +115,27 @@ final tokenRefreshCallbackProvider =
 
 /// Partition API client provider.
 ///
-/// Creates an authenticated PartitionClient using [newPartitionClient]
+/// Creates an authenticated TenancyClient using [newTenancyClient]
 /// with TokenManager for automatic token management.
-final partitionClientProvider =
-    FutureProvider<PartitionClient>((ref) async {
+final tenancyClientProvider =
+    FutureProvider<TenancyClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
 
   await tokenManager.initialize();
 
-  return newPartitionClient(
+  return newTenancyClient(
     createTransport: createTransportFactory(),
-    endpoint: ApiConfig.partitionBaseUrl,
+    endpoint: ApiConfig.tenancyBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
   );
 });
 
-/// Expose the raw PartitionServiceClient stub for direct RPC calls.
-final partitionServiceClientProvider =
-    FutureProvider<PartitionServiceClient>((ref) async {
-  final client = await ref.watch(partitionClientProvider.future);
+/// Expose the raw TenancyServiceClient stub for direct RPC calls.
+final tenancyServiceClientProvider =
+    FutureProvider<TenancyServiceClient>((ref) async {
+  final client = await ref.watch(tenancyClientProvider.future);
   return client.stub;
 });
 

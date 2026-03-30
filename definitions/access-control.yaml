@@ -53,7 +53,7 @@ pages:
     table:
       data_source:
         operation_id: listTenants
-        service_id: partition-svc
+        service_id: tenancy-svc
         mapping:
           items_path: data
       columns:
@@ -117,7 +117,7 @@ pages:
         route: /tenants/{id}
     data_source:
       operation_id: getTenant
-      service_id: partition-svc
+      service_id: tenancy-svc
     sections:
       - id: info
         title: Tenant Information
@@ -165,7 +165,7 @@ pages:
     table:
       data_source:
         operation_id: listPartitions
-        service_id: partition-svc
+        service_id: tenancy-svc
         mapping:
           items_path: data
       columns:
@@ -197,7 +197,7 @@ pages:
           type: reference
           lookup:
             operation_id: listTenants
-            service_id: partition-svc
+            service_id: tenancy-svc
             label_field: name
             value_field: id
         - field: state
@@ -239,7 +239,7 @@ pages:
         route: /partitions/{id}
     data_source:
       operation_id: getPartition
-      service_id: partition-svc
+      service_id: tenancy-svc
     sections:
       - id: info
         title: Partition Information
@@ -295,7 +295,7 @@ pages:
     table:
       data_source:
         operation_id: listPartitionRoles
-        service_id: partition-svc
+        service_id: tenancy-svc
         mapping:
           items_path: data
       columns:
@@ -322,7 +322,7 @@ pages:
           type: reference
           lookup:
             operation_id: listPartitions
-            service_id: partition-svc
+            service_id: tenancy-svc
             label_field: name
             value_field: id
       row_actions:
@@ -368,7 +368,7 @@ pages:
     table:
       data_source:
         operation_id: listAccessRoles
-        service_id: partition-svc
+        service_id: tenancy-svc
         mapping:
           items_path: data
       columns:
@@ -395,7 +395,7 @@ pages:
           type: reference
           lookup:
             operation_id: listPartitions
-            service_id: partition-svc
+            service_id: tenancy-svc
             label_field: name
             value_field: id
       row_actions:
@@ -441,7 +441,7 @@ pages:
         route: /access/{id}
     data_source:
       operation_id: getAccess
-      service_id: partition-svc
+      service_id: tenancy-svc
     sections:
       - id: info
         title: Access Information
@@ -506,7 +506,7 @@ pages:
     table:
       data_source:
         operation_id: listAccessRoles
-        service_id: partition-svc
+        service_id: tenancy-svc
         mapping:
           items_path: data
       columns:
@@ -580,7 +580,7 @@ forms:
     submit_command: access-control.updateTenant
     load_source:
       operation_id: getTenant
-      service_id: partition-svc
+      service_id: tenancy-svc
     success_route: /tenants/{id}
     success_message: Tenant updated successfully.
     sections:
@@ -631,7 +631,7 @@ forms:
             type: reference
             lookup:
               operation_id: listPartitions
-              service_id: partition-svc
+              service_id: tenancy-svc
               label_field: name
               value_field: id
 
@@ -642,7 +642,7 @@ forms:
     submit_command: access-control.updatePartition
     load_source:
       operation_id: getPartition
-      service_id: partition-svc
+      service_id: tenancy-svc
     success_route: /partitions/{id}
     success_message: Partition updated successfully.
     sections:
@@ -663,7 +663,7 @@ forms:
             type: reference
             lookup:
               operation_id: listPartitions
-              service_id: partition-svc
+              service_id: tenancy-svc
               label_field: name
               value_field: id
           - field: state
@@ -705,7 +705,7 @@ forms:
             required: true
             lookup:
               operation_id: listPartitions
-              service_id: partition-svc
+              service_id: tenancy-svc
               label_field: name
               value_field: id
 
@@ -732,7 +732,7 @@ forms:
             required: true
             lookup:
               operation_id: listPartitions
-              service_id: partition-svc
+              service_id: tenancy-svc
               label_field: name
               value_field: id
       - id: role_assignment
@@ -746,7 +746,7 @@ forms:
             required: true
             lookup:
               operation_id: listPartitionRoles
-              service_id: partition-svc
+              service_id: tenancy-svc
               label_field: name
               value_field: id
 
@@ -772,7 +772,7 @@ forms:
             required: true
             lookup:
               operation_id: listPartitionRoles
-              service_id: partition-svc
+              service_id: tenancy-svc
               label_field: name
               value_field: id
 
@@ -783,7 +783,7 @@ commands:
     operation:
       type: openapi
       operation_id: createTenant
-      service_id: partition-svc
+      service_id: tenancy-svc
     input:
       body_mapping: projection
       field_projection:
@@ -798,7 +798,7 @@ commands:
     operation:
       type: openapi
       operation_id: updateTenant
-      service_id: partition-svc
+      service_id: tenancy-svc
     input:
       body_mapping: projection
       field_projection:
@@ -815,7 +815,7 @@ commands:
     operation:
       type: openapi
       operation_id: createPartition
-      service_id: partition-svc
+      service_id: tenancy-svc
     input:
       body_mapping: projection
       field_projection:
@@ -831,7 +831,7 @@ commands:
     operation:
       type: openapi
       operation_id: updatePartition
-      service_id: partition-svc
+      service_id: tenancy-svc
     input:
       body_mapping: projection
       field_projection:
@@ -849,7 +849,7 @@ commands:
     operation:
       type: openapi
       operation_id: createPartitionRole
-      service_id: partition-svc
+      service_id: tenancy-svc
     input:
       body_mapping: projection
       field_projection:
@@ -865,7 +865,7 @@ commands:
     operation:
       type: openapi
       operation_id: removePartitionRole
-      service_id: partition-svc
+      service_id: tenancy-svc
     input:
       body_mapping: projection
       field_projection:
@@ -879,7 +879,7 @@ commands:
     operation:
       type: openapi
       operation_id: createAccess
-      service_id: partition-svc
+      service_id: tenancy-svc
     input:
       body_mapping: projection
       field_projection:
@@ -894,7 +894,7 @@ commands:
     operation:
       type: openapi
       operation_id: removeAccess
-      service_id: partition-svc
+      service_id: tenancy-svc
     input:
       body_mapping: projection
       field_projection:
@@ -908,7 +908,7 @@ commands:
     operation:
       type: openapi
       operation_id: createAccessRole
-      service_id: partition-svc
+      service_id: tenancy-svc
     input:
       body_mapping: projection
       field_projection:
@@ -923,7 +923,7 @@ commands:
     operation:
       type: openapi
       operation_id: removeAccessRole
-      service_id: partition-svc
+      service_id: tenancy-svc
     input:
       body_mapping: projection
       field_projection:
@@ -939,7 +939,7 @@ searches:
     operation:
       type: openapi
       operation_id: listTenants
-      service_id: partition-svc
+      service_id: tenancy-svc
     result_mapping:
       items_path: data
       title_field: name
@@ -956,7 +956,7 @@ searches:
     operation:
       type: openapi
       operation_id: listPartitions
-      service_id: partition-svc
+      service_id: tenancy-svc
     result_mapping:
       items_path: data
       title_field: name

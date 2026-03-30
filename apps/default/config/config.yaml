@@ -40,8 +40,8 @@ definitions:
 specs:
   directory: specs
   sources:
-    - service_id: partition-svc
-      spec_file: partition-svc.yaml
+    - service_id: tenancy-svc
+      spec_file: tenancy-svc.yaml
     - service_id: profile-svc
       spec_file: profile-svc.yaml
     - service_id: notification-svc
@@ -64,9 +64,9 @@ specs:
       spec_file: foundry-svc.yaml
 
 services:
-  partition-svc:
+  tenancy-svc:
     base_url: "https://api.stawi.org/partition"
-    authorization_namespace: "service_partition"
+    authorization_namespace: "service_tenancy"
     timeout: 10s
     pagination:
       style: offset

@@ -9,7 +9,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Register admin services before app starts.
-  registerPartitionService();
+  registerTenancyService();
   registerProfileService();
 
   runApp(const ProviderScope(child: ThesaApp()));

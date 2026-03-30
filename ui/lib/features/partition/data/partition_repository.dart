@@ -5,12 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/connect_client.dart';
 
-/// Repository wrapping [PartitionServiceClient] with error handling
+/// Repository wrapping [TenancyServiceClient] with error handling
 /// and stream-to-list conversion for all partition service entities.
 class PartitionRepository {
   PartitionRepository(this._client);
 
-  final PartitionServiceClient _client;
+  final TenancyServiceClient _client;
 
   /// Collect items from a streaming list RPC where each chunk has a repeated field.
   Future<List<T>> _collectStream<T>(
@@ -224,6 +224,6 @@ class PartitionRepository {
 
 final partitionRepositoryProvider =
     FutureProvider<PartitionRepository>((ref) async {
-  final client = await ref.watch(partitionServiceClientProvider.future);
+  final client = await ref.watch(tenancyServiceClientProvider.future);
   return PartitionRepository(client);
 });

@@ -8,9 +8,9 @@ class ApiConfig {
   const ApiConfig._();
 
   // Service endpoints (configurable via --dart-define)
-  static const String partitionBaseUrl = String.fromEnvironment(
-    'PARTITION_URL',
-    defaultValue: 'https://partition.antinvestor.com',
+  static const String tenancyBaseUrl = String.fromEnvironment(
+    'TENANCY_URL',
+    defaultValue: 'https://tenancy.antinvestor.com',
   );
 
   static const String profileBaseUrl = String.fromEnvironment(
