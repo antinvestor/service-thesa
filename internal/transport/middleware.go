@@ -152,8 +152,7 @@ func ResolveCapabilities(resolver model.CapabilityResolver) func(http.Handler) h
 				if rctx != nil {
 					caps, err := resolver.Resolve(r.Context(), rctx)
 					if err != nil {
-						util.Log(r.Context()).Error("capability resolution failed",
-							"error", err,
+						util.Log(r.Context()).WithError(err).Error("capability resolution failed",
 							"subject_id", rctx.SubjectID,
 						)
 						WriteError(w, model.NewBackendUnavailableError())
@@ -188,7 +187,7 @@ func RequestLogging(next http.Handler) http.Handler {
 		start := time.Now()
 		ww := &statusWriter{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(ww, r)
-		util.Log(r.Context()).Info("request",
+		util.Log(r.Context()).Debug("request",
 			"method", r.Method,
 			"path", r.URL.Path,
 			"status", ww.status,

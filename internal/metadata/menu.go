@@ -138,10 +138,9 @@ func (p *MenuProvider) resolveBadge(
 
 	result, err := p.invokers.Invoke(ctx, rctx, binding, model.InvocationInput{})
 	if err != nil {
-		util.Log(ctx).Debug("menu: badge resolution failed",
+		util.Log(ctx).WithError(err).Debug("menu: badge resolution failed",
 			"domain", domain.Domain,
 			"operation", badge.OperationID,
-			"error", err,
 		)
 		return nil
 	}

@@ -131,10 +131,9 @@ func (inv *OpenAPIOperationInvoker) executeWithRetry(
 			if !canRetry || !isRetryableError(err) {
 				return model.InvocationResult{}, err
 			}
-			util.Log(ctx).Debug("invoker: retrying after error",
+			util.Log(ctx).WithError(err).Debug("invoker: retrying after error",
 				"attempt", attempt+1,
 				"max", maxAttempts,
-				"error", err,
 			)
 			continue
 		}

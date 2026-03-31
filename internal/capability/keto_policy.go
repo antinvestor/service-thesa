@@ -79,8 +79,7 @@ func (e *KetoPolicyEvaluator) ResolveCapabilities(ctx context.Context, rctx *mod
 
 	results, err := e.authorizer.BatchCheck(ctx, requests)
 	if err != nil {
-		log.Error("capability: batch check failed, falling back to individual checks",
-			"error", err,
+		log.WithError(err).Error("capability: batch check failed, falling back to individual checks",
 			"subject_id", rctx.SubjectID,
 		)
 		return e.fallbackIndividualChecks(ctx, requests)
@@ -111,10 +110,9 @@ func (e *KetoPolicyEvaluator) fallbackIndividualChecks(ctx context.Context, requ
 	for i, req := range requests {
 		result, err := e.authorizer.Check(ctx, req)
 		if err != nil {
-			log.Warn("capability: individual check failed",
+			log.WithError(err).Warn("capability: individual check failed",
 				"permission", req.Permission,
 				"namespace", req.Object.Namespace,
-				"error", err,
 			)
 			continue
 		}

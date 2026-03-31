@@ -54,10 +54,9 @@ func main() {
 	validator := definition.NewValidator()
 	verrs := validator.Validate(defs, oaIndex)
 	if len(verrs) > 0 {
-		for _, ve := range verrs {
-			log.Error("definition validation error", "error", ve.Error())
-		}
-		log.Fatal("definition validation failed", "errors", len(verrs))
+		log.Fatal("definition validation failed",
+			"error_count", len(verrs),
+		)
 	}
 
 	registry := definition.NewRegistry(defs)
