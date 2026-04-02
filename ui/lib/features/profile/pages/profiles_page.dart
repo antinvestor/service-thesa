@@ -1,6 +1,7 @@
 import 'package:antinvestor_api_profile/antinvestor_api_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/services/service_definition.dart';
 import '../../../core/theme/app_colors.dart';
@@ -94,6 +95,8 @@ class ProfilesPage extends ConsumerWidget {
         debugPrint('Save profile: $values');
       },
       onRefresh: () => ref.invalidate(profilesProvider),
+      onRowNavigate: (profile) =>
+          context.go('/services/profile/profiles/${profile.id}'),
     );
   }
 }

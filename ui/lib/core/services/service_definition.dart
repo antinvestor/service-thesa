@@ -8,6 +8,7 @@ class SubFeatureDefinition {
     required this.label,
     required this.icon,
     this.description = '',
+    this.hasDetailPage = false,
   });
 
   /// Unique identifier used in routing (e.g., 'tenants' → /services/partition/tenants).
@@ -21,6 +22,10 @@ class SubFeatureDefinition {
 
   /// Short description for tooltips.
   final String description;
+
+  /// Whether clicking an entity row navigates to a detail page
+  /// (e.g., /services/tenancy/partitions/:id) instead of showing a side panel.
+  final bool hasDetailPage;
 }
 
 /// Defines an admin service that appears in the sidebar with nested navigation.

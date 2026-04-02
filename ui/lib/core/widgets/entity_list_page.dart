@@ -56,6 +56,7 @@ class EntityListPage<T> extends StatefulWidget {
     this.onSearch,
     this.onAdd,
     this.addLabel,
+    this.onRowNavigate,
     // Edit panel configuration
     this.editFields,
     this.editTitle,
@@ -75,6 +76,10 @@ class EntityListPage<T> extends StatefulWidget {
   final ValueChanged<String>? onSearch;
   final VoidCallback? onAdd;
   final String? addLabel;
+
+  /// When provided, row taps navigate to a detail page instead of
+  /// showing the side panel. Called with the tapped item.
+  final void Function(T item)? onRowNavigate;
 
   /// Fields to show in the edit panel. If null, no edit functionality.
   final List<EditField>? editFields;
@@ -218,10 +223,16 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
                               return widget.rowBuilder(
                                 widget.items[i],
                                 _selectedIndex == i,
-                                () => setState(() {
-                                  _selectedIndex =
-                                      _selectedIndex == i ? null : i;
-                                }),
+                                () {
+                                  if (widget.onRowNavigate != null) {
+                                    widget.onRowNavigate!(widget.items[i]);
+                                  } else {
+                                    setState(() {
+                                      _selectedIndex =
+                                          _selectedIndex == i ? null : i;
+                                    });
+                                  }
+                                },
                               );
                             }),
                           ),

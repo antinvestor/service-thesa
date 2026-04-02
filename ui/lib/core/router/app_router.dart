@@ -117,6 +117,24 @@ GoRouter createAppRouter(Ref ref) {
                     ),
                   );
                 },
+                routes: [
+                  // Entity detail: /services/:serviceId/:featureId/:entityId
+                  GoRoute(
+                    path: ':entityId',
+                    pageBuilder: (context, state) {
+                      final serviceId = state.pathParameters['serviceId']!;
+                      final featureId = state.pathParameters['featureId']!;
+                      final entityId = state.pathParameters['entityId']!;
+                      return NoTransitionPage(
+                        child: Builder(
+                          builder: (context) => ServiceRegistry.instance
+                              .buildEntityDetailPage(
+                                  context, serviceId, featureId, entityId),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),

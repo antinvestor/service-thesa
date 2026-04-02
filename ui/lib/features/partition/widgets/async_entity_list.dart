@@ -24,6 +24,7 @@ class AsyncEntityList<T> extends ConsumerWidget {
     this.auditTrailBuilder,
     this.actions,
     this.onRefresh,
+    this.onRowNavigate,
   });
 
   final FutureProvider<List<T>> dataProvider;
@@ -42,6 +43,7 @@ class AsyncEntityList<T> extends ConsumerWidget {
   final List<AuditEntry> Function(T item)? auditTrailBuilder;
   final List<Widget>? actions;
   final VoidCallback? onRefresh;
+  final void Function(T item)? onRowNavigate;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -88,6 +90,7 @@ class AsyncEntityList<T> extends ConsumerWidget {
         onSave: onSave,
         auditTrailBuilder: auditTrailBuilder,
         actions: actions,
+        onRowNavigate: onRowNavigate,
       ),
     );
   }

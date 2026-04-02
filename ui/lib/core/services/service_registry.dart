@@ -11,12 +11,18 @@ typedef ServiceAnalyticsBuilder = Widget Function(
 typedef SubFeaturePageBuilder = Widget Function(
     BuildContext context, ServiceDefinition service, SubFeatureDefinition feature);
 
+/// Callback that builds a detail page for a specific entity within a sub-feature.
+typedef EntityDetailPageBuilder = Widget Function(
+    BuildContext context, ServiceDefinition service,
+    SubFeatureDefinition feature, String entityId);
+
 /// Registration entry binding a service definition to its page builders.
 class ServiceRegistration {
   const ServiceRegistration({
     required this.definition,
     required this.analyticsBuilder,
     required this.featureBuilders,
+    this.detailBuilders = const {},
   });
 
   final ServiceDefinition definition;
@@ -26,6 +32,9 @@ class ServiceRegistration {
 
   /// Maps sub-feature IDs to their page builders.
   final Map<String, SubFeaturePageBuilder> featureBuilders;
+
+  /// Maps sub-feature IDs to their entity detail page builders.
+  final Map<String, EntityDetailPageBuilder> detailBuilders;
 }
 
 /// Central registry of all admin services.
@@ -87,6 +96,26 @@ class ServiceRegistry {
       return Center(child: Text('No page builder for "$featureId"'));
     }
     return builder(context, reg.definition, feature);
+  }
+
+  /// Build the entity detail page for a specific entity within a sub-feature.
+  Widget buildEntityDetailPage(
+      BuildContext context, String serviceId, String featureId, String entityId) {
+    final reg = _services[serviceId];
+    if (reg == null) {
+      return Center(child: Text('Service "$serviceId" not found'));
+    }
+    final feature = reg.definition.subFeatures
+        .where((f) => f.id == featureId)
+        .firstOrNull;
+    if (feature == null) {
+      return Center(child: Text('Feature "$featureId" not found'));
+    }
+    final builder = reg.detailBuilders[featureId];
+    if (builder == null) {
+      return Center(child: Text('No detail page for "$featureId"'));
+    }
+    return builder(context, reg.definition, feature, entityId);
   }
 
   /// Clear all registrations (useful for testing).

@@ -10,6 +10,13 @@ final tenantsProvider =
   return repo.listTenants();
 });
 
+/// Single tenant detail.
+final tenantDetailProvider =
+    FutureProvider.family<TenantObject, String>((ref, tenantId) async {
+  final repo = await ref.watch(partitionRepositoryProvider.future);
+  return repo.getTenant(tenantId);
+});
+
 /// Partitions list provider.
 final partitionsProvider =
     FutureProvider<List<PartitionObject>>((ref) async {
@@ -17,11 +24,26 @@ final partitionsProvider =
   return repo.listPartitions();
 });
 
-/// Partition roles list provider.
+/// Single partition detail.
+final partitionDetailProvider =
+    FutureProvider.family<PartitionObject, String>((ref, partitionId) async {
+  final repo = await ref.watch(partitionRepositoryProvider.future);
+  return repo.getPartition(partitionId);
+});
+
+/// Partition roles list provider (all roles).
 final partitionRolesProvider =
     FutureProvider<List<PartitionRoleObject>>((ref) async {
   final repo = await ref.watch(partitionRepositoryProvider.future);
   return repo.listPartitionRoles();
+});
+
+/// Partition roles scoped to a specific partition.
+final partitionRolesForPartitionProvider =
+    FutureProvider.family<List<PartitionRoleObject>, String>(
+        (ref, partitionId) async {
+  final repo = await ref.watch(partitionRepositoryProvider.future);
+  return repo.listPartitionRoles(partitionId: partitionId);
 });
 
 /// Pages list provider.
@@ -38,9 +60,17 @@ final accessListProvider =
   return <AccessObject>[];
 });
 
-/// Access roles list provider.
+/// Access roles list provider (all).
 final accessRolesProvider =
     FutureProvider<List<AccessRoleObject>>((ref) async {
   final repo = await ref.watch(partitionRepositoryProvider.future);
   return repo.listAccessRoles();
+});
+
+/// Access roles scoped to a specific access grant.
+final accessRolesForAccessProvider =
+    FutureProvider.family<List<AccessRoleObject>, String>(
+        (ref, accessId) async {
+  final repo = await ref.watch(partitionRepositoryProvider.future);
+  return repo.listAccessRoles(accessId: accessId);
 });

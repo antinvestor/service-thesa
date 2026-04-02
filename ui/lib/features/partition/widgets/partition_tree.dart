@@ -1,5 +1,6 @@
 import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -179,7 +180,7 @@ class _PartitionTreeViewState extends State<PartitionTreeView> {
           ? AppColors.tertiary.withValues(alpha: 0.05)
           : Colors.transparent,
       child: InkWell(
-        onTap: () => setState(() => _selectedId = p.id),
+        onTap: () => context.go('/services/tenancy/partitions/${p.id}'),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(

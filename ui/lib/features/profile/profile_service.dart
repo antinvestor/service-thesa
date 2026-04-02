@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/services/service_definition.dart';
 import '../../core/services/service_registry.dart';
-import 'pages/contacts_page.dart';
 import 'pages/profile_analytics_page.dart';
+import 'pages/profile_detail_page.dart';
 import 'pages/profiles_page.dart';
 import 'pages/relationships_page.dart';
 
@@ -19,12 +19,7 @@ const profileServiceDef = ServiceDefinition(
       label: 'Profiles',
       icon: Icons.person_outlined,
       description: 'Search and manage profiles',
-    ),
-    SubFeatureDefinition(
-      id: 'contacts',
-      label: 'Contacts',
-      icon: Icons.contact_phone_outlined,
-      description: 'Manage contacts across profiles',
+      hasDetailPage: true,
     ),
     SubFeatureDefinition(
       id: 'relationships',
@@ -45,10 +40,12 @@ void registerProfileService() {
       featureBuilders: {
         'profiles': (context, service, feature) =>
             ProfilesPage(service: service, feature: feature),
-        'contacts': (context, service, feature) =>
-            ContactsPage(service: service, feature: feature),
         'relationships': (context, service, feature) =>
             RelationshipsPage(service: service, feature: feature),
+      },
+      detailBuilders: {
+        'profiles': (context, service, feature, entityId) =>
+            ProfileDetailPage(profileId: entityId),
       },
     ),
   );
