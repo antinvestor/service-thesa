@@ -146,6 +146,7 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
     final screenSize = screenSizeOf(context);
     final showDetailPanel = screenSize == ScreenSize.desktop &&
         widget.detailBuilder != null &&
+        widget.onRowNavigate == null &&
         _selectedIndex != null;
 
     final showEditOverlay =
