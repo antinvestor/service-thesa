@@ -1,5 +1,3 @@
-import 'package:antinvestor_api_common/antinvestor_api_common.dart'
-    show STATE, Struct;
 import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,12 +26,10 @@ class PartitionRepository {
 
   Future<List<TenantObject>> listTenants({
     String query = '',
-    int count = 50,
   }) =>
       _collectStream(
         _client.listTenant(ListTenantRequest(
           query: query,
-          count: count,
         )),
         (r) => (r as ListTenantResponse).data,
       );
@@ -73,12 +69,10 @@ class PartitionRepository {
 
   Future<List<PartitionObject>> listPartitions({
     String query = '',
-    int count = 50,
   }) =>
       _collectStream(
         _client.listPartition(ListPartitionRequest(
           query: query,
-          count: count,
         )),
         (r) => (r as ListPartitionResponse).data,
       );
@@ -131,7 +125,7 @@ class PartitionRepository {
         _client.listPartitionRole(ListPartitionRoleRequest(
           partitionId: partitionId,
         )),
-        (r) => (r as ListPartitionRoleResponse).role,
+        (r) => (r as ListPartitionRoleResponse).data,
       );
 
   Future<PartitionRoleObject> createPartitionRole({
@@ -203,7 +197,7 @@ class PartitionRepository {
         _client.listAccessRole(ListAccessRoleRequest(
           accessId: accessId,
         )),
-        (r) => (r as ListAccessRoleResponse).role,
+        (r) => (r as ListAccessRoleResponse).data,
       );
 
   Future<AccessRoleObject> createAccessRole({

@@ -13,7 +13,7 @@ typedef ProfileContact = ({String profileId, ContactObject contact});
 
 /// Provider that extracts all contacts from loaded profiles into a flat list.
 final contactsProvider =
-    FutureProvider.autoDispose<List<ProfileContact>>((ref) async {
+    FutureProvider<List<ProfileContact>>((ref) async {
   final profiles = await ref.watch(profilesProvider.future);
   final contacts = <ProfileContact>[];
   for (final profile in profiles) {

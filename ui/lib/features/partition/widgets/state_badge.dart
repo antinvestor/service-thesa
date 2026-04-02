@@ -1,5 +1,5 @@
-import 'package:antinvestor_api_common/antinvestor_api_common.dart' show STATE;
 import 'package:flutter/material.dart';
+import 'package:protobuf/protobuf.dart' show ProtobufEnum;
 
 import '../../../core/theme/app_colors.dart';
 
@@ -7,14 +7,14 @@ import '../../../core/theme/app_colors.dart';
 class StateBadge extends StatelessWidget {
   const StateBadge(this.state, {super.key});
 
-  final STATE state;
+  final ProtobufEnum state;
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = switch (state) {
-      STATE.ACTIVE => ('ACTIVE', AppColors.success),
-      STATE.INACTIVE => ('INACTIVE', AppColors.onSurfaceMuted),
-      STATE.DELETED => ('DELETED', AppColors.error),
+    final (label, color) = switch (state.name) {
+      'ACTIVE' => ('ACTIVE', AppColors.success),
+      'INACTIVE' => ('INACTIVE', AppColors.onSurfaceMuted),
+      'DELETED' => ('DELETED', AppColors.error),
       _ => (state.name, AppColors.onSurfaceMuted),
     };
 

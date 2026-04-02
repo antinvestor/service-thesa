@@ -1,43 +1,13 @@
-import 'dart:io' as io;
-
 import 'package:antinvestor_api_common/antinvestor_api_common.dart';
 import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:antinvestor_api_profile/antinvestor_api_profile.dart';
-import 'package:connectrpc/connect.dart' as connect;
-import 'package:connectrpc/io.dart' as connect_io;
-import 'package:connectrpc/protobuf.dart' as connect_protobuf;
-import 'package:connectrpc/protocol/connect.dart' as connect_protocol;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/data/auth_service.dart' as auth;
 import 'api_config.dart';
-
-// ─── Transport Factory ───────────────────────────────────────────────────────
-
-typedef CreateTransportFn = connect.Transport Function(
-  Uri baseUrl,
-  List<connect.Interceptor> interceptors,
-);
-
-/// Creates a transport factory for ConnectRPC clients.
-CreateTransportFn createTransportFactory() {
-  return (Uri baseUrl, List<connect.Interceptor> interceptors) {
-    final httpClient = io.HttpClient()
-      ..connectionTimeout = ApiConfig.connectionTimeout
-      ..idleTimeout = ApiConfig.idleTimeout
-      ..maxConnectionsPerHost = 4
-      ..autoUncompress = true;
-
-    return connect_protocol.Transport(
-      baseUrl: baseUrl.toString(),
-      codec: const connect_protobuf.ProtoCodec(),
-      httpClient: connect_io.createHttpClient(httpClient),
-      interceptors: interceptors,
-    );
-  };
-}
+import 'transport/transport.dart';
 
 // ─── Token Manager ───────────────────────────────────────────────────────────
 

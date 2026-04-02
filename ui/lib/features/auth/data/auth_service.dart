@@ -327,7 +327,9 @@ class AuthService {
         return true;
       }
       return false;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Redirect result failed: $e — clearing stale tokens');
+      await logout();
       return false;
     }
   }

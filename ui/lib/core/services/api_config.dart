@@ -10,12 +10,12 @@ class ApiConfig {
   // Service endpoints (configurable via --dart-define)
   static const String tenancyBaseUrl = String.fromEnvironment(
     'TENANCY_URL',
-    defaultValue: 'https://tenancy.antinvestor.com',
+    defaultValue: 'https://api.stawi.org/tenancy',
   );
 
   static const String profileBaseUrl = String.fromEnvironment(
     'PROFILE_URL',
-    defaultValue: 'https://profile.antinvestor.com',
+    defaultValue: 'https://api.stawi.org/profile',
   );
 
   // OAuth2 configuration

@@ -5,7 +5,7 @@ import 'profile_repository.dart';
 
 /// Profiles search provider. Fetches all profiles (initial load).
 final profilesProvider =
-    FutureProvider.autoDispose<List<ProfileObject>>((ref) async {
+    FutureProvider<List<ProfileObject>>((ref) async {
   final repo = await ref.watch(profileRepositoryProvider.future);
   return repo.search();
 });
