@@ -46,7 +46,7 @@ class LedgerRepository {
   }
 
   Future<Account> createAccount({
-    required String id,
+    String? id,
     required String ledgerId,
     required String currency,
   }) async =>

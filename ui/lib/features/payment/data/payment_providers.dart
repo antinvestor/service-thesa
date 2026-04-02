@@ -33,3 +33,18 @@ final transactionsProvider =
   final repo = await ref.watch(ledgerRepositoryProvider.future);
   return repo.searchTransactions();
 });
+
+/// Accounts scoped to a specific ledger.
+final accountsForLedgerProvider =
+    FutureProvider.family<List<Account>, String>((ref, ledgerId) async {
+  final repo = await ref.watch(ledgerRepositoryProvider.future);
+  return repo.searchAccounts(query: ledgerId);
+});
+
+/// Transaction entries scoped to a specific account.
+final entriesForAccountProvider =
+    FutureProvider.family<List<TransactionEntry>, String>(
+        (ref, accountId) async {
+  final repo = await ref.watch(ledgerRepositoryProvider.future);
+  return repo.searchTransactionEntries(query: accountId);
+});

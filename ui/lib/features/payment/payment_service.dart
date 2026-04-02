@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/services/service_definition.dart';
 import '../../core/services/service_registry.dart';
+import 'pages/ledger_detail_page.dart';
 import 'pages/ledgers_page.dart';
 import 'pages/payment_analytics_page.dart';
 import 'pages/payments_page.dart';
@@ -22,7 +23,8 @@ const paymentServiceDef = ServiceDefinition(
       id: 'ledgers',
       label: 'Ledgers',
       icon: Icons.account_balance_outlined,
-      description: 'Manage ledgers and accounts',
+      description: 'Manage ledgers, accounts, and transactions',
+      hasDetailPage: true,
     ),
   ],
 );
@@ -38,6 +40,10 @@ void registerPaymentService() {
             PaymentsPage(service: service, feature: feature),
         'ledgers': (context, service, feature) =>
             LedgersPage(service: service, feature: feature),
+      },
+      detailBuilders: {
+        'ledgers': (context, service, feature, entityId) =>
+            LedgerDetailPage(ledgerId: entityId),
       },
     ),
   );

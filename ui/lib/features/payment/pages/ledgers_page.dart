@@ -1,6 +1,7 @@
 import 'package:antinvestor_api_ledger/antinvestor_api_ledger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/services/service_definition.dart';
 import '../../../core/theme/app_colors.dart';
@@ -103,14 +104,9 @@ class LedgersPage extends ConsumerWidget {
                             style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.onSurfaceMuted)),
-                        trailing: ledgers[i].parent.isNotEmpty
-                            ? Text('Parent: ${ledgers[i].parent}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelSmall
-                                    ?.copyWith(
-                                        color: AppColors.onSurfaceMuted))
-                            : null,
+                        trailing: const Icon(Icons.chevron_right, size: 18),
+                        onTap: () => context.go(
+                            '/services/payment/ledgers/${ledgers[i].id}'),
                       ),
                     ],
                   ],
