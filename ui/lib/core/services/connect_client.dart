@@ -1,4 +1,5 @@
 import 'package:antinvestor_api_common/antinvestor_api_common.dart';
+import 'package:antinvestor_api_device/antinvestor_api_device.dart';
 import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:antinvestor_api_profile/antinvestor_api_profile.dart';
 import 'package:flutter/foundation.dart';
@@ -131,5 +132,30 @@ final profileClientProvider =
 final profileServiceClientProvider =
     FutureProvider<ProfileServiceClient>((ref) async {
   final client = await ref.watch(profileClientProvider.future);
+  return client.stub;
+});
+
+// ─── Device Client ──────────────────────────────────────────────────────────
+
+/// Device API client provider.
+final deviceClientProvider =
+    FutureProvider<DeviceClient>((ref) async {
+  final tokenManager = ref.watch(tokenManagerProvider);
+  final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+
+  await tokenManager.initialize();
+
+  return newDeviceClient(
+    createTransport: createTransportFactory(),
+    endpoint: ApiConfig.deviceBaseUrl,
+    tokenManager: tokenManager,
+    onTokenRefresh: onTokenRefresh,
+  );
+});
+
+/// Expose the raw DeviceServiceClient stub.
+final deviceServiceClientProvider =
+    FutureProvider<DeviceServiceClient>((ref) async {
+  final client = await ref.watch(deviceClientProvider.future);
   return client.stub;
 });

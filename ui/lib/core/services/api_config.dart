@@ -18,6 +18,11 @@ class ApiConfig {
     defaultValue: 'https://api.stawi.org/profile',
   );
 
+  static const String deviceBaseUrl = String.fromEnvironment(
+    'DEVICE_URL',
+    defaultValue: 'https://api.stawi.org/devices',
+  );
+
   // OAuth2 configuration
   static const String oauth2IssuerUrl = String.fromEnvironment(
     'OAUTH2_ISSUER_URL',
