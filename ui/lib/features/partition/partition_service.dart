@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../core/services/service_definition.dart';
 import '../../core/services/service_registry.dart';
-import 'pages/access_page.dart';
-import 'pages/clients_page.dart';
 import 'pages/partition_analytics_page.dart';
 import 'pages/partition_detail_page.dart';
 import 'pages/partitions_page.dart';
-import 'pages/service_accounts_page.dart';
 import 'pages/tenant_detail_page.dart';
 import 'pages/tenants_page.dart';
 
-/// Partition Service definition for the admin sidebar.
+/// Tenancy Service definition for the admin sidebar.
+///
+/// Only top-level entities (Tenants, Partitions) appear in the sidebar.
+/// Child entities (Roles, Access, Service Accounts, Clients) are
+/// discoverable as tabs within the Partition detail page.
 const tenancyServiceDef = ServiceDefinition(
   id: 'tenancy',
   label: 'Tenancy Service',
@@ -32,24 +33,6 @@ const tenancyServiceDef = ServiceDefinition(
       description: 'Manage data partitions',
       hasDetailPage: true,
     ),
-    SubFeatureDefinition(
-      id: 'access',
-      label: 'Access',
-      icon: Icons.security_outlined,
-      description: 'Manage profile access to partitions',
-    ),
-    SubFeatureDefinition(
-      id: 'service-accounts',
-      label: 'Service Accounts',
-      icon: Icons.engineering_outlined,
-      description: 'Manage service accounts',
-    ),
-    SubFeatureDefinition(
-      id: 'clients',
-      label: 'Clients',
-      icon: Icons.key_outlined,
-      description: 'Manage OAuth2 clients',
-    ),
   ],
 );
 
@@ -65,12 +48,6 @@ void registerTenancyService() {
             TenantsPage(service: service, feature: feature),
         'partitions': (context, service, feature) =>
             PartitionsPage(service: service, feature: feature),
-        'access': (context, service, feature) =>
-            AccessPage(service: service, feature: feature),
-        'service-accounts': (context, service, feature) =>
-            ServiceAccountsPage(service: service, feature: feature),
-        'clients': (context, service, feature) =>
-            ClientsPage(service: service, feature: feature),
       },
       detailBuilders: {
         'tenants': (context, service, feature, entityId) =>

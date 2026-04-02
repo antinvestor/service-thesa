@@ -12,7 +12,7 @@ import '../widgets/state_badge.dart';
 /// Detail page for a single partition, shown at
 /// /services/tenancy/partitions/:partitionId.
 ///
-/// Tabs: Overview | Roles | Pages
+/// Tabs: Overview | Roles | Access | Service Accounts | Clients
 class PartitionDetailPage extends ConsumerWidget {
   const PartitionDetailPage({super.key, required this.partitionId});
 
@@ -68,7 +68,7 @@ class _PartitionDetailContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DefaultTabController(
-      length: 2,
+      length: 5,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -112,12 +112,15 @@ class _PartitionDetailContent extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          TabBar(
+          const TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            tabs: const [
+            tabs: [
               Tab(text: 'Overview'),
               Tab(text: 'Roles'),
+              Tab(text: 'Access'),
+              Tab(text: 'Service Accounts'),
+              Tab(text: 'Clients'),
             ],
           ),
           const Divider(height: 1),
@@ -126,6 +129,9 @@ class _PartitionDetailContent extends ConsumerWidget {
               children: [
                 _OverviewTab(partition: partition),
                 _RolesTab(partitionId: partitionId),
+                _AccessTab(partitionId: partitionId),
+                const _ServiceAccountsTab(),
+                const _ClientsTab(),
               ],
             ),
           ),
@@ -146,19 +152,14 @@ class _OverviewTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _InfoCard(
-            title: 'Partition Details',
-            rows: [
-              ('Name', partition.name),
-              ('Description', partition.description),
-              ('Tenant ID', partition.tenantId),
-              if (partition.hasParentId()) ('Parent ID', partition.parentId),
-              ('State', partition.state.name),
-            ],
-          ),
+      child: _InfoCard(
+        title: 'Partition Details',
+        rows: [
+          ('Name', partition.name),
+          ('Description', partition.description),
+          ('Tenant ID', partition.tenantId),
+          if (partition.hasParentId()) ('Parent ID', partition.parentId),
+          ('State', partition.state.name),
         ],
       ),
     );
@@ -179,43 +180,23 @@ class _RolesTab extends ConsumerWidget {
 
     return asyncRoles.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, size: 36, color: AppColors.error),
-            const SizedBox(height: 12),
-            Text('Failed to load roles',
-                style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 8),
-            Text(error.toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
-          ],
-        ),
+      error: (error, _) => _ErrorState(
+        message: 'Failed to load roles',
+        detail: error.toString(),
+        onRetry: () =>
+            ref.invalidate(partitionRolesForPartitionProvider(partitionId)),
       ),
       data: (roles) {
         if (roles.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.shield_outlined,
-                    size: 48, color: AppColors.onSurfaceMuted),
-                const SizedBox(height: 12),
-                Text('No roles defined for this partition',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.onSurfaceMuted)),
-              ],
-            ),
+          return _EmptyState(
+            icon: Icons.shield_outlined,
+            message: 'No roles defined for this partition',
           );
         }
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: roles.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
+          separatorBuilder: (_, _) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final role = roles[index];
             return ListTile(
@@ -231,6 +212,149 @@ class _RolesTab extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+// ─── Access Tab ───────────────────────────────────────────────────────────────
+
+class _AccessTab extends ConsumerWidget {
+  const _AccessTab({required this.partitionId});
+
+  final String partitionId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncAccess = ref.watch(accessListProvider);
+
+    return asyncAccess.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => _ErrorState(
+        message: 'Failed to load access grants',
+        detail: error.toString(),
+        onRetry: () => ref.invalidate(accessListProvider),
+      ),
+      data: (allAccess) {
+        // Filter to this partition where possible
+        final access = allAccess.where((a) {
+          if (a.hasPartition()) return a.partition.id == partitionId;
+          return true;
+        }).toList();
+
+        if (access.isEmpty) {
+          return _EmptyState(
+            icon: Icons.security_outlined,
+            message: 'No access grants for this partition',
+            action: 'Grant access to allow profiles to use this partition.',
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: access.length,
+          separatorBuilder: (_, _) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final a = access[index];
+            return ExpansionTile(
+              leading: Icon(Icons.vpn_key_outlined,
+                  size: 20, color: AppColors.tertiary),
+              title: Text(a.profileId,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'monospace',
+                      fontSize: 13)),
+              subtitle: Text('Access ID: ${a.id}',
+                  style: TextStyle(
+                      fontSize: 11, color: AppColors.onSurfaceMuted)),
+              trailing: StateBadge(a.state),
+              children: [
+                _AccessRolesSection(accessId: a.id),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+/// Inline section showing access roles for a given access grant.
+class _AccessRolesSection extends ConsumerWidget {
+  const _AccessRolesSection({required this.accessId});
+
+  final String accessId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncRoles = ref.watch(accessRolesForAccessProvider(accessId));
+
+    return asyncRoles.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+      error: (error, _) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text('Error loading roles: $error',
+            style: TextStyle(color: AppColors.error, fontSize: 12)),
+      ),
+      data: (roles) {
+        if (roles.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text('No roles assigned',
+                style: TextStyle(
+                    color: AppColors.onSurfaceMuted, fontSize: 13)),
+          );
+        }
+        return Column(
+          children: [
+            for (final role in roles)
+              ListTile(
+                dense: true,
+                leading: Icon(Icons.badge_outlined,
+                    size: 16, color: AppColors.tertiary),
+                title: Text(
+                  role.hasRole() ? role.role.name : role.id,
+                  style: const TextStyle(fontSize: 13),
+                ),
+                subtitle: Text(role.id,
+                    style: const TextStyle(
+                        fontFamily: 'monospace', fontSize: 10)),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ─── Service Accounts Tab ─────────────────────────────────────────────────────
+
+class _ServiceAccountsTab extends StatelessWidget {
+  const _ServiceAccountsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return _EmptyState(
+      icon: Icons.engineering_outlined,
+      message: 'Service Accounts',
+      action:
+          'Service account management will be available in a future API update.',
+    );
+  }
+}
+
+// ─── Clients Tab ──────────────────────────────────────────────────────────────
+
+class _ClientsTab extends StatelessWidget {
+  const _ClientsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return _EmptyState(
+      icon: Icons.key_outlined,
+      message: 'OAuth2 Clients',
+      action: 'Client management will be available in a future API update.',
     );
   }
 }
@@ -288,6 +412,80 @@ class _InfoCard extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({
+    required this.icon,
+    required this.message,
+    this.action,
+  });
+
+  final IconData icon;
+  final String message;
+  final String? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 48, color: AppColors.onSurfaceMuted),
+          const SizedBox(height: 12),
+          Text(message,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.onSurfaceMuted)),
+          if (action != null) ...[
+            const SizedBox(height: 8),
+            Text(action!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.onSurfaceMuted)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({
+    required this.message,
+    required this.detail,
+    this.onRetry,
+  });
+
+  final String message;
+  final String detail;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.error_outline, size: 36, color: AppColors.error),
+          const SizedBox(height: 12),
+          Text(message, style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 8),
+          Text(detail,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: AppColors.onSurfaceMuted)),
+          if (onRetry != null) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Retry'),
+            ),
+          ],
+        ],
       ),
     );
   }
