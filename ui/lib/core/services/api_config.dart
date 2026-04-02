@@ -28,6 +28,26 @@ class ApiConfig {
     defaultValue: 'https://api.stawi.org/geolocation',
   );
 
+  static const String notificationBaseUrl = String.fromEnvironment(
+    'NOTIFICATION_URL',
+    defaultValue: 'https://api.stawi.org/notification',
+  );
+
+  static const String paymentBaseUrl = String.fromEnvironment(
+    'PAYMENT_URL',
+    defaultValue: 'https://api.stawi.org/payment',
+  );
+
+  static const String ledgerBaseUrl = String.fromEnvironment(
+    'LEDGER_URL',
+    defaultValue: 'https://api.stawi.org/ledger',
+  );
+
+  static const String settingsBaseUrl = String.fromEnvironment(
+    'SETTINGS_URL',
+    defaultValue: 'https://api.stawi.org/settings',
+  );
+
   // OAuth2 configuration
   static const String oauth2IssuerUrl = String.fromEnvironment(
     'OAUTH2_ISSUER_URL',

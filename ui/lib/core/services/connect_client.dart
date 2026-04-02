@@ -1,7 +1,13 @@
 import 'package:antinvestor_api_common/antinvestor_api_common.dart';
 import 'package:antinvestor_api_device/antinvestor_api_device.dart';
-import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
+import 'package:antinvestor_api_ledger/antinvestor_api_ledger.dart';
+import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
+    hide SearchRequest, SearchResponse;
+import 'package:antinvestor_api_payment/antinvestor_api_payment.dart'
+    hide SearchRequest, SearchResponse, STATE, STATUS;
 import 'package:antinvestor_api_profile/antinvestor_api_profile.dart';
+import 'package:antinvestor_api_settings/antinvestor_api_settings.dart';
+import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -157,5 +163,91 @@ final deviceClientProvider =
 final deviceServiceClientProvider =
     FutureProvider<DeviceServiceClient>((ref) async {
   final client = await ref.watch(deviceClientProvider.future);
+  return client.stub;
+});
+
+// ─── Notification Client ────────────────────────────────────────────────────
+
+final notificationClientProvider =
+    FutureProvider<ConnectClientBase<NotificationServiceClient>>((ref) async {
+  final tokenManager = ref.watch(tokenManagerProvider);
+  final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  await tokenManager.initialize();
+  return newClient<NotificationServiceClient>(
+    defaultEndpoint: 'https://notification.antinvestor.com',
+    createServiceClient: NotificationServiceClient.new,
+    createTransport: createTransportFactory(),
+    endpoint: ApiConfig.notificationBaseUrl,
+    tokenManager: tokenManager,
+    onTokenRefresh: onTokenRefresh,
+  );
+});
+
+final notificationServiceClientProvider =
+    FutureProvider<NotificationServiceClient>((ref) async {
+  final client = await ref.watch(notificationClientProvider.future);
+  return client.stub;
+});
+
+// ─── Payment Client ─────────────────────────────────────────────────────────
+
+final paymentClientProvider =
+    FutureProvider<PaymentClient>((ref) async {
+  final tokenManager = ref.watch(tokenManagerProvider);
+  final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  await tokenManager.initialize();
+  return newPaymentClient(
+    createTransport: createTransportFactory(),
+    endpoint: ApiConfig.paymentBaseUrl,
+    tokenManager: tokenManager,
+    onTokenRefresh: onTokenRefresh,
+  );
+});
+
+final paymentServiceClientProvider =
+    FutureProvider<PaymentServiceClient>((ref) async {
+  final client = await ref.watch(paymentClientProvider.future);
+  return client.stub;
+});
+
+// ─── Ledger Client ──────────────────────────────────────────────────────────
+
+final ledgerClientProvider =
+    FutureProvider<LedgerClient>((ref) async {
+  final tokenManager = ref.watch(tokenManagerProvider);
+  final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  await tokenManager.initialize();
+  return newLedgerClient(
+    createTransport: createTransportFactory(),
+    endpoint: ApiConfig.ledgerBaseUrl,
+    tokenManager: tokenManager,
+    onTokenRefresh: onTokenRefresh,
+  );
+});
+
+final ledgerServiceClientProvider =
+    FutureProvider<LedgerServiceClient>((ref) async {
+  final client = await ref.watch(ledgerClientProvider.future);
+  return client.stub;
+});
+
+// ─── Settings Client ────────────────────────────────────────────────────────
+
+final settingsClientProvider =
+    FutureProvider<SettingsClient>((ref) async {
+  final tokenManager = ref.watch(tokenManagerProvider);
+  final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  await tokenManager.initialize();
+  return newSettingsClient(
+    createTransport: createTransportFactory(),
+    endpoint: ApiConfig.settingsBaseUrl,
+    tokenManager: tokenManager,
+    onTokenRefresh: onTokenRefresh,
+  );
+});
+
+final settingsServiceClientProvider =
+    FutureProvider<SettingsServiceClient>((ref) async {
+  final client = await ref.watch(settingsClientProvider.future);
   return client.stub;
 });
