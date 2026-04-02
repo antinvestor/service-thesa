@@ -212,6 +212,62 @@ class PartitionRepository {
 
   Future<void> removeAccessRole(String id) async =>
       _client.removeAccessRole(RemoveAccessRoleRequest(id: id));
+
+  // ── Service Accounts ────────────────────────────────────────────────────
+
+  Future<List<ServiceAccountObject>> listServiceAccounts({
+    String? partitionId,
+  }) =>
+      _collectStream(
+        _client.listServiceAccount(ListServiceAccountRequest(
+          partitionId: partitionId,
+        )),
+        (r) => (r as ListServiceAccountResponse).data,
+      );
+
+  Future<ServiceAccountObject> createServiceAccount({
+    required String partitionId,
+    required String name,
+    String type = 'internal',
+  }) async =>
+      (await _client.createServiceAccount(CreateServiceAccountRequest(
+        partitionId: partitionId,
+        name: name,
+        type: type,
+      )))
+          .data;
+
+  Future<void> removeServiceAccount(String id) async =>
+      _client.removeServiceAccount(RemoveServiceAccountRequest(id: id));
+
+  // ── Clients ─────────────────────────────────────────────────────────────
+
+  Future<List<ClientObject>> listClients({
+    String? partitionId,
+    String? serviceAccountId,
+  }) =>
+      _collectStream(
+        _client.listClient(ListClientRequest(
+          partitionId: partitionId,
+          serviceAccountId: serviceAccountId,
+        )),
+        (r) => (r as ListClientResponse).data,
+      );
+
+  Future<ClientObject> createClient({
+    required String name,
+    String type = 'public',
+    String scopes = 'openid',
+  }) async =>
+      (await _client.createClient(CreateClientRequest(
+        name: name,
+        type: type,
+        scopes: scopes,
+      )))
+          .data;
+
+  Future<void> removeClient(String id) async =>
+      _client.removeClient(RemoveClientRequest(id: id));
 }
 
 // ─── Riverpod Provider ───────────────────────────────────────────────────────

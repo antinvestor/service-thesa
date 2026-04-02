@@ -74,3 +74,19 @@ final accessRolesForAccessProvider =
   final repo = await ref.watch(partitionRepositoryProvider.future);
   return repo.listAccessRoles(accessId: accessId);
 });
+
+/// Service accounts scoped to a partition.
+final serviceAccountsForPartitionProvider =
+    FutureProvider.family<List<ServiceAccountObject>, String>(
+        (ref, partitionId) async {
+  final repo = await ref.watch(partitionRepositoryProvider.future);
+  return repo.listServiceAccounts(partitionId: partitionId);
+});
+
+/// Clients scoped to a partition.
+final clientsForPartitionProvider =
+    FutureProvider.family<List<ClientObject>, String>(
+        (ref, partitionId) async {
+  final repo = await ref.watch(partitionRepositoryProvider.future);
+  return repo.listClients(partitionId: partitionId);
+});

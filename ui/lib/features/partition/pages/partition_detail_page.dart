@@ -189,18 +189,8 @@ class _PartitionDetailContent extends ConsumerWidget {
                 _OverviewTab(partition: partition),
                 _RolesTab(partitionId: partitionId),
                 _AccessTab(partitionId: partitionId),
-                const _PlaceholderTab(
-                  icon: Icons.engineering_outlined,
-                  title: 'Service Accounts',
-                  subtitle:
-                      'Service account management will be available in a future API update.',
-                ),
-                const _PlaceholderTab(
-                  icon: Icons.key_outlined,
-                  title: 'OAuth2 Clients',
-                  subtitle:
-                      'Client management will be available in a future API update.',
-                ),
+                _ServiceAccountsTab(partitionId: partitionId),
+                _ClientsTab(partitionId: partitionId),
               ],
             ),
           ),
@@ -675,6 +665,299 @@ class _AccessRolesSection extends ConsumerWidget {
                 ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Shared Widgets ───────────────────────────────────────────────────────────
+
+// ─── Service Accounts Tab ─────────────────────────────────────────────────────
+
+class _ServiceAccountsTab extends ConsumerWidget {
+  const _ServiceAccountsTab({required this.partitionId});
+
+  final String partitionId;
+
+  Future<void> _create(BuildContext context, WidgetRef ref) async {
+    final values = await showEditDialog(
+      context: context,
+      title: 'New Service Account',
+      saveLabel: 'Create',
+      fields: const [
+        DialogField(key: 'name', label: 'Name'),
+        DialogField(
+          key: 'type',
+          label: 'Type',
+          type: DialogFieldType.dropdown,
+          options: ['internal', 'external'],
+          initialValue: 'internal',
+        ),
+      ],
+    );
+    if (values == null || !context.mounted) return;
+
+    try {
+      final repo = await ref.read(partitionRepositoryProvider.future);
+      await repo.createServiceAccount(
+        partitionId: partitionId,
+        name: values['name'] ?? '',
+        type: values['type'] ?? 'internal',
+      );
+      ref.invalidate(serviceAccountsForPartitionProvider(partitionId));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Service account created')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  Future<void> _remove(
+      BuildContext context, WidgetRef ref, ServiceAccountObject sa) async {
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: 'Remove Service Account',
+      message: 'Remove "${sa.profileId}"? This cannot be undone.',
+    );
+    if (!confirmed || !context.mounted) return;
+
+    try {
+      final repo = await ref.read(partitionRepositoryProvider.future);
+      await repo.removeServiceAccount(sa.id);
+      ref.invalidate(serviceAccountsForPartitionProvider(partitionId));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Service account removed')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncSAs = ref.watch(serviceAccountsForPartitionProvider(partitionId));
+
+    return asyncSAs.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => _ErrorState(
+        message: 'Failed to load service accounts',
+        detail: error.toString(),
+        onRetry: () =>
+            ref.invalidate(serviceAccountsForPartitionProvider(partitionId)),
+      ),
+      data: (accounts) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _create(context, ref),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('New Service Account'),
+                ),
+              ],
+            ),
+          ),
+          if (accounts.isEmpty)
+            const Expanded(
+              child: _PlaceholderTab(
+                icon: Icons.engineering_outlined,
+                title: 'No service accounts',
+                subtitle: 'Create service accounts for machine-to-machine access.',
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: accounts.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final sa = accounts[index];
+                  return ListTile(
+                    leading: Icon(Icons.engineering_outlined,
+                        size: 20, color: AppColors.tertiary),
+                    title: Text(sa.profileId,
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    subtitle: Text(
+                        'Client: ${sa.clientId} · Type: ${sa.type}',
+                        style: TextStyle(
+                            fontSize: 11, color: AppColors.onSurfaceMuted)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        StateBadge(sa.state),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(Icons.delete_outline,
+                              size: 18, color: AppColors.error),
+                          tooltip: 'Remove',
+                          onPressed: () => _remove(context, ref, sa),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Clients Tab ──────────────────────────────────────────────────────────────
+
+class _ClientsTab extends ConsumerWidget {
+  const _ClientsTab({required this.partitionId});
+
+  final String partitionId;
+
+  Future<void> _create(BuildContext context, WidgetRef ref) async {
+    final values = await showEditDialog(
+      context: context,
+      title: 'New OAuth2 Client',
+      saveLabel: 'Create',
+      fields: const [
+        DialogField(key: 'name', label: 'Client Name'),
+        DialogField(
+          key: 'type',
+          label: 'Type',
+          type: DialogFieldType.dropdown,
+          options: ['public', 'confidential', 'internal'],
+          initialValue: 'public',
+        ),
+        DialogField(key: 'scopes', label: 'Scopes', initialValue: 'openid'),
+      ],
+    );
+    if (values == null || !context.mounted) return;
+
+    try {
+      final repo = await ref.read(partitionRepositoryProvider.future);
+      await repo.createClient(
+        name: values['name'] ?? '',
+        type: values['type'] ?? 'public',
+        scopes: values['scopes'] ?? 'openid',
+      );
+      ref.invalidate(clientsForPartitionProvider(partitionId));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Client created')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  Future<void> _remove(
+      BuildContext context, WidgetRef ref, ClientObject client) async {
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: 'Remove Client',
+      message: 'Remove client "${client.name}"? This cannot be undone.',
+    );
+    if (!confirmed || !context.mounted) return;
+
+    try {
+      final repo = await ref.read(partitionRepositoryProvider.future);
+      await repo.removeClient(client.id);
+      ref.invalidate(clientsForPartitionProvider(partitionId));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Client removed')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncClients = ref.watch(clientsForPartitionProvider(partitionId));
+
+    return asyncClients.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => _ErrorState(
+        message: 'Failed to load clients',
+        detail: error.toString(),
+        onRetry: () =>
+            ref.invalidate(clientsForPartitionProvider(partitionId)),
+      ),
+      data: (clients) => Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _create(context, ref),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('New Client'),
+                ),
+              ],
+            ),
+          ),
+          if (clients.isEmpty)
+            const Expanded(
+              child: _PlaceholderTab(
+                icon: Icons.key_outlined,
+                title: 'No OAuth2 clients',
+                subtitle: 'Create clients for application authentication.',
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: clients.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final client = clients[index];
+                  return ListTile(
+                    leading: Icon(Icons.key_outlined,
+                        size: 20, color: AppColors.tertiary),
+                    title: Text(client.name,
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    subtitle: Text(
+                        'ID: ${client.clientId} · Type: ${client.type} · Scopes: ${client.scopes}',
+                        style: TextStyle(
+                            fontSize: 11, color: AppColors.onSurfaceMuted)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        StateBadge(client.state),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: Icon(Icons.delete_outline,
+                              size: 18, color: AppColors.error),
+                          tooltip: 'Remove',
+                          onPressed: () => _remove(context, ref, client),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
       ),
     );
   }
