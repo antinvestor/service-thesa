@@ -1,5 +1,7 @@
 import 'package:antinvestor_api_device/antinvestor_api_device.dart'
     show DeviceObject, DeviceLog;
+import 'package:antinvestor_api_geolocation/antinvestor_api_geolocation.dart'
+    show LocationPointObject, GeoEventObject, RouteAssignmentObject;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -436,14 +438,16 @@ class _LocationTrackTabState extends ConsumerState<_LocationTrackTab> {
                 itemCount: points.length,
                 itemBuilder: (context, index) {
                   final pt = points[index];
-                  final time = pt.timestamp != null
-                      ? DateFormat.yMd().add_Hms().format(pt.timestamp!)
+                  final time = pt.hasTimestamp()
+                      ? DateFormat.yMd().add_Hms().format(pt.timestamp.toDateTime())
                       : '';
+                  final srcLabel = pt.source.name;
+                  final isGps = srcLabel.contains('GPS');
                   return ListTile(
                     dense: true,
                     leading: Icon(Icons.location_on,
                         size: 18,
-                        color: pt.source == 'GPS'
+                        color: isGps
                             ? AppColors.success
                             : AppColors.tertiary),
                     title: Text(
@@ -451,8 +455,8 @@ class _LocationTrackTabState extends ConsumerState<_LocationTrackTab> {
                         style: const TextStyle(
                             fontFamily: 'monospace', fontSize: 13)),
                     subtitle: Text(
-                        '$time · ${pt.source} · Accuracy: ${pt.accuracy.toStringAsFixed(0)}m'
-                        '${pt.speed != null ? " · Speed: ${pt.speed!.toStringAsFixed(1)}m/s" : ""}',
+                        '$time · $srcLabel · Accuracy: ${pt.accuracy.toStringAsFixed(0)}m'
+                        '${pt.hasSpeed() ? " · Speed: ${pt.speed.toStringAsFixed(1)}m/s" : ""}',
                         style: TextStyle(
                             fontSize: 11, color: AppColors.onSurfaceMuted)),
                   );
@@ -525,20 +529,27 @@ class _GeofenceEventsTab extends ConsumerWidget {
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final event = events[index];
-            final icon = switch (event.eventType) {
-              'Entered' => Icons.login,
-              'Exited' => Icons.logout,
-              'Dwelling' => Icons.hourglass_bottom,
+            final evtName = event.eventType.name;
+            final icon = switch (evtName) {
+              _ when evtName.contains('ENTER') => Icons.login,
+              _ when evtName.contains('EXIT') => Icons.logout,
+              _ when evtName.contains('DWELL') => Icons.hourglass_bottom,
               _ => Icons.location_on,
             };
-            final color = switch (event.eventType) {
-              'Entered' => AppColors.success,
-              'Exited' => AppColors.error,
-              'Dwelling' => Colors.orange,
+            final label = switch (evtName) {
+              _ when evtName.contains('ENTER') => 'Entered',
+              _ when evtName.contains('EXIT') => 'Exited',
+              _ when evtName.contains('DWELL') => 'Dwelling',
+              _ => evtName,
+            };
+            final color = switch (evtName) {
+              _ when evtName.contains('ENTER') => AppColors.success,
+              _ when evtName.contains('EXIT') => AppColors.error,
+              _ when evtName.contains('DWELL') => Colors.orange,
               _ => AppColors.onSurfaceMuted,
             };
-            final time = event.timestamp != null
-                ? DateFormat.yMd().add_Hms().format(event.timestamp!)
+            final time = event.hasTimestamp()
+                ? DateFormat.yMd().add_Hms().format(event.timestamp.toDateTime())
                 : '';
             return ListTile(
               leading: Container(
@@ -549,7 +560,7 @@ class _GeofenceEventsTab extends ConsumerWidget {
                 ),
                 child: Icon(icon, size: 18, color: color),
               ),
-              title: Text(event.eventType,
+              title: Text(label,
                   style: TextStyle(
                       fontWeight: FontWeight.w600, color: color)),
               subtitle: Text(
@@ -625,11 +636,11 @@ class _RouteAssignmentsTab extends ConsumerWidget {
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final a = assignments[index];
-            final validFrom = a.validFrom != null
-                ? DateFormat.yMMMd().format(a.validFrom!)
+            final validFrom = a.hasValidFrom()
+                ? DateFormat.yMMMd().format(a.validFrom.toDateTime())
                 : 'N/A';
-            final validUntil = a.validUntil != null
-                ? DateFormat.yMMMd().format(a.validUntil!)
+            final validUntil = a.hasValidUntil()
+                ? DateFormat.yMMMd().format(a.validUntil.toDateTime())
                 : 'Ongoing';
             return ListTile(
               leading: Icon(Icons.route_outlined,
