@@ -18,9 +18,10 @@ class AuthRepository {
 
   Future<void> login() async {
     final token = await _authService.authenticate();
-    if (token == null) {
-      throw Exception('Authentication did not return a token');
-    }
+    // On web, authenticate() returns null because it redirects the browser
+    // to the OAuth provider. This is not an error — the callback will
+    // complete the flow when the browser returns.
+    if (token == null) return;
   }
 
   Future<void> logout() => _authService.logout();
