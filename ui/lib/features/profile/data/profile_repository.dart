@@ -1,7 +1,6 @@
 import 'package:antinvestor_api_common/antinvestor_api_common.dart'
     show STATE, Struct;
 import 'package:antinvestor_api_profile/antinvestor_api_profile.dart';
-import 'package:fixnum/fixnum.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/connect_client.dart';
@@ -24,14 +23,10 @@ class ProfileRepository {
 
   Future<List<ProfileObject>> search({
     String query = '',
-    int page = 0,
-    int count = 50,
   }) async {
     final items = <ProfileObject>[];
     await for (final response in _client.search(SearchRequest(
       query: query,
-      page: Int64(page),
-      count: count,
     ))) {
       items.addAll(response.data);
     }
