@@ -146,7 +146,7 @@ class AuthPlatformWeb implements AuthPlatform {
       scheme: uri.scheme,
       host: uri.host,
       port: uri.port,
-      path: uri.path,
+      path: '/',
     );
     web.window.history.replaceState(null, '', cleanUri.toString());
   }

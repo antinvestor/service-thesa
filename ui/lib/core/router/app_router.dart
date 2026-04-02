@@ -40,14 +40,14 @@ GoRouter createAppRouter(Ref ref) {
         return '/login';
       }
 
-      // Allow auth callback through (web OAuth redirect)
-      if (isAuthCallback) return null;
+      // Allow auth callback through only while unauthenticated
+      if (isAuthCallback && !isLoggedIn) return null;
 
       // Redirect unauthenticated users to login
       if (!isLoggedIn && !isLoginRoute) return '/login';
 
-      // Redirect authenticated users away from login
-      if (isLoggedIn && isLoginRoute) return '/';
+      // Redirect authenticated users away from login or callback
+      if (isLoggedIn && (isLoginRoute || isAuthCallback)) return '/';
 
       return null; // No redirect needed
     },
