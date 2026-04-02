@@ -17,6 +17,7 @@ class AsyncEntityList<T> extends ConsumerWidget {
     this.searchHint = 'Search...',
     this.detailBuilder,
     this.addLabel,
+    this.onAdd,
     this.editFields,
     this.editTitle,
     this.editValuesExtractor,
@@ -36,6 +37,7 @@ class AsyncEntityList<T> extends ConsumerWidget {
   final String searchHint;
   final Widget Function(T item)? detailBuilder;
   final String? addLabel;
+  final VoidCallback? onAdd;
   final List<EditField>? editFields;
   final String Function(T item)? editTitle;
   final Map<String, String> Function(T item)? editValuesExtractor;
@@ -84,6 +86,7 @@ class AsyncEntityList<T> extends ConsumerWidget {
         searchHint: searchHint,
         detailBuilder: detailBuilder,
         addLabel: addLabel,
+        onAdd: onAdd,
         editFields: editFields,
         editTitle: editTitle,
         editValuesExtractor: editValuesExtractor,
