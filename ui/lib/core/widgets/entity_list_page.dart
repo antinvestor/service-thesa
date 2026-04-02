@@ -130,6 +130,14 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
 
   @override
   Widget build(BuildContext context) {
+    // Reset stale indices when items list changes
+    if (_selectedIndex != null && _selectedIndex! >= widget.items.length) {
+      _selectedIndex = null;
+    }
+    if (_editingIndex != null && _editingIndex! >= widget.items.length) {
+      _editingIndex = null;
+    }
+
     final screenSize = screenSizeOf(context);
     final showDetailPanel = screenSize == ScreenSize.desktop &&
         widget.detailBuilder != null &&
@@ -556,7 +564,8 @@ class _EditSlideOverState extends State<_EditSlideOver>
         const SizedBox(height: 6),
         switch (field.type) {
           EditFieldType.dropdown => DropdownButtonFormField<String>(
-              initialValue: _dropdownValues[field.key]?.isNotEmpty == true
+              initialValue: _dropdownValues[field.key]?.isNotEmpty == true &&
+                      field.options.contains(_dropdownValues[field.key])
                   ? _dropdownValues[field.key]
                   : null,
               decoration: InputDecoration(

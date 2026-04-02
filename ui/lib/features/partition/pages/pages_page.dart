@@ -74,7 +74,7 @@ class PagesPage extends ConsumerWidget {
           label: 'State',
           key: 'state',
           type: EditFieldType.dropdown,
-          options: ['ACTIVE', 'INACTIVE'],
+          options: ['CREATED', 'ACTIVE', 'INACTIVE', 'DELETED'],
         ),
       ],
       editTitle: (page) => 'Edit ${page.name}',

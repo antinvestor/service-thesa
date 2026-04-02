@@ -83,7 +83,7 @@ class ProfilesPage extends ConsumerWidget {
           label: 'State',
           key: 'state',
           type: EditFieldType.dropdown,
-          options: ['ACTIVE', 'INACTIVE', 'DELETED'],
+          options: ['CREATED', 'ACTIVE', 'INACTIVE', 'DELETED'],
         ),
       ],
       editTitle: (profile) => 'Edit ${_profileDisplayName(profile)}',
