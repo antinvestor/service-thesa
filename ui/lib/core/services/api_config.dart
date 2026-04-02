@@ -23,6 +23,11 @@ class ApiConfig {
     defaultValue: 'https://api.stawi.org/devices',
   );
 
+  static const String geolocationBaseUrl = String.fromEnvironment(
+    'GEOLOCATION_URL',
+    defaultValue: 'https://api.stawi.org/geolocation',
+  );
+
   // OAuth2 configuration
   static const String oauth2IssuerUrl = String.fromEnvironment(
     'OAUTH2_ISSUER_URL',

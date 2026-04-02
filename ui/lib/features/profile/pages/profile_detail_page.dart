@@ -560,7 +560,7 @@ class _DevicesTab extends ConsumerWidget {
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final device = devices[index];
-            return _DeviceTile(device: device);
+            return _DeviceTile(device: device, profileId: profileId);
           },
         );
       },
@@ -569,9 +569,10 @@ class _DevicesTab extends ConsumerWidget {
 }
 
 class _DeviceTile extends StatelessWidget {
-  const _DeviceTile({required this.device});
+  const _DeviceTile({required this.device, required this.profileId});
 
   final DeviceObject device;
+  final String profileId;
 
   IconData get _icon {
     final ua = device.userAgent.toLowerCase();
@@ -585,7 +586,7 @@ class _DeviceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ExpansionTile(
+    return ListTile(
       leading: Icon(_icon, size: 20, color: AppColors.tertiary),
       title: Text(
         device.name.isNotEmpty ? device.name : 'Device ${device.id}',
@@ -599,27 +600,16 @@ class _DeviceTile extends StatelessWidget {
         ].join(' · '),
         style: TextStyle(fontSize: 11, color: AppColors.onSurfaceMuted),
       ),
-      trailing: _PresenceDot(device.presence.name),
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _DetailRow('Device ID', device.id),
-              _DetailRow('Session ID', device.sessionId),
-              _DetailRow('User Agent', device.userAgent),
-              _DetailRow('OS', device.os),
-              _DetailRow('IP', device.ip),
-              _DetailRow('Last Seen', device.lastSeen),
-              _DetailRow('Presence', device.presence.name),
-              if (device.hasLocale())
-                _DetailRow('Locale',
-                    '${device.locale.language.join(", ")} / ${device.locale.timezone}'),
-            ],
-          ),
-        ),
-      ],
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _PresenceDot(device.presence.name),
+          const SizedBox(width: 8),
+          Icon(Icons.chevron_right, size: 18, color: AppColors.onSurfaceMuted),
+        ],
+      ),
+      onTap: () => context.go(
+          '/services/profile/profiles/$profileId/devices/${device.id}'),
     );
   }
 }

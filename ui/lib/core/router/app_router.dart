@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/data/auth_state_provider.dart';
 import '../../features/auth/ui/login_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
+import '../../features/profile/pages/device_detail_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../services/service_registry.dart';
 import '../widgets/responsive_scaffold.dart';
@@ -133,6 +134,22 @@ GoRouter createAppRouter(Ref ref) {
                         ),
                       );
                     },
+                    routes: [
+                      // Device detail: /services/profile/profiles/:profileId/devices/:deviceId
+                      GoRoute(
+                        path: 'devices/:deviceId',
+                        pageBuilder: (context, state) {
+                          final profileId = state.pathParameters['entityId']!;
+                          final deviceId = state.pathParameters['deviceId']!;
+                          return NoTransitionPage(
+                            child: DeviceDetailPage(
+                              deviceId: deviceId,
+                              profileId: profileId,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
