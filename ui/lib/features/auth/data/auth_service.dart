@@ -52,6 +52,8 @@ class AuthService {
         'service_profile',
         'service_notification',
         'service_payment',
+        'service_ledger',
+        'service_setting',
         'service_thesa',
         'service_file',
       ],
