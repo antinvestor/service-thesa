@@ -47,14 +47,22 @@ dependencies:
   antinvestor_api_profile: ^1.52.0
   antinvestor_api_device: ^1.53.0
   antinvestor_api_geolocation:
-    path: ../../service-profile/sdk/dart/geolocation
+    git:
+      url: https://github.com/antinvestor/service-profile.git
+      path: sdk/dart/geolocation
   antinvestor_api_notification: ^1.51.0
   antinvestor_api_payment:
-    path: ../../service-payment/sdk/dart/payment
+    git:
+      url: https://github.com/antinvestor/service-payment.git
+      path: sdk/dart/payment
   antinvestor_api_ledger:
-    path: ../../service-payment/sdk/dart/ledger
+    git:
+      url: https://github.com/antinvestor/service-payment.git
+      path: sdk/dart/ledger
   antinvestor_api_settings:
-    path: ../../service-profile/sdk/dart/settings
+    git:
+      url: https://github.com/antinvestor/service-profile.git
+      path: sdk/dart/settings
   openid_client: ^0.4.9+2
   flutter_secure_storage: ^10.0.0
   url_launcher: ^6.3.2

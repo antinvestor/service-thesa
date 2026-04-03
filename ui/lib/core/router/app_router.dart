@@ -7,7 +7,6 @@ import '../../features/auth/ui/login_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
 import '../../features/payment/pages/account_detail_page.dart';
 import '../../features/profile/pages/device_detail_page.dart';
-import '../../features/settings/settings_page.dart';
 import '../services/service_registry.dart';
 import '../widgets/responsive_scaffold.dart';
 
@@ -88,9 +87,7 @@ GoRouter createAppRouter(Ref ref) {
           ),
           GoRoute(
             path: '/settings',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: SettingsPage(),
-            ),
+            redirect: (context, state) => '/services/settings/all',
           ),
           // Service analytics page: /services/:serviceId
           GoRoute(

@@ -1,4 +1,3 @@
-import 'package:antinvestor_api_common/antinvestor_api_common.dart' show STATE;
 import 'package:antinvestor_api_device/antinvestor_api_device.dart'
     show DeviceObject;
 import 'package:antinvestor_api_profile/antinvestor_api_profile.dart';
@@ -702,41 +701,6 @@ class _PresenceDot extends StatelessWidget {
       width: 10,
       height: 10,
       decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  const _DetailRow(this.label, this.value);
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    if (value.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
-          ),
-          Expanded(
-            child: Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w500)),
-          ),
-        ],
-      ),
     );
   }
 }

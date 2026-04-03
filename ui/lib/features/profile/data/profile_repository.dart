@@ -1,5 +1,3 @@
-import 'package:antinvestor_api_common/antinvestor_api_common.dart'
-    show STATE, Struct;
 import 'package:antinvestor_api_profile/antinvestor_api_profile.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -36,16 +36,20 @@ packages:
   antinvestor_api_geolocation:
     dependency: "direct main"
     description:
-      path: "../../service-profile/sdk/dart/geolocation"
-      relative: true
-    source: path
+      path: "sdk/dart/geolocation"
+      ref: HEAD
+      resolved-ref: "05ff50235a6c13a5ad8f48f597fa21055e9bfa9f"
+      url: "https://github.com/antinvestor/service-profile.git"
+    source: git
     version: "1.53.0"
   antinvestor_api_ledger:
     dependency: "direct main"
     description:
-      path: "../../service-payment/sdk/dart/ledger"
-      relative: true
-    source: path
+      path: "sdk/dart/ledger"
+      ref: HEAD
+      resolved-ref: ab87883547b49d8115bcf2816055504596423fe3
+      url: "https://github.com/antinvestor/service-payment.git"
+    source: git
     version: "1.53.0"
   antinvestor_api_notification:
     dependency: "direct main"
@@ -58,24 +62,28 @@ packages:
   antinvestor_api_payment:
     dependency: "direct main"
     description:
-      path: "../../service-payment/sdk/dart/payment"
-      relative: true
-    source: path
+      path: "sdk/dart/payment"
+      ref: HEAD
+      resolved-ref: ab87883547b49d8115bcf2816055504596423fe3
+      url: "https://github.com/antinvestor/service-payment.git"
+    source: git
     version: "1.53.0"
   antinvestor_api_profile:
     dependency: "direct main"
     description:
       name: antinvestor_api_profile
-      sha256: e7a31e18eeb716f1450d6b42914058f0e35e698dddbdf9637b7371fa78ebf198
+      sha256: fb540379b01a5c2b899a74a4ef0c8ceec96ff43846d9b18488a628cf0ab734c5
       url: "https://pub.dev"
     source: hosted
-    version: "1.52.1"
+    version: "1.53.0"
   antinvestor_api_settings:
     dependency: "direct main"
     description:
-      path: "../../service-profile/sdk/dart/settings"
-      relative: true
-    source: path
+      path: "sdk/dart/settings"
+      ref: HEAD
+      resolved-ref: "05ff50235a6c13a5ad8f48f597fa21055e9bfa9f"
+      url: "https://github.com/antinvestor/service-profile.git"
+    source: git
     version: "0.1.0"
   antinvestor_api_tenancy:
     dependency: "direct main"
@@ -113,10 +121,10 @@ packages:
     dependency: transitive
     description:
       name: async
-      sha256: "758e6d74e971c3e5aceb4110bfd6698efc7f501675bcfe0c775459a8140750eb"
+      sha256: e2eb0491ba5ddb6177742d2da23904574082139b07c1e33b8503b9f46f3e1a37
       url: "https://pub.dev"
     source: hosted
-    version: "2.13.0"
+    version: "2.13.1"
   boolean_selector:
     dependency: transitive
     description:
@@ -209,10 +217,10 @@ packages:
     dependency: "direct main"
     description:
       name: cupertino_icons
-      sha256: ba631d1c7f7bef6b729a622b7b752645a2d076dba9976925b8f25725a30e1ee6
+      sha256: "41e005c33bd814be4d3096aff55b1908d419fde52ca656c8c47719ec745873cd"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.8"
+    version: "1.0.9"
   equatable:
     dependency: transitive
     description:
@@ -360,10 +368,10 @@ packages:
     dependency: "direct main"
     description:
       name: go_router
-      sha256: "7974313e217a7771557add6ff2238acb63f635317c35fa590d348fb238f00896"
+      sha256: "48fb2f42ad057476fa4b733cb95e9f9ea7b0b010bb349ea491dca7dbdb18ffc4"
       url: "https://pub.dev"
     source: hosted
-    version: "17.1.0"
+    version: "17.2.0"
   google_fonts:
     dependency: "direct main"
     description:
@@ -536,10 +544,10 @@ packages:
     dependency: "direct main"
     description:
       name: openid_client
-      sha256: d7c229b849eaf4ff0ac77c22f8f1c4c522f6830b8c58d7b73953514ad6980954
+      sha256: "5cf6fee07fc6ac855172738d450b6f1b68b34d08faf312c0e741e2199411aa71"
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.9+2"
+    version: "0.4.10"
   package_config:
     dependency: transitive
     description:
@@ -568,10 +576,10 @@ packages:
     dependency: transitive
     description:
       name: path_provider_android
-      sha256: f2c65e21139ce2c3dad46922be8272bb5963516045659e71bb16e151c93b580e
+      sha256: "149441ca6e4f38193b2e004c0ca6376a3d11f51fa5a77552d8bd4d2b0c0912ba"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.22"
+    version: "2.2.23"
   path_provider_foundation:
     dependency: transitive
     description:
@@ -821,10 +829,10 @@ packages:
     dependency: transitive
     description:
       name: url_launcher_android
-      sha256: "767344bf3063897b5cf0db830e94f904528e6dd50a6dfaf839f0abf509009611"
+      sha256: "3bb000251e55d4a209aa0e2e563309dc9bb2befea2295fd0cec1f51760aac572"
       url: "https://pub.dev"
     source: hosted
-    version: "6.3.28"
+    version: "6.3.29"
   url_launcher_ios:
     dependency: transitive
     description:

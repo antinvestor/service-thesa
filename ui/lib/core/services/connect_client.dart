@@ -5,7 +5,8 @@ import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
     hide SearchRequest, SearchResponse;
 import 'package:antinvestor_api_payment/antinvestor_api_payment.dart'
     hide SearchRequest, SearchResponse, STATE, STATUS;
-import 'package:antinvestor_api_profile/antinvestor_api_profile.dart';
+import 'package:antinvestor_api_profile/antinvestor_api_profile.dart'
+    hide DeviceClient, newDeviceClient, Struct, STATE, STATUS;
 import 'package:antinvestor_api_settings/antinvestor_api_settings.dart';
 import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:flutter/foundation.dart';

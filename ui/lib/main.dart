@@ -6,6 +6,7 @@ import 'features/notification/notification_service.dart';
 import 'features/partition/partition_service.dart';
 import 'features/payment/payment_service.dart';
 import 'features/profile/profile_service.dart';
+import 'features/settings/settings_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +16,7 @@ void main() {
   registerProfileService();
   registerNotificationService();
   registerPaymentService();
+  registerSettingsService();
 
   runApp(const ProviderScope(child: ThesaApp()));
 }

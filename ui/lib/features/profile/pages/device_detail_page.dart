@@ -1,7 +1,5 @@
 import 'package:antinvestor_api_device/antinvestor_api_device.dart'
     show DeviceObject, DeviceLog;
-import 'package:antinvestor_api_geolocation/antinvestor_api_geolocation.dart'
-    show LocationPointObject, GeoEventObject, RouteAssignmentObject;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
