@@ -392,7 +392,7 @@ class _AccessTab extends ConsumerWidget {
         partitionId: partitionId,
         profileId: values['profileId'] ?? '',
       );
-      ref.invalidate(accessListProvider);
+      ref.invalidate(accessForPartitionProvider(partitionId));
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Access granted')),
@@ -418,7 +418,7 @@ class _AccessTab extends ConsumerWidget {
     try {
       final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.removeAccess(access.id);
-      ref.invalidate(accessListProvider);
+      ref.invalidate(accessForPartitionProvider(partitionId));
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Access removed')),
@@ -434,20 +434,17 @@ class _AccessTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncAccess = ref.watch(accessListProvider);
+    final asyncAccess = ref.watch(accessForPartitionProvider(partitionId));
 
     return asyncAccess.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _ErrorState(
         message: 'Failed to load access grants',
         detail: error.toString(),
-        onRetry: () => ref.invalidate(accessListProvider),
+        onRetry: () =>
+            ref.invalidate(accessForPartitionProvider(partitionId)),
       ),
-      data: (allAccess) {
-        final access = allAccess.where((a) {
-          if (a.hasPartition()) return a.partition.id == partitionId;
-          return true;
-        }).toList();
+      data: (access) {
 
         return Column(
           children: [
@@ -847,6 +844,7 @@ class _ClientsTab extends ConsumerWidget {
       final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.createClient(
         name: values['name'] ?? '',
+        partitionId: partitionId,
         type: values['type'] ?? 'public',
         scopes: values['scopes'] ?? 'openid',
       );

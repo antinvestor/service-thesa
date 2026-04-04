@@ -7,6 +7,7 @@ import '../../../core/services/service_definition.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/entity_list_page.dart';
 import '../data/partition_providers.dart';
+import '../data/partition_repository.dart';
 import '../widgets/async_entity_list.dart';
 import '../widgets/state_badge.dart';
 
@@ -22,28 +23,13 @@ class PagesPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      children: [
-        MaterialBanner(
-          content: const Text(
-            'The ListPage RPC is not yet available in the tenancy API. '
-            'This page will show pages once the server endpoint is implemented.',
-          ),
-          leading: const Icon(Icons.info_outline),
-          actions: [
-            TextButton(
-              onPressed: () {},
-              child: const Text('DISMISS'),
-            ),
-          ],
-        ),
-        Expanded(
-          child: AsyncEntityList<PageObject>(
+    return AsyncEntityList<PageObject>(
       dataProvider: pagesProvider,
       title: 'Pages',
       breadcrumbs: ['Services', service.label, 'Pages'],
       searchHint: 'Search pages...',
       addLabel: 'New Page',
+      exportRow: (page) => [page.name, page.id, page.state.name],
       columns: const [
         DataColumn(label: Text('NAME')),
         DataColumn(label: Text('ID')),
@@ -79,6 +65,7 @@ class PagesPage extends ConsumerWidget {
       },
       detailBuilder: (page) => _PageDetail(page: page),
       editFields: const [
+        EditField(label: 'Partition ID', key: 'partitionId'),
         EditField(label: 'Page Name', key: 'name'),
         EditField(
           label: 'HTML Content',
@@ -95,17 +82,33 @@ class PagesPage extends ConsumerWidget {
       ],
       editTitle: (page) => 'Edit ${page.name}',
       editValuesExtractor: (page) => {
+        'partitionId': page.partitionId,
         'name': page.name,
         'html': page.html,
         'state': page.state.name,
       },
-      onSave: (page, values) {
-        debugPrint('Save page: $values');
+      onSave: (page, values) async {
+        try {
+          final repo = await ref.read(partitionRepositoryProvider.future);
+          if (page == null) {
+            final partitionId = values['partitionId'] ?? '';
+            final name = values['name'] ?? '';
+            if (partitionId.isEmpty || name.isEmpty) {
+              debugPrint('Partition ID and Page Name are required');
+              return;
+            }
+            await repo.createPage(
+              partitionId: partitionId,
+              name: name,
+              html: values['html'] ?? '',
+            );
+          }
+          ref.invalidate(pagesProvider);
+        } catch (e) {
+          debugPrint('Error saving page: $e');
+        }
       },
       onRefresh: () => ref.invalidate(pagesProvider),
-    ),
-        ),
-      ],
     );
   }
 }

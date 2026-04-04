@@ -46,22 +46,34 @@ final partitionRolesForPartitionProvider =
   return repo.listPartitionRoles(partitionId: partitionId);
 });
 
-/// Pages list provider.
-/// Returns an empty list because the ListPage RPC is not yet available
-/// in the tenancy API. Once the server exposes a ListPage endpoint, replace
-/// the body with a call to repo.listPages() similar to the other providers.
+/// Pages list provider (all pages).
 final pagesProvider =
     FutureProvider<List<PageObject>>((ref) async {
-  return <PageObject>[];
+  final repo = await ref.watch(partitionRepositoryProvider.future);
+  return repo.listPages();
 });
 
-/// Access list provider.
-/// Returns an empty list because the ListAccess RPC is not yet available
-/// in the tenancy API. Once the server exposes a ListAccess endpoint, replace
-/// the body with a call to repo.listAccess() similar to the other providers.
+/// Pages scoped to a specific partition.
+final pagesForPartitionProvider =
+    FutureProvider.family<List<PageObject>, String>(
+        (ref, partitionId) async {
+  final repo = await ref.watch(partitionRepositoryProvider.future);
+  return repo.listPages(partitionId: partitionId);
+});
+
+/// Access list provider (all access grants).
 final accessListProvider =
     FutureProvider<List<AccessObject>>((ref) async {
-  return <AccessObject>[];
+  final repo = await ref.watch(partitionRepositoryProvider.future);
+  return repo.listAccess();
+});
+
+/// Access grants scoped to a specific partition.
+final accessForPartitionProvider =
+    FutureProvider.family<List<AccessObject>, String>(
+        (ref, partitionId) async {
+  final repo = await ref.watch(partitionRepositoryProvider.future);
+  return repo.listAccess(partitionId: partitionId);
 });
 
 /// Access roles list provider (all).

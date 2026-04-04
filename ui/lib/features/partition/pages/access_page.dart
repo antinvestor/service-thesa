@@ -7,6 +7,7 @@ import '../../../core/services/service_definition.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/entity_list_page.dart';
 import '../data/partition_providers.dart';
+import '../data/partition_repository.dart';
 import '../widgets/async_entity_list.dart';
 import '../widgets/state_badge.dart';
 
@@ -22,28 +23,18 @@ class AccessPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      children: [
-        MaterialBanner(
-          content: const Text(
-            'The ListAccess RPC is not yet available in the tenancy API. '
-            'This page will show access grants once the server endpoint is implemented.',
-          ),
-          leading: const Icon(Icons.info_outline),
-          actions: [
-            TextButton(
-              onPressed: () {},
-              child: const Text('DISMISS'),
-            ),
-          ],
-        ),
-        Expanded(
-          child: AsyncEntityList<AccessObject>(
+    return AsyncEntityList<AccessObject>(
       dataProvider: accessListProvider,
       title: 'Access',
       breadcrumbs: ['Services', service.label, 'Access'],
       searchHint: 'Search access grants...',
       addLabel: 'New Access',
+      exportRow: (access) => [
+        access.id,
+        access.profileId,
+        access.hasPartition() ? access.partition.name : '',
+        access.state.name,
+      ],
       columns: const [
         DataColumn(label: Text('ID')),
         DataColumn(label: Text('PROFILE ID')),
@@ -86,13 +77,27 @@ class AccessPage extends ConsumerWidget {
         'partitionId': access.hasPartition() ? access.partition.id : '',
         'profileId': access.profileId,
       },
-      onSave: (access, values) {
-        debugPrint('Save access: $values');
+      onSave: (access, values) async {
+        try {
+          final repo = await ref.read(partitionRepositoryProvider.future);
+          if (access == null) {
+            final partitionId = values['partitionId'] ?? '';
+            final profileId = values['profileId'] ?? '';
+            if (partitionId.isEmpty || profileId.isEmpty) {
+              debugPrint('Partition ID and Profile ID are required');
+              return;
+            }
+            await repo.createAccess(
+              partitionId: partitionId,
+              profileId: profileId,
+            );
+          }
+          ref.invalidate(accessListProvider);
+        } catch (e) {
+          debugPrint('Error saving access: $e');
+        }
       },
       onRefresh: () => ref.invalidate(accessListProvider),
-    ),
-        ),
-      ],
     );
   }
 }

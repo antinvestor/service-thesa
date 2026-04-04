@@ -145,6 +145,16 @@ class PartitionRepository {
 
   // ── Pages ────────────────────────────────────────────────────────────────
 
+  Future<List<PageObject>> listPages({
+    String? partitionId,
+  }) =>
+      _collectStream(
+        _client.listPage(ListPageRequest(
+          partitionId: partitionId,
+        )),
+        (r) => (r as ListPageResponse).data,
+      );
+
   Future<PageObject> getPage(String pageId) async =>
       (await _client.getPage(GetPageRequest(pageId: pageId))).data;
 
@@ -164,6 +174,18 @@ class PartitionRepository {
       _client.removePage(RemovePageRequest(id: id));
 
   // ── Access ───────────────────────────────────────────────────────────────
+
+  Future<List<AccessObject>> listAccess({
+    String? partitionId,
+    String? profileId,
+  }) =>
+      _collectStream(
+        _client.listAccess(ListAccessRequest(
+          partitionId: partitionId,
+          profileId: profileId,
+        )),
+        (r) => (r as ListAccessResponse).data,
+      );
 
   Future<AccessObject> getAccess({
     required String accessId,
@@ -256,13 +278,27 @@ class PartitionRepository {
 
   Future<ClientObject> createClient({
     required String name,
+    String? partitionId,
+    String? serviceAccountId,
     String type = 'public',
     String scopes = 'openid',
+    List<String>? grantTypes,
+    List<String>? responseTypes,
+    List<String>? redirectUris,
+    List<String>? audiences,
+    List<String>? roles,
   }) async =>
       (await _client.createClient(CreateClientRequest(
         name: name,
+        partitionId: partitionId,
+        serviceAccountId: serviceAccountId,
         type: type,
         scopes: scopes,
+        grantTypes: grantTypes,
+        responseTypes: responseTypes,
+        redirectUris: redirectUris,
+        audiences: audiences,
+        roles: roles,
       )))
           .data;
 
