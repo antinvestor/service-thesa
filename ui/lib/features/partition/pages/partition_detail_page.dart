@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/services/tenant_context.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/validators.dart';
 import '../../../core/widgets/edit_dialog.dart';
 import '../../../core/widgets/page_header.dart';
 import '../../profile/data/profile_repository.dart';
@@ -1614,60 +1615,24 @@ class _ClientsTab extends ConsumerWidget {
   final String partitionId;
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
-    final values = await showEditDialog(
+    final result = await showDialog<_CreateClientResult>(
       context: context,
-      title: 'New OAuth2 Client',
-      saveLabel: 'Create',
-      fields: const [
-        DialogField(key: 'name', label: 'Client Name', hint: 'e.g. My Web App'),
-        DialogField(
-          key: 'type',
-          label: 'Type',
-          type: DialogFieldType.dropdown,
-          options: ['public', 'confidential', 'internal'],
-          initialValue: 'public',
-        ),
-        DialogField(key: 'scopes', label: 'Scopes', initialValue: 'openid'),
-        DialogField(
-          key: 'grantTypes',
-          label: 'Grant Types (comma-separated)',
-          hint: 'e.g. authorization_code,refresh_token',
-        ),
-        DialogField(
-          key: 'responseTypes',
-          label: 'Response Types (comma-separated)',
-          hint: 'e.g. code,token',
-        ),
-        DialogField(
-          key: 'redirectUris',
-          label: 'Redirect URIs (comma-separated)',
-          hint: 'e.g. https://app.example.com/callback',
-        ),
-        DialogField(
-          key: 'audiences',
-          label: 'Audiences (comma-separated)',
-          hint: 'e.g. service_profile,service_notification',
-        ),
-      ],
+      barrierDismissible: false,
+      builder: (ctx) => const _CreateClientDialog(),
     );
-    if (values == null || !context.mounted) return;
-
-    List<String>? _split(String? val) {
-      if (val == null || val.isEmpty) return null;
-      return val.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
-    }
+    if (result == null || !context.mounted) return;
 
     try {
       final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.createClient(
-        name: values['name'] ?? '',
+        name: result.name,
         partitionId: partitionId,
-        type: values['type'] ?? 'public',
-        scopes: values['scopes'] ?? 'openid',
-        grantTypes: _split(values['grantTypes']),
-        responseTypes: _split(values['responseTypes']),
-        redirectUris: _split(values['redirectUris']),
-        audiences: _split(values['audiences']),
+        type: result.type,
+        scopes: result.scopes,
+        grantTypes: splitCommaSeparated(result.grantTypes),
+        responseTypes: splitCommaSeparated(result.responseTypes),
+        redirectUris: splitCommaSeparated(result.redirectUris),
+        audiences: splitCommaSeparated(result.audiences),
       );
       ref.invalidate(clientsForPartitionProvider(partitionId));
       if (context.mounted) {
@@ -1963,6 +1928,179 @@ class _GrantAccessDialogState extends State<_GrantAccessDialog> {
 }
 
 // ─── Shared Detail Row ───────────────────────────────────────────────────────
+
+// ─── Create Client Dialog with Validation ────────────────────────────────────
+
+class _CreateClientResult {
+  const _CreateClientResult({
+    required this.name,
+    required this.type,
+    required this.scopes,
+    this.grantTypes,
+    this.responseTypes,
+    this.redirectUris,
+    this.audiences,
+  });
+
+  final String name;
+  final String type;
+  final String scopes;
+  final String? grantTypes;
+  final String? responseTypes;
+  final String? redirectUris;
+  final String? audiences;
+}
+
+class _CreateClientDialog extends StatefulWidget {
+  const _CreateClientDialog();
+
+  @override
+  State<_CreateClientDialog> createState() => _CreateClientDialogState();
+}
+
+class _CreateClientDialogState extends State<_CreateClientDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameCtl = TextEditingController();
+  final _scopesCtl = TextEditingController(text: 'openid');
+  final _grantTypesCtl = TextEditingController();
+  final _responseTypesCtl = TextEditingController();
+  final _redirectUrisCtl = TextEditingController();
+  final _audiencesCtl = TextEditingController();
+  String _type = 'public';
+
+  @override
+  void dispose() {
+    _nameCtl.dispose();
+    _scopesCtl.dispose();
+    _grantTypesCtl.dispose();
+    _responseTypesCtl.dispose();
+    _redirectUrisCtl.dispose();
+    _audiencesCtl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('New OAuth2 Client'),
+      content: SizedBox(
+        width: 500,
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  controller: _nameCtl,
+                  decoration: const InputDecoration(
+                    labelText: 'Client Name *',
+                    hintText: 'e.g. My Web App',
+                  ),
+                  validator: validateClientName,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _type,
+                  decoration: const InputDecoration(labelText: 'Type'),
+                  items: ['public', 'confidential', 'internal']
+                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setState(() => _type = v);
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _scopesCtl,
+                  decoration: const InputDecoration(
+                    labelText: 'Scopes *',
+                    hintText: 'e.g. openid offline_access profile',
+                    helperText: 'Space-separated',
+                  ),
+                  validator: validateScopes,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _grantTypesCtl,
+                  decoration: const InputDecoration(
+                    labelText: 'Grant Types',
+                    hintText: 'e.g. authorization_code,refresh_token',
+                    helperText:
+                        'Valid: authorization_code, client_credentials, refresh_token, implicit',
+                  ),
+                  validator: validateGrantTypes,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _responseTypesCtl,
+                  decoration: const InputDecoration(
+                    labelText: 'Response Types',
+                    hintText: 'e.g. code,token',
+                    helperText: 'Valid: code, token, id_token',
+                  ),
+                  validator: validateResponseTypes,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _redirectUrisCtl,
+                  decoration: const InputDecoration(
+                    labelText: 'Redirect URIs',
+                    hintText:
+                        'e.g. https://app.example.com/callback,myapp://auth',
+                    helperText:
+                        'Comma-separated. Must have scheme (https:// or custom://)',
+                  ),
+                  maxLines: 2,
+                  validator: validateRedirectUris,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _audiencesCtl,
+                  decoration: const InputDecoration(
+                    labelText: 'Audiences',
+                    hintText: 'e.g. service_profile,service_notification',
+                    helperText: 'Comma-separated service names',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (!_formKey.currentState!.validate()) return;
+            Navigator.of(context).pop(_CreateClientResult(
+              name: _nameCtl.text.trim(),
+              type: _type,
+              scopes: _scopesCtl.text.trim(),
+              grantTypes: _grantTypesCtl.text.trim().isNotEmpty
+                  ? _grantTypesCtl.text.trim()
+                  : null,
+              responseTypes: _responseTypesCtl.text.trim().isNotEmpty
+                  ? _responseTypesCtl.text.trim()
+                  : null,
+              redirectUris: _redirectUrisCtl.text.trim().isNotEmpty
+                  ? _redirectUrisCtl.text.trim()
+                  : null,
+              audiences: _audiencesCtl.text.trim().isNotEmpty
+                  ? _audiencesCtl.text.trim()
+                  : null,
+            ));
+          },
+          child: const Text('Create'),
+        ),
+      ],
+    );
+  }
+}
 
 class _SADetailRow extends StatelessWidget {
   const _SADetailRow(this.label, this.value);
