@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/services/service_definition.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/edit_dialog.dart';
 import '../../../core/widgets/entity_list_page.dart';
 import '../../partition/widgets/async_entity_list.dart';
 import '../../partition/widgets/state_badge.dart';
 import '../data/profile_providers.dart';
+import '../data/profile_repository.dart';
 
 class ProfilesPage extends ConsumerWidget {
   const ProfilesPage({
@@ -27,6 +29,60 @@ class ProfilesPage extends ConsumerWidget {
       title: 'Profiles',
       breadcrumbs: ['Services', service.label, 'Profiles'],
       searchHint: 'Search profiles...',
+      addLabel: 'New Profile',
+      onAdd: () async {
+        final values = await showEditDialog(
+          context: context,
+          title: 'New Profile',
+          saveLabel: 'Create',
+          fields: const [
+            DialogField(
+              key: 'type',
+              label: 'Profile Type',
+              type: DialogFieldType.dropdown,
+              options: ['PERSON', 'INSTITUTION', 'BOT'],
+              initialValue: 'PERSON',
+            ),
+            DialogField(
+              key: 'contact',
+              label: 'Contact (email or phone)',
+              hint: 'e.g. user@example.com or +254712345678',
+            ),
+            DialogField(key: 'name', label: 'Name (optional)'),
+          ],
+        );
+        if (values == null || !context.mounted) return;
+        try {
+          final typeStr = values['type'] ?? 'PERSON';
+          final type = ProfileType.values
+              .where((t) => t.name == typeStr)
+              .firstOrNull ?? ProfileType.PERSON;
+          final name = values['name'] ?? '';
+          Struct? properties;
+          if (name.isNotEmpty) {
+            properties = Struct(fields: {
+              'name': Value(stringValue: name),
+            });
+          }
+          final repo = await ref.read(profileRepositoryProvider.future);
+          await repo.create(
+            type: type,
+            contact: values['contact'] ?? '',
+            properties: properties,
+          );
+          ref.invalidate(profilesProvider);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Profile created')),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text('Error: $e')));
+          }
+        }
+      },
       exportRow: (profile) => [
         _profileDisplayName(profile),
         profile.type.name,

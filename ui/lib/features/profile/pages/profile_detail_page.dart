@@ -80,10 +80,19 @@ class _ProfileDetailContent extends ConsumerWidget {
   }
 
   Future<void> _editProfile(BuildContext context, WidgetRef ref) async {
+    final currentName = profile.hasProperties() &&
+            profile.properties.fields.containsKey('name')
+        ? profile.properties.fields['name']!.stringValue
+        : '';
     final values = await showEditDialog(
       context: context,
       title: 'Edit Profile',
       fields: [
+        DialogField(
+          key: 'name',
+          label: 'Display Name',
+          initialValue: currentName,
+        ),
         DialogField(
           key: 'state',
           label: 'State',
@@ -100,7 +109,14 @@ class _ProfileDetailContent extends ConsumerWidget {
       final state = STATE.values
           .where((s) => s.name == values['state'])
           .firstOrNull;
-      await repo.update(id: profileId, state: state);
+      final name = values['name'] ?? '';
+      Struct? properties;
+      if (name.isNotEmpty) {
+        properties = Struct(fields: {
+          'name': Value(stringValue: name),
+        });
+      }
+      await repo.update(id: profileId, state: state, properties: properties);
       ref.invalidate(profileDetailProvider(profileId));
       if (context.mounted) {
         ScaffoldMessenger.of(context)
@@ -270,6 +286,59 @@ class _ContactsTab extends ConsumerWidget {
     }
   }
 
+  Future<void> _verifyContact(
+      BuildContext context, WidgetRef ref, ContactObject contact) async {
+    try {
+      final repo = await ref.read(profileRepositoryProvider.future);
+      // Step 1: Create verification (sends code)
+      final verification = await repo.createContactVerification(
+        profileId: profileId,
+        contactId: contact.id,
+      );
+      if (!context.mounted) return;
+
+      // Step 2: Ask user for the code
+      final values = await showEditDialog(
+        context: context,
+        title: 'Verify ${contact.detail}',
+        saveLabel: 'Verify',
+        fields: [
+          DialogField(
+            key: 'code',
+            label: 'Verification Code',
+            hint: 'Enter the code sent to ${contact.detail}',
+          ),
+        ],
+      );
+      if (values == null || !context.mounted) return;
+
+      // Step 3: Check verification
+      final result = await repo.checkVerification(
+        verificationId: verification.id,
+        code: values['code'] ?? '',
+      );
+      ref.invalidate(profileDetailProvider(profileId));
+      if (context.mounted) {
+        if (result.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Contact verified successfully')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    'Verification failed (${result.checkAttempts} attempts)')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
   Future<void> _removeContact(
       BuildContext context, WidgetRef ref, ContactObject contact) async {
     final confirmed = await showConfirmDialog(
@@ -356,10 +425,17 @@ class _ContactsTab extends ConsumerWidget {
                       if (contact.verified)
                         Icon(Icons.verified,
                             size: 18, color: AppColors.success)
-                      else
-                        Icon(Icons.pending_outlined,
-                            size: 18, color: AppColors.onSurfaceMuted),
-                      const SizedBox(width: 8),
+                      else ...[
+                        TextButton.icon(
+                          onPressed: () =>
+                              _verifyContact(context, ref, contact),
+                          icon: const Icon(Icons.verified_outlined,
+                              size: 16),
+                          label: const Text('Verify',
+                              style: TextStyle(fontSize: 12)),
+                        ),
+                      ],
+                      const SizedBox(width: 4),
                       IconButton(
                         icon: Icon(Icons.delete_outline,
                             size: 18, color: AppColors.error),
@@ -615,39 +691,231 @@ class _DeviceTile extends StatelessWidget {
 
 // ─── Relationships Tab ────────────────────────────────────────────────────────
 
+/// Provider for relationships of a profile.
+final _relationshipsProvider =
+    FutureProvider.family<List<RelationshipObject>, String>(
+        (ref, profileId) async {
+  final repo = await ref.watch(profileRepositoryProvider.future);
+  return repo.listRelationships(peerName: 'profile', peerId: profileId);
+});
+
 class _RelationshipsTab extends ConsumerWidget {
   const _RelationshipsTab({required this.profileId});
 
   final String profileId;
 
+  Future<void> _addRelationship(BuildContext context, WidgetRef ref) async {
+    final values = await showEditDialog(
+      context: context,
+      title: 'Add Relationship',
+      saveLabel: 'Add',
+      fields: const [
+        DialogField(
+          key: 'type',
+          label: 'Relationship Type',
+          type: DialogFieldType.dropdown,
+          options: ['MEMBER', 'AFFILIATED', 'BLACK_LISTED'],
+          initialValue: 'MEMBER',
+        ),
+        DialogField(
+          key: 'peerName',
+          label: 'Peer Type',
+          hint: 'e.g. profile, organization',
+          initialValue: 'profile',
+        ),
+        DialogField(
+          key: 'peerId',
+          label: 'Peer ID',
+          hint: 'ID of the related entity',
+        ),
+      ],
+    );
+    if (values == null || !context.mounted) return;
+
+    try {
+      final typeStr = values['type'] ?? 'MEMBER';
+      final relType = RelationshipType.values
+              .where((t) => t.name == typeStr)
+              .firstOrNull ??
+          RelationshipType.MEMBER;
+      final repo = await ref.read(profileRepositoryProvider.future);
+      await repo.addRelationship(
+        parent: 'profile',
+        parentId: profileId,
+        child: values['peerName'] ?? 'profile',
+        childId: values['peerId'] ?? '',
+        type: relType,
+      );
+      ref.invalidate(_relationshipsProvider(profileId));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Relationship added')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  Future<void> _deleteRelationship(
+      BuildContext context, WidgetRef ref, RelationshipObject rel) async {
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: 'Remove Relationship',
+      message: 'Remove this ${rel.type.name} relationship?',
+    );
+    if (!confirmed || !context.mounted) return;
+
+    try {
+      final repo = await ref.read(profileRepositoryProvider.future);
+      await repo.deleteRelationship(id: rel.id);
+      ref.invalidate(_relationshipsProvider(profileId));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Relationship removed')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Relationships require explicit query — show search UI
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    final asyncRels = ref.watch(_relationshipsProvider(profileId));
+
+    return asyncRels.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 36, color: AppColors.error),
+            const SizedBox(height: 12),
+            Text('Failed to load relationships'),
+            const SizedBox(height: 8),
+            Text(error.toString(),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () =>
+                  ref.invalidate(_relationshipsProvider(profileId)),
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+      data: (relationships) => Column(
         children: [
-          Icon(Icons.group_work_outlined,
-              size: 48, color: AppColors.onSurfaceMuted),
-          const SizedBox(height: 12),
-          Text('Relationships',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: AppColors.onSurfaceMuted)),
-          const SizedBox(height: 8),
-          Text(
-              'Use the Relationships page to search and manage relationships.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: AppColors.onSurfaceMuted)),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: () => context.go('/services/profile/relationships'),
-            icon: const Icon(Icons.search, size: 18),
-            label: const Text('Go to Relationships'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _addRelationship(context, ref),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add Relationship'),
+                ),
+              ],
+            ),
           ),
+          if (relationships.isEmpty)
+            const Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.group_work_outlined,
+                        size: 48, color: Colors.grey),
+                    SizedBox(height: 12),
+                    Text('No relationships'),
+                  ],
+                ),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: relationships.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final rel = relationships[index];
+                  final typeColor = switch (rel.type) {
+                    RelationshipType.MEMBER => AppColors.success,
+                    RelationshipType.AFFILIATED => AppColors.tertiary,
+                    RelationshipType.BLACK_LISTED => AppColors.error,
+                    _ => AppColors.onSurfaceMuted,
+                  };
+                  return ListTile(
+                    leading: Icon(
+                      switch (rel.type) {
+                        RelationshipType.MEMBER => Icons.group_outlined,
+                        RelationshipType.AFFILIATED =>
+                          Icons.handshake_outlined,
+                        RelationshipType.BLACK_LISTED =>
+                          Icons.block_outlined,
+                        _ => Icons.link,
+                      },
+                      size: 20,
+                      color: typeColor,
+                    ),
+                    title: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: typeColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(rel.type.name,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: typeColor)),
+                        ),
+                        const SizedBox(width: 8),
+                        if (rel.hasPeerProfile())
+                          Text(
+                            rel.peerProfile.contacts.isNotEmpty
+                                ? rel.peerProfile.contacts.first.detail
+                                : rel.peerProfile.id,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                      ],
+                    ),
+                    subtitle: Text(
+                      'Parent: ${rel.parentEntry.objectName}/${rel.parentEntry.objectId} '
+                      '→ Child: ${rel.childEntry.objectName}/${rel.childEntry.objectId}',
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                          color: AppColors.onSurfaceMuted),
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete_outline,
+                          size: 18, color: AppColors.error),
+                      tooltip: 'Remove',
+                      onPressed: () =>
+                          _deleteRelationship(context, ref, rel),
+                    ),
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );
