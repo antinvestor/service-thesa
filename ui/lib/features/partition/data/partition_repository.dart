@@ -259,11 +259,15 @@ class PartitionRepository {
     required String partitionId,
     required String name,
     String type = 'internal',
+    List<String>? audiences,
+    List<String>? roles,
   }) async =>
       (await _client.createServiceAccount(CreateServiceAccountRequest(
         partitionId: partitionId,
         name: name,
         type: type,
+        audiences: audiences,
+        roles: roles,
       )))
           .data;
 

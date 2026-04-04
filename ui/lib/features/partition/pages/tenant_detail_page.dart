@@ -569,7 +569,7 @@ class _PartitionsTab extends ConsumerWidget {
 
     try {
       final repo = await ref.read(partitionRepositoryProvider.future);
-      await repo.createPartition(
+      final partition = await repo.createPartition(
         tenantId: result.tenantId,
         name: result.name,
         parentId: result.parentId,
@@ -577,10 +577,19 @@ class _PartitionsTab extends ConsumerWidget {
         domain: result.domain,
         properties: result.toPropertiesStruct(),
       );
+      // Auto-create default roles
+      for (final roleName in ['owner', 'admin', 'member']) {
+        try {
+          await repo.createPartitionRole(
+            partitionId: partition.id,
+            name: roleName,
+          );
+        } catch (_) {}
+      }
       ref.invalidate(partitionsProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Partition created')),
+          const SnackBar(content: Text('Partition created with default roles')),
         );
       }
     } catch (e) {

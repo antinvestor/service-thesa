@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/edit_dialog.dart';
 import '../../../core/widgets/page_header.dart';
+import '../../profile/data/profile_repository.dart';
 import '../data/partition_providers.dart';
 import '../data/partition_repository.dart';
 import '../widgets/state_badge.dart';
@@ -1086,25 +1087,17 @@ class _AccessTab extends ConsumerWidget {
   final String partitionId;
 
   Future<void> _createAccess(BuildContext context, WidgetRef ref) async {
-    final values = await showEditDialog(
+    final result = await showDialog<String>(
       context: context,
-      title: 'Grant Access',
-      saveLabel: 'Grant',
-      fields: [
-        const DialogField(
-          key: 'profileId',
-          label: 'Profile ID',
-          hint: 'Enter the profile ID to grant access',
-        ),
-      ],
+      builder: (ctx) => _GrantAccessDialog(ref: ref),
     );
-    if (values == null || !context.mounted) return;
+    if (result == null || result.isEmpty || !context.mounted) return;
 
     try {
       final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.createAccess(
         partitionId: partitionId,
-        profileId: values['profileId'] ?? '',
+        profileId: result,
       );
       ref.invalidate(accessForPartitionProvider(partitionId));
       if (context.mounted) {
@@ -1396,7 +1389,7 @@ class _ServiceAccountsTab extends ConsumerWidget {
       title: 'New Service Account',
       saveLabel: 'Create',
       fields: const [
-        DialogField(key: 'name', label: 'Name'),
+        DialogField(key: 'name', label: 'Name', hint: 'e.g. my-service'),
         DialogField(
           key: 'type',
           label: 'Type',
@@ -1404,16 +1397,26 @@ class _ServiceAccountsTab extends ConsumerWidget {
           options: ['internal', 'external'],
           initialValue: 'internal',
         ),
+        DialogField(
+          key: 'audiences',
+          label: 'Audiences (comma-separated)',
+          hint: 'e.g. service_profile,service_notification',
+        ),
       ],
     );
     if (values == null || !context.mounted) return;
 
     try {
+      final audienceStr = values['audiences'] ?? '';
+      final audiences = audienceStr.isNotEmpty
+          ? audienceStr.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList()
+          : null;
       final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.createServiceAccount(
         partitionId: partitionId,
         name: values['name'] ?? '',
         type: values['type'] ?? 'internal',
+        audiences: audiences,
       );
       ref.invalidate(serviceAccountsForPartitionProvider(partitionId));
       if (context.mounted) {
@@ -1496,13 +1499,13 @@ class _ServiceAccountsTab extends ConsumerWidget {
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final sa = accounts[index];
-                  return ListTile(
+                  return ExpansionTile(
                     leading: Icon(Icons.engineering_outlined,
                         size: 20, color: AppColors.tertiary),
-                    title: Text(sa.profileId,
+                    title: Text(sa.profileId.isNotEmpty ? sa.profileId : sa.id,
                         style: const TextStyle(fontWeight: FontWeight.w500)),
                     subtitle: Text(
-                        'Client: ${sa.clientId} · Type: ${sa.type}',
+                        'Type: ${sa.type}',
                         style: TextStyle(
                             fontSize: 11, color: AppColors.onSurfaceMuted)),
                     trailing: Row(
@@ -1518,6 +1521,24 @@ class _ServiceAccountsTab extends ConsumerWidget {
                         ),
                       ],
                     ),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _SADetailRow('ID', sa.id),
+                            if (sa.profileId.isNotEmpty)
+                              _SADetailRow('Profile ID', sa.profileId),
+                            if (sa.clientId.isNotEmpty)
+                              _SADetailRow('Client ID', sa.clientId),
+                            _SADetailRow('Type', sa.type),
+                            if (sa.audiences.isNotEmpty)
+                              _SADetailRow('Audiences', sa.audiences.join(', ')),
+                          ],
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
@@ -1541,7 +1562,7 @@ class _ClientsTab extends ConsumerWidget {
       title: 'New OAuth2 Client',
       saveLabel: 'Create',
       fields: const [
-        DialogField(key: 'name', label: 'Client Name'),
+        DialogField(key: 'name', label: 'Client Name', hint: 'e.g. My Web App'),
         DialogField(
           key: 'type',
           label: 'Type',
@@ -1550,9 +1571,34 @@ class _ClientsTab extends ConsumerWidget {
           initialValue: 'public',
         ),
         DialogField(key: 'scopes', label: 'Scopes', initialValue: 'openid'),
+        DialogField(
+          key: 'grantTypes',
+          label: 'Grant Types (comma-separated)',
+          hint: 'e.g. authorization_code,refresh_token',
+        ),
+        DialogField(
+          key: 'responseTypes',
+          label: 'Response Types (comma-separated)',
+          hint: 'e.g. code,token',
+        ),
+        DialogField(
+          key: 'redirectUris',
+          label: 'Redirect URIs (comma-separated)',
+          hint: 'e.g. https://app.example.com/callback',
+        ),
+        DialogField(
+          key: 'audiences',
+          label: 'Audiences (comma-separated)',
+          hint: 'e.g. service_profile,service_notification',
+        ),
       ],
     );
     if (values == null || !context.mounted) return;
+
+    List<String>? _split(String? val) {
+      if (val == null || val.isEmpty) return null;
+      return val.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    }
 
     try {
       final repo = await ref.read(partitionRepositoryProvider.future);
@@ -1561,6 +1607,10 @@ class _ClientsTab extends ConsumerWidget {
         partitionId: partitionId,
         type: values['type'] ?? 'public',
         scopes: values['scopes'] ?? 'openid',
+        grantTypes: _split(values['grantTypes']),
+        responseTypes: _split(values['responseTypes']),
+        redirectUris: _split(values['redirectUris']),
+        audiences: _split(values['audiences']),
       );
       ref.invalidate(clientsForPartitionProvider(partitionId));
       if (context.mounted) {
@@ -1643,13 +1693,13 @@ class _ClientsTab extends ConsumerWidget {
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final client = clients[index];
-                  return ListTile(
+                  return ExpansionTile(
                     leading: Icon(Icons.key_outlined,
                         size: 20, color: AppColors.tertiary),
                     title: Text(client.name,
                         style: const TextStyle(fontWeight: FontWeight.w500)),
                     subtitle: Text(
-                        'ID: ${client.clientId} · Type: ${client.type} · Scopes: ${client.scopes}',
+                        'Type: ${client.type} · Scopes: ${client.scopes}',
                         style: TextStyle(
                             fontSize: 11, color: AppColors.onSurfaceMuted)),
                     trailing: Row(
@@ -1665,6 +1715,27 @@ class _ClientsTab extends ConsumerWidget {
                         ),
                       ],
                     ),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _SADetailRow('Client ID', client.clientId),
+                            _SADetailRow('Type', client.type),
+                            _SADetailRow('Scopes', client.scopes),
+                            if (client.grantTypes.isNotEmpty)
+                              _SADetailRow('Grant Types', client.grantTypes.join(', ')),
+                            if (client.responseTypes.isNotEmpty)
+                              _SADetailRow('Response Types', client.responseTypes.join(', ')),
+                            if (client.redirectUris.isNotEmpty)
+                              _SADetailRow('Redirect URIs', client.redirectUris.join('\n')),
+                            if (client.audiences.isNotEmpty)
+                              _SADetailRow('Audiences', client.audiences.join(', ')),
+                          ],
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
@@ -1676,6 +1747,198 @@ class _ClientsTab extends ConsumerWidget {
 }
 
 // ─── Shared Widgets ───────────────────────────────────────────────────────────
+
+// ─── Grant Access Dialog ─────────────────────────────────────────────────────
+
+class _GrantAccessDialog extends StatefulWidget {
+  const _GrantAccessDialog({required this.ref});
+  final WidgetRef ref;
+
+  @override
+  State<_GrantAccessDialog> createState() => _GrantAccessDialogState();
+}
+
+class _GrantAccessDialogState extends State<_GrantAccessDialog> {
+  final _contactCtl = TextEditingController();
+  final _profileIdCtl = TextEditingController();
+  String? _profileName;
+  bool _searching = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _contactCtl.dispose();
+    _profileIdCtl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _searchProfile() async {
+    final contact = _contactCtl.text.trim();
+    if (contact.isEmpty) return;
+
+    setState(() {
+      _searching = true;
+      _error = null;
+      _profileName = null;
+    });
+
+    try {
+      final repo = await widget.ref.read(profileRepositoryProvider.future);
+      final profile = await repo.getByContact(contact);
+      // Extract display name
+      final nameField = profile.properties.fields['name'];
+      final name = (nameField != null && nameField.hasStringValue())
+          ? nameField.stringValue
+          : profile.contacts.isNotEmpty
+              ? profile.contacts.first.detail
+              : profile.id;
+      setState(() {
+        _profileIdCtl.text = profile.id;
+        _profileName = name;
+        _searching = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Profile not found for "$contact"';
+        _searching = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Grant Access'),
+      content: SizedBox(
+        width: 450,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Search by contact (email or phone)',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.onSurfaceMuted)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _contactCtl,
+                    decoration: const InputDecoration(
+                      labelText: 'Contact',
+                      hintText: 'e.g. user@example.com or +256...',
+                      prefixIcon: Icon(Icons.search, size: 20),
+                    ),
+                    onSubmitted: (_) => _searchProfile(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _searching ? null : _searchProfile,
+                  child: _searching
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Search'),
+                ),
+              ],
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!,
+                  style: TextStyle(color: AppColors.error, fontSize: 12)),
+            ],
+            if (_profileName != null) ...[
+              const SizedBox(height: 12),
+              Card(
+                color: AppColors.tertiary.withValues(alpha: 0.05),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.tertiary.withValues(alpha: 0.15),
+                    child: Text(
+                      _profileName!.isNotEmpty
+                          ? _profileName!.substring(0, 1).toUpperCase()
+                          : '?',
+                      style: TextStyle(color: AppColors.tertiary),
+                    ),
+                  ),
+                  title: Text(_profileName!,
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle: Text(_profileIdCtl.text,
+                      style: const TextStyle(
+                          fontFamily: 'monospace', fontSize: 11)),
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 8),
+            Text('Or enter Profile ID directly',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.onSurfaceMuted)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _profileIdCtl,
+              decoration: const InputDecoration(
+                labelText: 'Profile ID',
+                hintText: 'Paste profile ID...',
+                prefixIcon: Icon(Icons.person_outlined, size: 20),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _profileIdCtl.text.trim().isNotEmpty
+              ? () => Navigator.of(context).pop(_profileIdCtl.text.trim())
+              : null,
+          child: const Text('Grant Access'),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Shared Detail Row ───────────────────────────────────────────────────────
+
+class _SADetailRow extends StatelessWidget {
+  const _SADetailRow(this.label, this.value);
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(label,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+          ),
+          Expanded(
+            child: SelectableText(value,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500)),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _PlaceholderTab extends StatelessWidget {
   const _PlaceholderTab({
