@@ -22,7 +22,23 @@ class PagesPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AsyncEntityList<PageObject>(
+    return Column(
+      children: [
+        MaterialBanner(
+          content: const Text(
+            'The ListPage RPC is not yet available in the tenancy API. '
+            'This page will show pages once the server endpoint is implemented.',
+          ),
+          leading: const Icon(Icons.info_outline),
+          actions: [
+            TextButton(
+              onPressed: () {},
+              child: const Text('DISMISS'),
+            ),
+          ],
+        ),
+        Expanded(
+          child: AsyncEntityList<PageObject>(
       dataProvider: pagesProvider,
       title: 'Pages',
       breadcrumbs: ['Services', service.label, 'Pages'],
@@ -87,6 +103,9 @@ class PagesPage extends ConsumerWidget {
         debugPrint('Save page: $values');
       },
       onRefresh: () => ref.invalidate(pagesProvider),
+    ),
+        ),
+      ],
     );
   }
 }

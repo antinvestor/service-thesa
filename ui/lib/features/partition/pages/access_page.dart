@@ -22,7 +22,23 @@ class AccessPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AsyncEntityList<AccessObject>(
+    return Column(
+      children: [
+        MaterialBanner(
+          content: const Text(
+            'The ListAccess RPC is not yet available in the tenancy API. '
+            'This page will show access grants once the server endpoint is implemented.',
+          ),
+          leading: const Icon(Icons.info_outline),
+          actions: [
+            TextButton(
+              onPressed: () {},
+              child: const Text('DISMISS'),
+            ),
+          ],
+        ),
+        Expanded(
+          child: AsyncEntityList<AccessObject>(
       dataProvider: accessListProvider,
       title: 'Access',
       breadcrumbs: ['Services', service.label, 'Access'],
@@ -74,6 +90,9 @@ class AccessPage extends ConsumerWidget {
         debugPrint('Save access: $values');
       },
       onRefresh: () => ref.invalidate(accessListProvider),
+    ),
+        ),
+      ],
     );
   }
 }

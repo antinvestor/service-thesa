@@ -30,6 +30,14 @@ class TenantsPage extends ConsumerWidget {
       breadcrumbs: ['Services', service.label, 'Tenants'],
       searchHint: 'Search tenants...',
       addLabel: 'New Tenant',
+      exportRow: (tenant) => [
+        tenant.name,
+        tenant.id,
+        tenant.state.name,
+        tenant.hasCreatedAt()
+            ? DateFormat.yMd().format(tenant.createdAt.toDateTime())
+            : '',
+      ],
       columns: const [
         DataColumn(label: Text('TENANT NAME')),
         DataColumn(label: Text('IDENTIFIER')),

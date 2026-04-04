@@ -27,6 +27,12 @@ class ProfilesPage extends ConsumerWidget {
       title: 'Profiles',
       breadcrumbs: ['Services', service.label, 'Profiles'],
       searchHint: 'Search profiles...',
+      exportRow: (profile) => [
+        _profileDisplayName(profile),
+        profile.type.name,
+        '${profile.contacts.length}',
+        profile.state.name,
+      ],
       columns: const [
         DataColumn(label: Text('NAME')),
         DataColumn(label: Text('TYPE')),

@@ -25,6 +25,11 @@ class AccessRolesPage extends ConsumerWidget {
       breadcrumbs: ['Services', service.label, 'Access Roles'],
       searchHint: 'Search access roles...',
       addLabel: 'New Access Role',
+      exportRow: (ar) => [
+        ar.id,
+        ar.accessId,
+        ar.hasRole() ? ar.role.name : '',
+      ],
       columns: const [
         DataColumn(label: Text('ID')),
         DataColumn(label: Text('ACCESS ID')),

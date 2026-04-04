@@ -26,6 +26,8 @@ class AsyncEntityList<T> extends ConsumerWidget {
     this.actions,
     this.onRefresh,
     this.onRowNavigate,
+    this.exportRow,
+    this.rowsPerPage = 25,
   });
 
   final FutureProvider<List<T>> dataProvider;
@@ -46,6 +48,8 @@ class AsyncEntityList<T> extends ConsumerWidget {
   final List<Widget>? actions;
   final VoidCallback? onRefresh;
   final void Function(T item)? onRowNavigate;
+  final List<String> Function(T item)? exportRow;
+  final int rowsPerPage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -94,6 +98,8 @@ class AsyncEntityList<T> extends ConsumerWidget {
         auditTrailBuilder: auditTrailBuilder,
         actions: actions,
         onRowNavigate: onRowNavigate,
+        exportRow: exportRow,
+        rowsPerPage: rowsPerPage,
       ),
     );
   }

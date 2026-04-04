@@ -93,17 +93,51 @@ class _UserAvatar extends StatelessWidget {
 
   final WidgetRef ref;
 
+  /// Build a display name from JWT claims, trying several standard OIDC fields.
+  static String _resolveName(Map<String, dynamic>? info) {
+    if (info == null) return 'Admin';
+
+    final name = info['name'] as String?;
+    if (name != null && name.trim().isNotEmpty) return name.trim();
+
+    final given = info['given_name'] as String? ?? '';
+    final family = info['family_name'] as String? ?? '';
+    final fullName = '$given $family'.trim();
+    if (fullName.isNotEmpty) return fullName;
+
+    final preferred = info['preferred_username'] as String?;
+    if (preferred != null && preferred.trim().isNotEmpty) {
+      return preferred.trim();
+    }
+
+    final email = info['email'] as String?;
+    if (email != null && email.trim().isNotEmpty) return email.trim();
+
+    return 'Admin';
+  }
+
+  /// Resolve an email or username to display as subtitle.
+  static String _resolveSubtitle(Map<String, dynamic>? info) {
+    if (info == null) return 'Admin Console';
+
+    final email = info['email'] as String?;
+    if (email != null && email.trim().isNotEmpty) return email.trim();
+
+    final preferred = info['preferred_username'] as String?;
+    if (preferred != null && preferred.trim().isNotEmpty) {
+      return preferred.trim();
+    }
+
+    return 'Admin Console';
+  }
+
   @override
   Widget build(BuildContext context) {
     final userInfo = ref.watch(userInfoProvider);
 
-    final name = userInfo.whenOrNull(
-          data: (info) =>
-              info?['name'] as String? ??
-              info?['preferred_username'] as String? ??
-              'Admin',
-        ) ??
-        'Admin';
+    final claims = userInfo.whenOrNull(data: (info) => info);
+    final name = _resolveName(claims);
+    final subtitle = _resolveSubtitle(claims);
 
     final initials = name
         .split(' ')
@@ -119,8 +153,7 @@ class _UserAvatar extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(name, style: Theme.of(context).textTheme.titleSmall),
-            Text('Admin Console',
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
           ],
         ),
         const SizedBox(width: 10),

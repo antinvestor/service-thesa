@@ -47,14 +47,18 @@ final partitionRolesForPartitionProvider =
 });
 
 /// Pages list provider.
-/// TODO: Implement when ListPage RPC is available in the API.
+/// Returns an empty list because the ListPage RPC is not yet available
+/// in the tenancy API. Once the server exposes a ListPage endpoint, replace
+/// the body with a call to repo.listPages() similar to the other providers.
 final pagesProvider =
     FutureProvider<List<PageObject>>((ref) async {
   return <PageObject>[];
 });
 
 /// Access list provider.
-/// TODO: Implement when ListAccess RPC is available in the API.
+/// Returns an empty list because the ListAccess RPC is not yet available
+/// in the tenancy API. Once the server exposes a ListAccess endpoint, replace
+/// the body with a call to repo.listAccess() similar to the other providers.
 final accessListProvider =
     FutureProvider<List<AccessObject>>((ref) async {
   return <AccessObject>[];

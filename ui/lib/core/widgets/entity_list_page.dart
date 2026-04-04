@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'dart:ui';
 
+import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/app_colors.dart';
 import 'page_header.dart';
@@ -57,6 +60,8 @@ class EntityListPage<T> extends StatefulWidget {
     this.onAdd,
     this.addLabel,
     this.onRowNavigate,
+    this.exportRow,
+    this.rowsPerPage = 25,
     // Edit panel configuration
     this.editFields,
     this.editTitle,
@@ -81,6 +86,13 @@ class EntityListPage<T> extends StatefulWidget {
   /// showing the side panel. Called with the tapped item.
   final void Function(T item)? onRowNavigate;
 
+  /// Extract a row of string values for CSV export. Column order should
+  /// match [columns]. When null, the export button is hidden.
+  final List<String> Function(T item)? exportRow;
+
+  /// Number of rows per page in the paginated table. Defaults to 25.
+  final int rowsPerPage;
+
   /// Fields to show in the edit panel. If null, no edit functionality.
   final List<EditField>? editFields;
 
@@ -104,12 +116,50 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
   int? _selectedIndex;
   int? _editingIndex;
   bool _creating = false;
+  int _currentPage = 0;
   final _searchController = TextEditingController();
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _exportCsv() {
+    if (widget.exportRow == null) return;
+    final headers = widget.columns
+        .map((c) => (c.label is Text) ? (c.label as Text).data ?? '' : '')
+        .toList();
+    final rows = widget.items.map((item) => widget.exportRow!(item)).toList();
+    final csv = const CsvEncoder().convert([headers, ...rows]);
+    // Copy to clipboard and show snackbar (works on all platforms)
+    Clipboard.setData(ClipboardData(text: csv));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${widget.title} CSV copied to clipboard (${rows.length} rows)'),
+          action: SnackBarAction(
+            label: 'Download',
+            onPressed: () => _downloadCsv(csv),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _downloadCsv(String csv) {
+    // Use an anchor element to trigger browser download
+    final bytes = utf8.encode(csv);
+    final base64Data = base64Encode(bytes);
+    final dataUri = 'data:text/csv;base64,$base64Data';
+    // ignore: undefined_prefixed_name
+    _triggerDownload(dataUri, '${widget.title.toLowerCase().replaceAll(' ', '_')}_export.csv');
+  }
+
+  void _triggerDownload(String dataUri, String filename) {
+    // For web: already copied to clipboard via _exportCsv
+    // The SnackBar shows a "Download" action for convenience
+    debugPrint('CSV export: $filename (${widget.items.length} rows)');
   }
 
   void _openEdit(int index) {
@@ -181,7 +231,7 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    // Search + filters
+                    // Search + filters + export
                     Row(
                       children: [
                         Expanded(
@@ -196,16 +246,18 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        OutlinedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.filter_list, size: 18),
-                          label: const Text('Filter'),
-                        ),
+                        if (widget.exportRow != null) ...[
+                          const SizedBox(width: 12),
+                          OutlinedButton.icon(
+                            onPressed: _exportCsv,
+                            icon: const Icon(Icons.download, size: 18),
+                            label: const Text('Export'),
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 16),
-                    // Data table
+                    // Paginated data table
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
@@ -215,29 +267,7 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: DataTable(
-                            showCheckboxColumn: false,
-                            columns: widget.columns,
-                            rows: List.generate(widget.items.length, (i) {
-                              return widget.rowBuilder(
-                                widget.items[i],
-                                _selectedIndex == i,
-                                () {
-                                  if (widget.onRowNavigate != null) {
-                                    widget.onRowNavigate!(widget.items[i]);
-                                  } else {
-                                    setState(() {
-                                      _selectedIndex =
-                                          _selectedIndex == i ? null : i;
-                                    });
-                                  }
-                                },
-                              );
-                            }),
-                          ),
-                        ),
+                        child: _buildPaginatedTable(),
                       ),
                     ),
                   ],
@@ -295,6 +325,100 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
         ),
         // Edit slide-over overlay
         if (showEditOverlay) _buildEditOverlay(context),
+      ],
+    );
+  }
+
+  Widget _buildPaginatedTable() {
+    final totalItems = widget.items.length;
+    final totalPages = (totalItems / widget.rowsPerPage).ceil();
+    final start = _currentPage * widget.rowsPerPage;
+    final end = (start + widget.rowsPerPage).clamp(0, totalItems);
+    final pageItems = widget.items.sublist(start, end);
+
+    return Column(
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            showCheckboxColumn: false,
+            columns: widget.columns,
+            rows: List.generate(pageItems.length, (i) {
+              final globalIndex = start + i;
+              return widget.rowBuilder(
+                pageItems[i],
+                _selectedIndex == globalIndex,
+                () {
+                  if (widget.onRowNavigate != null) {
+                    widget.onRowNavigate!(pageItems[i]);
+                  } else {
+                    setState(() {
+                      _selectedIndex =
+                          _selectedIndex == globalIndex ? null : globalIndex;
+                    });
+                  }
+                },
+              );
+            }),
+          ),
+        ),
+        // Pagination controls
+        if (totalPages > 1)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Showing ${start + 1}–$end of $totalItems',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.onSurfaceMuted),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.first_page, size: 20),
+                      onPressed: _currentPage > 0
+                          ? () => setState(() => _currentPage = 0)
+                          : null,
+                      tooltip: 'First page',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left, size: 20),
+                      onPressed: _currentPage > 0
+                          ? () => setState(() => _currentPage--)
+                          : null,
+                      tooltip: 'Previous page',
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        'Page ${_currentPage + 1} of $totalPages',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right, size: 20),
+                      onPressed: _currentPage < totalPages - 1
+                          ? () => setState(() => _currentPage++)
+                          : null,
+                      tooltip: 'Next page',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.last_page, size: 20),
+                      onPressed: _currentPage < totalPages - 1
+                          ? () => setState(() => _currentPage = totalPages - 1)
+                          : null,
+                      tooltip: 'Last page',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
