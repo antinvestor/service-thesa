@@ -9,6 +9,7 @@ import '../../../core/widgets/edit_dialog.dart';
 import '../../../core/widgets/page_header.dart';
 import '../data/partition_providers.dart';
 import '../data/partition_repository.dart';
+import '../widgets/create_partition_wizard.dart';
 import '../widgets/state_badge.dart';
 
 /// Detail page for a single tenant at /services/tenancy/tenants/:tenantId.
@@ -282,41 +283,22 @@ class _PartitionsTab extends ConsumerWidget {
 
   Future<void> _createPartition(
       BuildContext context, WidgetRef ref, List<PartitionObject> existing) async {
-    final parentOptions = existing.map((p) => p.name).toList();
-    final values = await showEditDialog(
+    final result = await showCreatePartitionWizard(
       context: context,
-      title: 'New Partition',
-      saveLabel: 'Create',
-      fields: [
-        const DialogField(key: 'name', label: 'Partition Name'),
-        if (parentOptions.isNotEmpty)
-          DialogField(
-            key: 'parent',
-            label: 'Parent Partition (optional)',
-            type: DialogFieldType.searchableDropdown,
-            options: parentOptions,
-          ),
-        const DialogField(
-          key: 'description',
-          label: 'Description',
-          type: DialogFieldType.textarea,
-          maxLines: 2,
-        ),
-      ],
+      tenantId: tenantId,
+      existingPartitions: existing,
     );
-    if (values == null || !context.mounted) return;
+    if (result == null || !context.mounted) return;
 
     try {
-      final parentName = values['parent'] ?? '';
-      final parentPartition = parentName.isNotEmpty
-          ? existing.where((p) => p.name == parentName).firstOrNull
-          : null;
       final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.createPartition(
-        tenantId: tenantId,
-        name: values['name'] ?? '',
-        parentId: parentPartition?.id,
-        description: values['description'] ?? '',
+        tenantId: result.tenantId,
+        name: result.name,
+        parentId: result.parentId,
+        description: result.description,
+        domain: result.domain,
+        properties: result.toPropertiesStruct(),
       );
       ref.invalidate(partitionsProvider);
       if (context.mounted) {

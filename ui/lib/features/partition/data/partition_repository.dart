@@ -93,6 +93,7 @@ class PartitionRepository {
     required String name,
     String? parentId,
     String description = '',
+    String? domain,
     Struct? properties,
   }) async =>
       (await _client.createPartition(CreatePartitionRequest(
@@ -100,6 +101,7 @@ class PartitionRepository {
         name: name,
         parentId: parentId,
         description: description,
+        domain: domain,
         properties: properties,
       )))
           .data;
@@ -108,6 +110,7 @@ class PartitionRepository {
     required String id,
     String? name,
     String? description,
+    String? domain,
     STATE? state,
     Struct? properties,
   }) async =>
@@ -115,6 +118,7 @@ class PartitionRepository {
         id: id,
         name: name,
         description: description,
+        domain: domain,
         state: state,
         properties: properties,
       )))
