@@ -293,7 +293,7 @@ class _PartitionsTab extends ConsumerWidget {
           DialogField(
             key: 'parent',
             label: 'Parent Partition (optional)',
-            type: DialogFieldType.dropdown,
+            type: DialogFieldType.searchableDropdown,
             options: parentOptions,
           ),
         const DialogField(

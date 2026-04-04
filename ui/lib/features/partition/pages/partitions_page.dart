@@ -224,24 +224,38 @@ class _CreatePartitionDialogState extends State<_CreatePartitionDialog> {
                       : null,
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedParentId,
-                  decoration: const InputDecoration(
-                    labelText: 'Parent Partition (optional)',
-                    hintText: 'None',
-                  ),
-                  items: [
-                    const DropdownMenuItem(
-                      value: '',
-                      child: Text('None'),
-                    ),
-                    ...widget.partitions.map((p) => DropdownMenuItem(
-                          value: p.id,
-                          child: Text(p.name),
-                        )),
-                  ],
-                  onChanged: (v) => setState(
-                      () => _selectedParentId = (v?.isEmpty ?? true) ? null : v),
+                Autocomplete<PartitionObject>(
+                  optionsBuilder: (textEditingValue) {
+                    if (textEditingValue.text.isEmpty) {
+                      return widget.partitions;
+                    }
+                    final query = textEditingValue.text.toLowerCase();
+                    return widget.partitions.where(
+                        (p) => p.name.toLowerCase().contains(query));
+                  },
+                  displayStringForOption: (p) => p.name,
+                  onSelected: (p) =>
+                      setState(() => _selectedParentId = p.id),
+                  fieldViewBuilder: (context, textController, focusNode,
+                      onFieldSubmitted) {
+                    return TextFormField(
+                      controller: textController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        labelText: 'Parent Partition (optional)',
+                        hintText: 'Type to search...',
+                        suffixIcon: textController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  textController.clear();
+                                  setState(() => _selectedParentId = null);
+                                },
+                              )
+                            : const Icon(Icons.search, size: 18),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(

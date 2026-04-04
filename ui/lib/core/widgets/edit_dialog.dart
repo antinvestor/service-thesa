@@ -25,7 +25,7 @@ class DialogField {
   final bool required;
 }
 
-enum DialogFieldType { text, textarea, dropdown }
+enum DialogFieldType { text, textarea, dropdown, searchableDropdown }
 
 /// Shows a modal dialog with form fields. Returns the values map on save,
 /// or null on cancel.
@@ -70,7 +70,8 @@ class _EditDialogContentState extends State<_EditDialogContent> {
     _controllers = {};
     _dropdownValues = {};
     for (final field in widget.fields) {
-      if (field.type == DialogFieldType.dropdown) {
+      if (field.type == DialogFieldType.dropdown ||
+          field.type == DialogFieldType.searchableDropdown) {
         _dropdownValues[field.key] = field.options.contains(field.initialValue)
             ? field.initialValue
             : '';
@@ -92,7 +93,8 @@ class _EditDialogContentState extends State<_EditDialogContent> {
   Map<String, String> _collectValues() {
     final values = <String, String>{};
     for (final field in widget.fields) {
-      if (field.type == DialogFieldType.dropdown) {
+      if (field.type == DialogFieldType.dropdown ||
+          field.type == DialogFieldType.searchableDropdown) {
         values[field.key] = _dropdownValues[field.key] ?? '';
       } else {
         values[field.key] = _controllers[field.key]?.text ?? '';
@@ -148,6 +150,49 @@ class _EditDialogContentState extends State<_EditDialogContent> {
               .toList(),
           onChanged: (v) =>
               setState(() => _dropdownValues[field.key] = v ?? ''),
+        );
+      case DialogFieldType.searchableDropdown:
+        return Autocomplete<String>(
+          optionsBuilder: (textEditingValue) {
+            if (textEditingValue.text.isEmpty) {
+              return field.options;
+            }
+            final query = textEditingValue.text.toLowerCase();
+            return field.options
+                .where((o) => o.toLowerCase().contains(query));
+          },
+          initialValue: (_dropdownValues[field.key]?.isNotEmpty == true)
+              ? TextEditingValue(text: _dropdownValues[field.key]!)
+              : null,
+          onSelected: (value) =>
+              setState(() => _dropdownValues[field.key] = value),
+          fieldViewBuilder:
+              (context, textController, focusNode, onFieldSubmitted) {
+            return TextField(
+              controller: textController,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                labelText: field.label,
+                hintText: field.hint ?? 'Type to search...',
+                suffixIcon: textController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          textController.clear();
+                          setState(
+                              () => _dropdownValues[field.key] = '');
+                        },
+                      )
+                    : const Icon(Icons.search, size: 18),
+              ),
+              onChanged: (value) {
+                // Allow clearing
+                if (value.isEmpty) {
+                  _dropdownValues[field.key] = '';
+                }
+              },
+            );
+          },
         );
       case DialogFieldType.textarea:
         return TextField(

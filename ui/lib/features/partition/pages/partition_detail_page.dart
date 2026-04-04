@@ -202,23 +202,194 @@ class _PartitionDetailContent extends ConsumerWidget {
 
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
-class _OverviewTab extends StatelessWidget {
+class _OverviewTab extends ConsumerWidget {
   const _OverviewTab({required this.partition});
 
   final PartitionObject partition;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncTenant = ref.watch(tenantDetailProvider(partition.tenantId));
+    final asyncPartitions = ref.watch(partitionsProvider);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
-      child: _InfoCard(
-        title: 'Partition Details',
-        rows: [
-          ('Name', partition.name),
-          ('Description', partition.description),
-          ('Tenant ID', partition.tenantId),
-          if (partition.hasParentId()) ('Parent ID', partition.parentId),
-          ('State', partition.state.name),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Partition details card
+          _InfoCard(
+            title: 'Partition Details',
+            rows: [
+              ('Name', partition.name),
+              ('Description', partition.description),
+              ('State', partition.state.name),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Tenant link card
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(color: AppColors.border),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Tenant',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 12),
+                  asyncTenant.when(
+                    loading: () => const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2)),
+                    error: (_, __) => Text(partition.tenantId,
+                        style: const TextStyle(
+                            fontFamily: 'monospace', fontSize: 12)),
+                    data: (tenant) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.business_outlined,
+                          color: AppColors.tertiary),
+                      title: Text(tenant.name,
+                          style:
+                              const TextStyle(fontWeight: FontWeight.w500)),
+                      subtitle: Text(tenant.id,
+                          style: const TextStyle(
+                              fontFamily: 'monospace', fontSize: 11)),
+                      trailing: const Icon(Icons.chevron_right, size: 20),
+                      onTap: () => context.go(
+                          '/services/tenancy/tenants/${tenant.id}'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Parent partition link
+          if (partition.hasParentId()) ...[
+            const SizedBox(height: 16),
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: BorderSide(color: AppColors.border),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Parent Partition',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 12),
+                    asyncPartitions.when(
+                      loading: () => const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child:
+                              CircularProgressIndicator(strokeWidth: 2)),
+                      error: (_, __) => Text(partition.parentId,
+                          style: const TextStyle(
+                              fontFamily: 'monospace', fontSize: 12)),
+                      data: (partitions) {
+                        final parent = partitions
+                            .where((p) => p.id == partition.parentId)
+                            .firstOrNull;
+                        if (parent == null) {
+                          return Text(partition.parentId,
+                              style: const TextStyle(
+                                  fontFamily: 'monospace', fontSize: 12));
+                        }
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.account_tree_outlined,
+                              color: AppColors.tertiary),
+                          title: Text(parent.name,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w500)),
+                          subtitle: Text(parent.id,
+                              style: const TextStyle(
+                                  fontFamily: 'monospace', fontSize: 11)),
+                          trailing:
+                              const Icon(Icons.chevron_right, size: 20),
+                          onTap: () => context.go(
+                              '/services/tenancy/partitions/${parent.id}'),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+
+          // Sibling / related partitions
+          const SizedBox(height: 16),
+          asyncPartitions.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (allPartitions) {
+              final siblings = allPartitions
+                  .where((p) =>
+                      p.tenantId == partition.tenantId &&
+                      p.id != partition.id)
+                  .toList();
+              if (siblings.isEmpty) return const SizedBox.shrink();
+              return Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(color: AppColors.border),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Related Partitions',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      for (final sibling in siblings)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          leading: Icon(
+                            sibling.parentId == partition.id
+                                ? Icons.subdirectory_arrow_right
+                                : Icons.account_tree_outlined,
+                            size: 18,
+                            color: AppColors.tertiary,
+                          ),
+                          title: Text(sibling.name,
+                              style: const TextStyle(fontSize: 14)),
+                          subtitle: Text(sibling.id,
+                              style: const TextStyle(
+                                  fontFamily: 'monospace', fontSize: 11)),
+                          trailing: StateBadge(sibling.state),
+                          onTap: () => context.go(
+                              '/services/tenancy/partitions/${sibling.id}'),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
