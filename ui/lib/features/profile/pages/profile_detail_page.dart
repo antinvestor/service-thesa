@@ -21,7 +21,7 @@ final profileDetailProvider =
 
 /// Detail page for a single profile at /services/profile/profiles/:profileId.
 ///
-/// Tabs: Overview | Contacts | Addresses | Devices | Relationships
+/// Tabs: Overview | Contacts | Addresses | Devices | Roster
 class ProfileDetailPage extends ConsumerWidget {
   const ProfileDetailPage({super.key, required this.profileId});
 
@@ -164,16 +164,33 @@ class _ProfileDetailContent extends ConsumerWidget {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-            child: Row(
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 StateBadge(profile.state),
-                const SizedBox(width: 12),
-                Text('ID: ${profile.id}',
+                _TypeBadge(profile.type.name),
+                SelectableText('ID: ${profile.id}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontFamily: 'monospace',
                         color: AppColors.onSurfaceMuted)),
-                const SizedBox(width: 12),
-                _TypeBadge(profile.type.name),
+                if (profile.contacts.isNotEmpty)
+                  Text(
+                    '${profile.contacts.length} contact${profile.contacts.length == 1 ? '' : 's'}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: AppColors.onSurfaceMuted),
+                  ),
+                if (profile.addresses.isNotEmpty)
+                  Text(
+                    '${profile.addresses.length} address${profile.addresses.length == 1 ? '' : 'es'}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: AppColors.onSurfaceMuted),
+                  ),
               ],
             ),
           ),
@@ -186,7 +203,7 @@ class _ProfileDetailContent extends ConsumerWidget {
               Tab(text: 'Contacts'),
               Tab(text: 'Addresses'),
               Tab(text: 'Devices'),
-              Tab(text: 'Relationships'),
+              Tab(text: 'Roster'),
             ],
           ),
           const Divider(height: 1),
@@ -197,7 +214,7 @@ class _ProfileDetailContent extends ConsumerWidget {
                 _ContactsTab(profile: profile, profileId: profileId),
                 _AddressesTab(profile: profile, profileId: profileId),
                 _DevicesTab(profileId: profileId),
-                _RelationshipsTab(profileId: profileId),
+                _RosterTab(profileId: profileId),
               ],
             ),
           ),
@@ -214,6 +231,16 @@ class _OverviewTab extends StatelessWidget {
 
   final ProfileObject profile;
 
+  String get _displayName {
+    if (profile.hasProperties() &&
+        profile.properties.fields.containsKey('name')) {
+      final n = profile.properties.fields['name']!;
+      if (n.hasStringValue() && n.stringValue.isNotEmpty) return n.stringValue;
+    }
+    if (profile.contacts.isNotEmpty) return profile.contacts.first.detail;
+    return profile.id;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -221,23 +248,206 @@ class _OverviewTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _InfoCard(title: 'Profile Details', rows: [
-            ('ID', profile.id),
-            ('Type', profile.type.name),
-            ('State', profile.state.name),
-            ('Contacts', '${profile.contacts.length}'),
-            ('Addresses', '${profile.addresses.length}'),
-          ]),
-          if (profile.hasProperties() &&
-              profile.properties.fields.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            _InfoCard(
-              title: 'Properties',
-              rows: profile.properties.fields.entries
-                  .map((e) => (e.key, e.value.stringValue))
-                  .toList(),
+          // Profile details + properties side by side
+          LayoutBuilder(builder: (context, constraints) {
+            final wide = constraints.maxWidth > 700;
+            final detailCard = _buildCard(
+              context,
+              title: 'Profile Details',
+              icon: Icons.person_outlined,
+              child: Column(children: [
+                _OvRow('Name', _displayName),
+                _OvRow('Type', profile.type.name),
+                _OvRow('State', profile.state.name),
+                _OvRow('ID', profile.id),
+              ]),
+            );
+
+            final propCard = (profile.hasProperties() &&
+                    profile.properties.fields.isNotEmpty)
+                ? _buildCard(
+                    context,
+                    title: 'Properties',
+                    icon: Icons.data_object,
+                    child: Column(
+                      children: [
+                        for (final e in profile.properties.fields.entries)
+                          _OvRow(e.key, _fmtValue(e.value)),
+                      ],
+                    ),
+                  )
+                : null;
+
+            if (wide && propCard != null) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: detailCard),
+                  const SizedBox(width: 16),
+                  Expanded(child: propCard),
+                ],
+              );
+            }
+            return Column(children: [
+              detailCard,
+              if (propCard != null) ...[const SizedBox(height: 16), propCard],
+            ]);
+          }),
+          const SizedBox(height: 16),
+
+          // Contacts summary
+          if (profile.contacts.isNotEmpty)
+            _buildCard(
+              context,
+              title: 'Contacts (${profile.contacts.length})',
+              icon: Icons.contact_phone_outlined,
+              child: Column(
+                children: [
+                  for (final c in profile.contacts)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Icon(
+                            c.type == ContactType.EMAIL
+                                ? Icons.email_outlined
+                                : Icons.phone_outlined,
+                            size: 16,
+                            color: AppColors.onSurfaceMuted,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(c.detail,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(fontWeight: FontWeight.w500)),
+                          ),
+                          if (c.verified)
+                            Icon(Icons.verified,
+                                size: 14, color: AppColors.success)
+                          else
+                            Icon(Icons.pending_outlined,
+                                size: 14,
+                                color: AppColors.onSurfaceMuted),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
+          if (profile.contacts.isNotEmpty) const SizedBox(height: 16),
+
+          // Addresses summary
+          if (profile.addresses.isNotEmpty)
+            _buildCard(
+              context,
+              title: 'Addresses (${profile.addresses.length})',
+              icon: Icons.location_on_outlined,
+              child: Column(
+                children: [
+                  for (final a in profile.addresses)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Icon(Icons.location_on_outlined,
+                              size: 16, color: AppColors.onSurfaceMuted),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              [
+                                if (a.name.isNotEmpty) a.name,
+                                if (a.city.isNotEmpty) a.city,
+                                if (a.country.isNotEmpty) a.country,
+                              ].join(', '),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _fmtValue(Value v) {
+    if (v.hasStringValue()) return v.stringValue;
+    if (v.hasBoolValue()) return v.boolValue ? 'true' : 'false';
+    if (v.hasNumberValue()) return v.numberValue.toString();
+    if (v.hasStructValue()) {
+      return v.structValue.fields.entries
+          .map((e) => '${e.key}: ${_fmtValue(e.value)}')
+          .join(', ');
+    }
+    return '—';
+  }
+
+  Widget _buildCard(BuildContext context,
+      {required String title, required IconData icon, required Widget child}) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: AppColors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Icon(icon, size: 18, color: AppColors.tertiary),
+              const SizedBox(width: 8),
+              Text(title,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+            ]),
+            const SizedBox(height: 12),
+            child,
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OvRow extends StatelessWidget {
+  const _OvRow(this.label, this.value);
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(label,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+          ),
+          Expanded(
+            child: SelectableText(value,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(fontWeight: FontWeight.w500)),
+          ),
         ],
       ),
     );
@@ -405,9 +615,9 @@ class _ContactsTab extends ConsumerWidget {
               separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final contact = contacts[index];
-                return ListTile(
+                return ExpansionTile(
                   leading: Icon(
-                    contact.type.name.contains('EMAIL')
+                    contact.type == ContactType.EMAIL
                         ? Icons.email_outlined
                         : Icons.phone_outlined,
                     size: 20,
@@ -415,17 +625,35 @@ class _ContactsTab extends ConsumerWidget {
                   ),
                   title: Text(contact.detail,
                       style: const TextStyle(fontWeight: FontWeight.w500)),
-                  subtitle: Text(
-                      '${contact.type.name} · ${contact.verified ? "Verified" : "Unverified"}',
-                      style: TextStyle(
-                          fontSize: 12, color: AppColors.onSurfaceMuted)),
+                  subtitle: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(contact.type.name,
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.onSurfaceMuted)),
+                      const SizedBox(width: 8),
+                      if (contact.verified)
+                        Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.verified,
+                              size: 14, color: AppColors.success),
+                          const SizedBox(width: 4),
+                          Text('Verified',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.success)),
+                        ])
+                      else
+                        Text('Unverified',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.onSurfaceMuted)),
+                    ],
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (contact.verified)
-                        Icon(Icons.verified,
-                            size: 18, color: AppColors.success)
-                      else ...[
+                      if (!contact.verified)
                         TextButton.icon(
                           onPressed: () =>
                               _verifyContact(context, ref, contact),
@@ -434,8 +662,6 @@ class _ContactsTab extends ConsumerWidget {
                           label: const Text('Verify',
                               style: TextStyle(fontSize: 12)),
                         ),
-                      ],
-                      const SizedBox(width: 4),
                       IconButton(
                         icon: Icon(Icons.delete_outline,
                             size: 18, color: AppColors.error),
@@ -445,6 +671,23 @@ class _ContactsTab extends ConsumerWidget {
                       ),
                     ],
                   ),
+                  children: [
+                    Padding(
+                      padding:
+                          const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _OvRow('Contact ID', contact.id),
+                          _OvRow('Type', contact.type.name),
+                          _OvRow('Detail', contact.detail),
+                          _OvRow('Verified',
+                              contact.verified ? 'Yes' : 'No'),
+                          _OvRow('State', contact.state.name),
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
@@ -547,20 +790,20 @@ class _AddressesTab extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final addr = addresses[index];
                 final parts = [
-                  addr.house,
-                  addr.street,
-                  addr.area,
                   addr.city,
                   addr.country,
                 ].where((s) => s.isNotEmpty).join(', ');
-                return ListTile(
+                return ExpansionTile(
                   leading: Icon(Icons.location_on_outlined,
                       size: 20, color: AppColors.tertiary),
-                  title: Text(addr.name.isNotEmpty ? addr.name : 'Address',
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
-                  subtitle: Text(parts,
+                  title: Text(
+                      addr.name.isNotEmpty ? addr.name : 'Address',
+                      style:
+                          const TextStyle(fontWeight: FontWeight.w500)),
+                  subtitle: Text(parts.isNotEmpty ? parts : '—',
                       style: TextStyle(
-                          fontSize: 12, color: AppColors.onSurfaceMuted)),
+                          fontSize: 12,
+                          color: AppColors.onSurfaceMuted)),
                   trailing: addr.latitude != 0 || addr.longitude != 0
                       ? Tooltip(
                           message:
@@ -569,6 +812,34 @@ class _AddressesTab extends ConsumerWidget {
                               size: 16, color: AppColors.tertiary),
                         )
                       : null,
+                  children: [
+                    Padding(
+                      padding:
+                          const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (addr.name.isNotEmpty)
+                            _OvRow('Name', addr.name),
+                          if (addr.house.isNotEmpty)
+                            _OvRow('House', addr.house),
+                          if (addr.street.isNotEmpty)
+                            _OvRow('Street', addr.street),
+                          if (addr.area.isNotEmpty)
+                            _OvRow('Area', addr.area),
+                          if (addr.city.isNotEmpty)
+                            _OvRow('City', addr.city),
+                          if (addr.country.isNotEmpty)
+                            _OvRow('Country', addr.country),
+                          if (addr.postcode.isNotEmpty)
+                            _OvRow('Postcode', addr.postcode),
+                          if (addr.latitude != 0 || addr.longitude != 0)
+                            _OvRow('Coordinates',
+                                '${addr.latitude.toStringAsFixed(5)}, ${addr.longitude.toStringAsFixed(5)}'),
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
@@ -689,93 +960,37 @@ class _DeviceTile extends StatelessWidget {
   }
 }
 
-// ─── Relationships Tab ────────────────────────────────────────────────────────
+// ─── Roster Tab ──────────────────────────────────────────────────────────────
 
-/// Provider for relationships of a profile.
-final _relationshipsProvider =
-    FutureProvider.family<List<RelationshipObject>, String>(
+/// Provider for roster entries of a profile.
+final _rosterProvider =
+    FutureProvider.family<List<RosterObject>, String>(
         (ref, profileId) async {
   final repo = await ref.watch(profileRepositoryProvider.future);
-  return repo.listRelationships(peerName: 'profile', peerId: profileId);
+  return repo.searchRoster(profileId: profileId);
 });
 
-class _RelationshipsTab extends ConsumerWidget {
-  const _RelationshipsTab({required this.profileId});
+class _RosterTab extends ConsumerWidget {
+  const _RosterTab({required this.profileId});
 
   final String profileId;
 
-  Future<void> _addRelationship(BuildContext context, WidgetRef ref) async {
-    final values = await showEditDialog(
-      context: context,
-      title: 'Add Relationship',
-      saveLabel: 'Add',
-      fields: const [
-        DialogField(
-          key: 'type',
-          label: 'Relationship Type',
-          type: DialogFieldType.dropdown,
-          options: ['MEMBER', 'AFFILIATED', 'BLACK_LISTED'],
-          initialValue: 'MEMBER',
-        ),
-        DialogField(
-          key: 'peerName',
-          label: 'Peer Type',
-          hint: 'e.g. profile, organization',
-          initialValue: 'profile',
-        ),
-        DialogField(
-          key: 'peerId',
-          label: 'Peer ID',
-          hint: 'ID of the related entity',
-        ),
-      ],
-    );
-    if (values == null || !context.mounted) return;
-
-    try {
-      final typeStr = values['type'] ?? 'MEMBER';
-      final relType = RelationshipType.values
-              .where((t) => t.name == typeStr)
-              .firstOrNull ??
-          RelationshipType.MEMBER;
-      final repo = await ref.read(profileRepositoryProvider.future);
-      await repo.addRelationship(
-        parent: 'profile',
-        parentId: profileId,
-        child: values['peerName'] ?? 'profile',
-        childId: values['peerId'] ?? '',
-        type: relType,
-      );
-      ref.invalidate(_relationshipsProvider(profileId));
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Relationship added')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
-    }
-  }
-
-  Future<void> _deleteRelationship(
-      BuildContext context, WidgetRef ref, RelationshipObject rel) async {
+  Future<void> _removeEntry(
+      BuildContext context, WidgetRef ref, RosterObject entry) async {
     final confirmed = await showConfirmDialog(
       context: context,
-      title: 'Remove Relationship',
-      message: 'Remove this ${rel.type.name} relationship?',
+      title: 'Remove Roster Entry',
+      message: 'Remove "${entry.contact.detail}" from roster?',
     );
     if (!confirmed || !context.mounted) return;
 
     try {
       final repo = await ref.read(profileRepositoryProvider.future);
-      await repo.deleteRelationship(id: rel.id);
-      ref.invalidate(_relationshipsProvider(profileId));
+      await repo.removeRoster(entry.id);
+      ref.invalidate(_rosterProvider(profileId));
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Relationship removed')),
+          const SnackBar(content: Text('Roster entry removed')),
         );
       }
     } catch (e) {
@@ -788,9 +1003,9 @@ class _RelationshipsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncRels = ref.watch(_relationshipsProvider(profileId));
+    final asyncRoster = ref.watch(_rosterProvider(profileId));
 
-    return asyncRels.when(
+    return asyncRoster.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => Center(
         child: Column(
@@ -798,7 +1013,7 @@ class _RelationshipsTab extends ConsumerWidget {
           children: [
             Icon(Icons.error_outline, size: 36, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('Failed to load relationships'),
+            Text('Failed to load roster'),
             const SizedBox(height: 8),
             Text(error.toString(),
                 style: Theme.of(context)
@@ -807,39 +1022,49 @@ class _RelationshipsTab extends ConsumerWidget {
                     ?.copyWith(color: AppColors.onSurfaceMuted)),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: () =>
-                  ref.invalidate(_relationshipsProvider(profileId)),
+              onPressed: () => ref.invalidate(_rosterProvider(profileId)),
               icon: const Icon(Icons.refresh, size: 16),
               label: const Text('Retry'),
             ),
           ],
         ),
       ),
-      data: (relationships) => Column(
+      data: (entries) => Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                ElevatedButton.icon(
-                  onPressed: () => _addRelationship(context, ref),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Relationship'),
+                Text('${entries.length} roster entries',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: AppColors.onSurfaceMuted)),
+                const Spacer(),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      ref.invalidate(_rosterProvider(profileId)),
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Refresh'),
                 ),
               ],
             ),
           ),
-          if (relationships.isEmpty)
+          if (entries.isEmpty)
             const Expanded(
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.group_work_outlined,
+                    Icon(Icons.contacts_outlined,
                         size: 48, color: Colors.grey),
                     SizedBox(height: 12),
-                    Text('No relationships'),
+                    Text('No roster entries'),
+                    SizedBox(height: 4),
+                    Text(
+                      'Roster entries are synced from the user\'s contact book',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
                   ],
                 ),
               ),
@@ -848,70 +1073,63 @@ class _RelationshipsTab extends ConsumerWidget {
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
-                itemCount: relationships.length,
+                itemCount: entries.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
-                  final rel = relationships[index];
-                  final typeColor = switch (rel.type) {
-                    RelationshipType.MEMBER => AppColors.success,
-                    RelationshipType.AFFILIATED => AppColors.tertiary,
-                    RelationshipType.BLACK_LISTED => AppColors.error,
-                    _ => AppColors.onSurfaceMuted,
-                  };
-                  return ListTile(
+                  final entry = entries[index];
+                  final contact = entry.contact;
+                  return ExpansionTile(
                     leading: Icon(
-                      switch (rel.type) {
-                        RelationshipType.MEMBER => Icons.group_outlined,
-                        RelationshipType.AFFILIATED =>
-                          Icons.handshake_outlined,
-                        RelationshipType.BLACK_LISTED =>
-                          Icons.block_outlined,
-                        _ => Icons.link,
-                      },
+                      contact.type == ContactType.EMAIL
+                          ? Icons.email_outlined
+                          : Icons.phone_outlined,
                       size: 20,
-                      color: typeColor,
+                      color: AppColors.tertiary,
                     ),
-                    title: Row(
+                    title: Text(contact.detail,
+                        style:
+                            const TextStyle(fontWeight: FontWeight.w500)),
+                    subtitle: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: typeColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(rel.type.name,
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: typeColor)),
-                        ),
+                        Text(contact.type.name,
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.onSurfaceMuted)),
                         const SizedBox(width: 8),
-                        if (rel.hasPeerProfile())
-                          Text(
-                            rel.peerProfile.contacts.isNotEmpty
-                                ? rel.peerProfile.contacts.first.detail
-                                : rel.peerProfile.id,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w500),
-                          ),
+                        if (contact.verified)
+                          Icon(Icons.verified,
+                              size: 14, color: AppColors.success)
+                        else
+                          Icon(Icons.pending_outlined,
+                              size: 14,
+                              color: AppColors.onSurfaceMuted),
                       ],
-                    ),
-                    subtitle: Text(
-                      'Parent: ${rel.parentEntry.objectName}/${rel.parentEntry.objectId} '
-                      '→ Child: ${rel.childEntry.objectName}/${rel.childEntry.objectId}',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontFamily: 'monospace',
-                          color: AppColors.onSurfaceMuted),
                     ),
                     trailing: IconButton(
                       icon: Icon(Icons.delete_outline,
                           size: 18, color: AppColors.error),
                       tooltip: 'Remove',
                       onPressed: () =>
-                          _deleteRelationship(context, ref, rel),
+                          _removeEntry(context, ref, entry),
                     ),
+                    children: [
+                      Padding(
+                        padding:
+                            const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _OvRow('Roster ID', entry.id),
+                            _OvRow('Profile ID', entry.profileId),
+                            _OvRow('Contact', contact.detail),
+                            _OvRow('Type', contact.type.name),
+                            _OvRow('Verified',
+                                contact.verified ? 'Yes' : 'No'),
+                          ],
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
@@ -973,58 +1191,3 @@ class _PresenceDot extends StatelessWidget {
   }
 }
 
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.title, required this.rows});
-
-  final String title;
-  final List<(String, String)> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: AppColors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 16),
-            for (final (label, value) in rows)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 120,
-                      child: Text(label,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: AppColors.onSurfaceMuted)),
-                    ),
-                    Expanded(
-                      child: Text(value,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(fontWeight: FontWeight.w500)),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
