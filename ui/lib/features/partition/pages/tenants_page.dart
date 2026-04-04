@@ -98,14 +98,26 @@ class TenantsPage extends ConsumerWidget {
               type: DialogFieldType.textarea,
               maxLines: 2,
             ),
+            DialogField(
+              key: 'environment',
+              label: 'Environment',
+              type: DialogFieldType.dropdown,
+              options: ['Production', 'Staging'],
+              initialValue: 'Production',
+            ),
           ],
         );
         if (values == null || !context.mounted) return;
         try {
+          final envStr = values['environment'] ?? 'Production';
+          final environment = envStr == 'Staging'
+              ? TenantEnvironment.TENANT_ENVIRONMENT_STAGING
+              : TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION;
           final repo = await ref.read(partitionRepositoryProvider.future);
           await repo.createTenant(
             name: values['name'] ?? '',
             description: values['description'] ?? '',
+            environment: environment,
           );
           ref.invalidate(tenantsProvider);
           if (context.mounted) {

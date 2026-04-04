@@ -40,11 +40,13 @@ class PartitionRepository {
   Future<TenantObject> createTenant({
     required String name,
     String description = '',
+    TenantEnvironment? environment,
     Struct? properties,
   }) async =>
       (await _client.createTenant(CreateTenantRequest(
         name: name,
         description: description,
+        environment: environment,
         properties: properties,
       )))
           .data;
@@ -54,6 +56,7 @@ class PartitionRepository {
     String? name,
     String? description,
     STATE? state,
+    TenantEnvironment? environment,
     Struct? properties,
   }) async =>
       (await _client.updateTenant(UpdateTenantRequest(
@@ -61,6 +64,7 @@ class PartitionRepository {
         name: name,
         description: description,
         state: state,
+        environment: environment,
         properties: properties,
       )))
           .data;

@@ -58,6 +58,11 @@ class _TenantDetailContent extends ConsumerWidget {
   final String tenantId;
 
   Future<void> _editTenant(BuildContext context, WidgetRef ref) async {
+    final envName = switch (tenant.environment) {
+      TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION => 'Production',
+      TenantEnvironment.TENANT_ENVIRONMENT_STAGING => 'Staging',
+      _ => 'Production',
+    };
     final values = await showEditDialog(
       context: context,
       title: 'Edit ${tenant.name}',
@@ -72,22 +77,34 @@ class _TenantDetailContent extends ConsumerWidget {
           maxLines: 3,
         ),
         DialogField(
+          key: 'environment',
+          label: 'Environment',
+          initialValue: envName,
+          type: DialogFieldType.dropdown,
+          options: const ['Production', 'Staging'],
+        ),
+        DialogField(
           key: 'state',
           label: 'State',
           initialValue: tenant.state.name,
           type: DialogFieldType.dropdown,
-          options: ['CREATED', 'ACTIVE', 'INACTIVE', 'DELETED'],
+          options: const ['CREATED', 'ACTIVE', 'INACTIVE', 'DELETED'],
         ),
       ],
     );
     if (values == null || !context.mounted) return;
 
     try {
+      final envStr = values['environment'] ?? 'Production';
+      final environment = envStr == 'Staging'
+          ? TenantEnvironment.TENANT_ENVIRONMENT_STAGING
+          : TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION;
       final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.updateTenant(
         id: tenantId,
         name: values['name'],
         description: values['description'],
+        environment: environment,
         state: STATE.values
             .where((s) => s.name == values['state'])
             .firstOrNull,
@@ -216,6 +233,11 @@ class _OverviewTab extends StatelessWidget {
               for (final (label, value) in [
                 ('Name', tenant.name),
                 ('Description', tenant.description),
+                ('Environment', switch (tenant.environment) {
+                  TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION => 'Production',
+                  TenantEnvironment.TENANT_ENVIRONMENT_STAGING => 'Staging',
+                  _ => 'Unspecified',
+                }),
                 ('State', tenant.state.name),
               ])
                 Padding(
