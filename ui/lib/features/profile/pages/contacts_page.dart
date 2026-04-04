@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../partition/widgets/async_entity_list.dart';
 import '../../partition/widgets/state_badge.dart';
 import '../data/profile_providers.dart';
+import '../widgets/profile_badge.dart';
 
 /// A contact entry paired with the owning profile's ID.
 typedef ProfileContact = ({String profileId, ContactObject contact});
@@ -87,12 +88,7 @@ class ContactsPage extends ConsumerWidget {
               size: 18,
               color: contact.verified ? AppColors.success : AppColors.onSurfaceMuted,
             )),
-            DataCell(Text(
-              entry.profileId.length >= 8
-                  ? entry.profileId.substring(0, 8)
-                  : entry.profileId,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-            )),
+            DataCell(ProfileBadge(profileId: entry.profileId, compact: true)),
             DataCell(StateBadge(contact.state)),
           ],
         );
@@ -162,7 +158,14 @@ class _ContactDetail extends StatelessWidget {
             label: 'Communication',
             value: contact.communicationLevel.name),
         _DetailRow(label: 'State', value: contact.state.name),
-        _DetailRow(label: 'Profile ID', value: entry.profileId),
+        const SizedBox(height: 8),
+        Text('Profile',
+            style: Theme.of(context)
+                .textTheme
+                .labelMedium
+                ?.copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 4),
+        ProfileBadge(profileId: entry.profileId),
       ],
     );
   }

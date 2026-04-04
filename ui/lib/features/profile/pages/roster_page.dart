@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/edit_dialog.dart';
 import '../../../core/widgets/page_header.dart';
 import '../data/profile_repository.dart';
+import '../widgets/profile_badge.dart';
 
 /// Roster page - search a profile's roster (contact book) entries.
 class RosterPage extends ConsumerStatefulWidget {
@@ -257,10 +258,7 @@ class _RosterEntryTile extends StatelessWidget {
       ),
       title: Text(contact.detail,
           style: const TextStyle(fontWeight: FontWeight.w500)),
-      subtitle: Text(
-        '${contact.type.name} · Profile: ${entry.profileId}',
-        style: TextStyle(fontSize: 11, color: AppColors.onSurfaceMuted),
-      ),
+      subtitle: ProfileBadge(profileId: entry.profileId, compact: true),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

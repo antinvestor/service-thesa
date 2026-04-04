@@ -6,6 +6,7 @@ import '../../../core/services/service_definition.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../partition/widgets/async_entity_list.dart';
 import '../data/profile_providers.dart';
+import '../widgets/profile_badge.dart';
 
 /// An address entry paired with the owning profile's ID and name.
 typedef ProfileAddress = ({
@@ -100,8 +101,7 @@ class AddressesPage extends ConsumerWidget {
               ],
             )),
             DataCell(Text(parts.isNotEmpty ? parts : '—')),
-            DataCell(Text(pa.profileName,
-                style: const TextStyle(fontSize: 12))),
+            DataCell(ProfileBadge(profileId: pa.profileId, compact: true)),
           ],
         );
       },
@@ -151,9 +151,7 @@ class _AddressDetail extends StatelessWidget {
                           .textTheme
                           .titleMedium
                           ?.copyWith(fontWeight: FontWeight.w600)),
-                  Text(pa.profileName,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceMuted)),
+                  ProfileBadge(profileId: pa.profileId, compact: true),
                 ],
               ),
             ),
@@ -166,7 +164,8 @@ class _AddressDetail extends StatelessWidget {
         if (addr.city.isNotEmpty) _Row('City', addr.city),
         if (addr.country.isNotEmpty) _Row('Country', addr.country),
         if (addr.postcode.isNotEmpty) _Row('Postcode', addr.postcode),
-        _Row('Profile ID', pa.profileId),
+        const SizedBox(height: 4),
+        ProfileBadge(profileId: pa.profileId),
         if (addr.latitude != 0 || addr.longitude != 0)
           _Row('Coordinates',
               '${addr.latitude.toStringAsFixed(5)}, ${addr.longitude.toStringAsFixed(5)}'),

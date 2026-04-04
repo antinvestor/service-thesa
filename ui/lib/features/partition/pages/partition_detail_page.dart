@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/edit_dialog.dart';
 import '../../../core/widgets/page_header.dart';
 import '../../profile/data/profile_repository.dart';
+import '../../profile/widgets/profile_badge.dart';
 import '../data/partition_providers.dart';
 import '../data/partition_repository.dart';
 import '../widgets/state_badge.dart';
@@ -1186,16 +1187,12 @@ class _AccessTab extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final a = access[index];
                     return ExpansionTile(
-                      leading: Icon(Icons.vpn_key_outlined,
-                          size: 20, color: AppColors.tertiary),
-                      title: Text(a.profileId,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'monospace',
-                              fontSize: 13)),
-                      subtitle: Text('Access ID: ${a.id}',
+                      leading: null,
+                      title: ProfileBadge(profileId: a.profileId),
+                      subtitle: Text('Access: ${a.id}',
                           style: TextStyle(
                               fontSize: 11,
+                              fontFamily: 'monospace',
                               color: AppColors.onSurfaceMuted)),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -1502,8 +1499,12 @@ class _ServiceAccountsTab extends ConsumerWidget {
                   return ExpansionTile(
                     leading: Icon(Icons.engineering_outlined,
                         size: 20, color: AppColors.tertiary),
-                    title: Text(sa.profileId.isNotEmpty ? sa.profileId : sa.id,
-                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    title: sa.profileId.isNotEmpty
+                        ? ProfileBadge(
+                            profileId: sa.profileId, compact: true)
+                        : Text(sa.id,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w500)),
                     subtitle: Text(
                         'Type: ${sa.type}',
                         style: TextStyle(

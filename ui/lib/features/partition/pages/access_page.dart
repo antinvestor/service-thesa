@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/services/service_definition.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/entity_list_page.dart';
+import '../../profile/widgets/profile_badge.dart';
 import '../data/partition_providers.dart';
 import '../data/partition_repository.dart';
 import '../widgets/async_entity_list.dart';
@@ -59,9 +60,7 @@ class AccessPage extends ConsumerWidget {
             DataCell(Text(access.id,
                 style:
                     const TextStyle(fontFamily: 'monospace', fontSize: 12))),
-            DataCell(Text(access.profileId,
-                style:
-                    const TextStyle(fontFamily: 'monospace', fontSize: 12))),
+            DataCell(ProfileBadge(profileId: access.profileId, compact: true)),
             DataCell(Text(partitionName)),
             DataCell(StateBadge(access.state)),
           ],
@@ -153,7 +152,9 @@ class _AccessDetail extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
-        _DetailRow(label: 'Profile ID', value: access.profileId),
+        const SizedBox(height: 4),
+        ProfileBadge(profileId: access.profileId),
+        const SizedBox(height: 8),
         _DetailRow(label: 'Partition', value: partitionName),
         _DetailRow(label: 'State', value: access.state.name),
         _DetailRow(label: 'Created', value: createdAt),
