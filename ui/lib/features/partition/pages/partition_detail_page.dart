@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/services/tenant_context.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/edit_dialog.dart';
 import '../../../core/widgets/page_header.dart';
@@ -143,13 +144,54 @@ class _PartitionDetailContent extends ConsumerWidget {
     }
   }
 
+  void _setAsActiveContext(WidgetRef ref) {
+    final jwt = ref.read(jwtTenantContextProvider);
+    final jwtCtx = jwt.whenOrNull(data: (c) => c) ??
+        const TenantContext(tenantId: '', partitionId: '');
+    ref.read(activeTenantProvider.notifier).set(
+      jwtCtx.copyWith(
+        tenantId: partition.tenantId,
+        partitionId: partition.id,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final effectiveCtx = ref.watch(effectiveTenantProvider);
+    final isActiveContext = effectiveCtx.partitionId == partitionId;
+
     return DefaultTabController(
       length: 5,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Active context banner
+          if (isActiveContext)
+            Container(
+              width: double.infinity,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              color: AppColors.success.withValues(alpha: 0.1),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle,
+                      size: 18, color: AppColors.success),
+                  const SizedBox(width: 8),
+                  Text('Active Context',
+                      style: TextStyle(
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13)),
+                  const SizedBox(width: 8),
+                  Text(
+                      'You are working within this partition',
+                      style: TextStyle(
+                          color: AppColors.success, fontSize: 12)),
+                ],
+              ),
+            ),
+
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
             child: PageHeader(
@@ -172,26 +214,40 @@ class _PartitionDetailContent extends ConsumerWidget {
                   icon: const Icon(Icons.edit_outlined, size: 18),
                   label: const Text('Edit'),
                 ),
+                const SizedBox(width: 8),
+                if (!isActiveContext)
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      _setAsActiveContext(ref);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                'Switched context to ${partition.name}')),
+                      );
+                    },
+                    icon: const Icon(Icons.login, size: 18),
+                    label: const Text('Set as Active'),
+                  ),
               ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-            child: Row(
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 StateBadge(partition.state),
-                const SizedBox(width: 12),
-                Text('ID: ${partition.id}',
+                SelectableText('ID: ${partition.id}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontFamily: 'monospace',
                         color: AppColors.onSurfaceMuted)),
-                if (partition.hasCreatedAt()) ...[
-                  const SizedBox(width: 16),
+                if (partition.hasCreatedAt())
                   Text(
                       'Created: ${DateFormat.yMMMd().format(partition.createdAt.toDateTime())}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.onSurfaceMuted)),
-                ],
               ],
             ),
           ),
