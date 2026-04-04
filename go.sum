@@ -186,8 +186,8 @@ github.com/panjf2000/ants/v2 v2.12.0 h1:u9JhESo83i/GkZnhfTNuFMMWcNt7mnV1bGJ6FT4w
 github.com/panjf2000/ants/v2 v2.12.0/go.mod h1:tSQuaNQ6r6NRhPt+IZVUevvDyFMTs+eS4ztZc52uJTY=
 github.com/perimeterx/marshmallow v1.1.5 h1:a2LALqQ1BlHM8PZblsDdidgv1mWi1DgC2UmX50IvK2s=
 github.com/perimeterx/marshmallow v1.1.5/go.mod h1:dsXbUu8CRzfYP5a87xpp0xq9S3u0Vchtcl8we9tYaXw=
-github.com/pitabwire/frame v1.93.4 h1:JBmN9FElhE04kCflPsDCilib+6ZZHY9PDxIo9GzOiHQ=
-github.com/pitabwire/frame v1.93.4/go.mod h1:jeFJgAyH+Oz3NjiyHQsHhDizB+fYrYNXFGbrSfHnjuU=
+github.com/pitabwire/frame v1.93.5 h1:afb6J3NddTTah8qhrvf2rj0KgI1HIyACgsavBrtcg84=
+github.com/pitabwire/frame v1.93.5/go.mod h1:jeFJgAyH+Oz3NjiyHQsHhDizB+fYrYNXFGbrSfHnjuU=
 github.com/pitabwire/natspubsub v0.8.1 h1:1FjZ4wGbLWKFdH29rEErsq/B4ZL8ZsX6zyd1jLuaE1Q=
 github.com/pitabwire/natspubsub v0.8.1/go.mod h1:mAHWmEWQiq69YVgiqn6Ml4UlhFTGSJISm6byjw2GcBY=
 github.com/pitabwire/util v0.8.0 h1:LNKCTMmfurjk4ShG1peTuMFGsOAR5o5jIZ84lHNvwlU=
