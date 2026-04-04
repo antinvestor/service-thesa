@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/auth/data/auth_repository.dart';
 import '../theme/app_colors.dart';
+import 'tenant_picker.dart';
 
 /// Provider that loads the current user info from the JWT token.
 final userInfoProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
@@ -57,6 +58,9 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
             ),
           ),
           const SizedBox(width: 16),
+          // Tenant context picker
+          const TenantPicker(),
+          const SizedBox(width: 12),
           // Action icons
           _HeaderIconButton(
               icon: Icons.notifications_outlined, tooltip: 'Notifications'),
