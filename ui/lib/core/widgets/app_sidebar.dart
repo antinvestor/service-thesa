@@ -99,17 +99,32 @@ class AppSidebar extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.tertiary,
-              borderRadius: BorderRadius.circular(8),
+          GestureDetector(
+            onTap: collapsed ? onToggleCollapse : null,
+            child: Tooltip(
+              message: collapsed ? 'Expand sidebar' : '',
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.tertiary,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.diamond_outlined,
+                    color: Colors.white, size: 20),
+              ),
             ),
-            child: const Icon(Icons.diamond_outlined,
-                color: Colors.white, size: 20),
           ),
-          if (!collapsed) ...[
+          if (collapsed) ...[
+            // When collapsed, clicking logo expands the sidebar
+            if (onToggleCollapse != null)
+              Expanded(
+                child: GestureDetector(
+                  onTap: onToggleCollapse,
+                  child: const SizedBox.shrink(),
+                ),
+              ),
+          ] else ...[
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -269,7 +284,46 @@ class _ServiceGroupTileState extends ConsumerState<_ServiceGroupTile>
           borderRadius: BorderRadius.circular(8),
           child: InkWell(
             borderRadius: BorderRadius.circular(8),
-            onTap: () => widget.onNavigate(widget.item.route),
+            onTap: () {
+              // Show a popup menu with children when collapsed
+              final renderBox = context.findRenderObject() as RenderBox;
+              final offset = renderBox.localToGlobal(Offset.zero);
+              final items = <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  value: widget.item.route,
+                  child: Text(widget.item.label,
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                const PopupMenuDivider(height: 1),
+                ...widget.item.children.map((child) => PopupMenuItem<String>(
+                      value: child.route,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(child.icon, size: 16,
+                              color: _isChildActive(child.route)
+                                  ? AppColors.tertiary
+                                  : null),
+                          const SizedBox(width: 8),
+                          Text(child.label,
+                              style: TextStyle(
+                                fontWeight: _isChildActive(child.route)
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              )),
+                        ],
+                      ),
+                    )),
+              ];
+              showMenu<String>(
+                context: context,
+                position: RelativeRect.fromLTRB(
+                    offset.dx + 72, offset.dy, 0, 0),
+                items: items,
+              ).then((value) {
+                if (value != null) widget.onNavigate(value);
+              });
+            },
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Center(

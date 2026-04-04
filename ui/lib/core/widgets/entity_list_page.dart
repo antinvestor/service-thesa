@@ -117,7 +117,11 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
   int? _editingIndex;
   bool _creating = false;
   int _currentPage = 0;
+  late int _pageSize = widget.rowsPerPage;
+  int _lastItemCount = 0;
   final _searchController = TextEditingController();
+
+  static const _pageSizeOptions = [10, 25, 50, 100];
 
   @override
   void dispose() {
@@ -257,19 +261,8 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    // Paginated data table
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: _buildPaginatedTable(),
-                      ),
-                    ),
+                    // Paginated data table + footer
+                    ..._buildPaginatedTable(),
                   ],
                 ),
               ),
@@ -329,17 +322,38 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
     );
   }
 
-  Widget _buildPaginatedTable() {
+  List<Widget> _buildPaginatedTable() {
     final totalItems = widget.items.length;
-    final totalPages = (totalItems / widget.rowsPerPage).ceil();
-    final start = _currentPage * widget.rowsPerPage;
-    final end = (start + widget.rowsPerPage).clamp(0, totalItems);
-    final pageItems = widget.items.sublist(start, end);
 
-    return Column(
-      children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
+    // Reset to first page when item count changes (e.g. after refresh/filter).
+    if (totalItems != _lastItemCount) {
+      _lastItemCount = totalItems;
+      if (_currentPage > 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _currentPage = 0);
+        });
+      }
+    }
+
+    final totalPages = totalItems == 0 ? 1 : (totalItems / _pageSize).ceil();
+    // Clamp current page to valid range.
+    if (_currentPage >= totalPages) _currentPage = totalPages - 1;
+
+    final start = _currentPage * _pageSize;
+    final end = (start + _pageSize).clamp(0, totalItems);
+    final pageItems = totalItems > 0 ? widget.items.sublist(start, end) : <T>[];
+
+    return [
+      // Table body
+      Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
           child: DataTable(
             showCheckboxColumn: false,
             columns: widget.columns,
@@ -353,8 +367,9 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
                     widget.onRowNavigate!(pageItems[i]);
                   } else {
                     setState(() {
-                      _selectedIndex =
-                          _selectedIndex == globalIndex ? null : globalIndex;
+                      _selectedIndex = _selectedIndex == globalIndex
+                          ? null
+                          : globalIndex;
                     });
                   }
                 },
@@ -362,65 +377,58 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
             }),
           ),
         ),
-        // Pagination controls
-        if (totalPages > 1)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Showing ${start + 1}–$end of $totalItems',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: AppColors.onSurfaceMuted),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.first_page, size: 20),
-                      onPressed: _currentPage > 0
-                          ? () => setState(() => _currentPage = 0)
-                          : null,
-                      tooltip: 'First page',
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left, size: 20),
-                      onPressed: _currentPage > 0
-                          ? () => setState(() => _currentPage--)
-                          : null,
-                      tooltip: 'Previous page',
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(
-                        'Page ${_currentPage + 1} of $totalPages',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right, size: 20),
-                      onPressed: _currentPage < totalPages - 1
-                          ? () => setState(() => _currentPage++)
-                          : null,
-                      tooltip: 'Next page',
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.last_page, size: 20),
-                      onPressed: _currentPage < totalPages - 1
-                          ? () => setState(() => _currentPage = totalPages - 1)
-                          : null,
-                      tooltip: 'Last page',
-                    ),
-                  ],
-                ),
-              ],
+      ),
+      // Pagination footer
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Text('Rows per page: ',
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            DropdownButton<int>(
+              value: _pageSize,
+              underline: const SizedBox.shrink(),
+              isDense: true,
+              style: Theme.of(context).textTheme.bodySmall,
+              items: _pageSizeOptions
+                  .map((s) => DropdownMenuItem(value: s, child: Text('$s')))
+                  .toList(),
+              onChanged: (v) {
+                if (v != null) setState(() { _pageSize = v; _currentPage = 0; });
+              },
             ),
-          ),
-      ],
-    );
+            const Spacer(),
+            Text(
+              totalItems == 0 ? '0 items' : '${start + 1}–$end of $totalItems',
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
+            const SizedBox(width: 16),
+            IconButton(
+              icon: const Icon(Icons.chevron_left, size: 20),
+              onPressed: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+              tooltip: 'Previous',
+              visualDensity: VisualDensity.compact,
+            ),
+            Text('${_currentPage + 1} / $totalPages',
+                style: Theme.of(context).textTheme.bodySmall),
+            IconButton(
+              icon: const Icon(Icons.chevron_right, size: 20),
+              onPressed: _currentPage < totalPages - 1 ? () => setState(() => _currentPage++) : null,
+              tooltip: 'Next',
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+      ),
+    ];
   }
 
   Widget _buildEditOverlay(BuildContext context) {
