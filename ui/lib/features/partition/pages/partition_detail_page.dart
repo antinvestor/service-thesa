@@ -67,40 +67,63 @@ class _PartitionDetailContent extends ConsumerWidget {
   final PartitionObject partition;
   final String partitionId;
 
+  /// Extract a property value from the partition's properties Struct.
+  String _prop(String key) {
+    if (!partition.hasProperties()) return '';
+    final fields = partition.properties.fields;
+    if (!fields.containsKey(key)) return '';
+    final v = fields[key]!;
+    if (v.hasStringValue()) return v.stringValue;
+    if (v.hasBoolValue()) return v.boolValue.toString();
+    return '';
+  }
+
+  String _nestedProp(String parent, String child) {
+    if (!partition.hasProperties()) return '';
+    final fields = partition.properties.fields;
+    if (!fields.containsKey(parent)) return '';
+    final v = fields[parent]!;
+    if (!v.hasStructValue()) return '';
+    final nested = v.structValue.fields;
+    if (!nested.containsKey(child)) return '';
+    final cv = nested[child]!;
+    if (cv.hasStringValue()) return cv.stringValue;
+    return '';
+  }
+
+  bool _boolProp(String key, {bool defaultValue = true}) {
+    if (!partition.hasProperties()) return defaultValue;
+    final fields = partition.properties.fields;
+    if (!fields.containsKey(key)) return defaultValue;
+    final v = fields[key]!;
+    if (v.hasBoolValue()) return v.boolValue;
+    if (v.hasStringValue()) return v.stringValue == 'true';
+    return defaultValue;
+  }
+
   Future<void> _editPartition(BuildContext context, WidgetRef ref) async {
-    final values = await showEditDialog(
+    final result = await showDialog<_EditPartitionResult>(
       context: context,
-      title: 'Edit ${partition.name}',
-      fields: [
-        DialogField(
-            key: 'name', label: 'Partition Name', initialValue: partition.name),
-        DialogField(
-          key: 'description',
-          label: 'Description',
-          initialValue: partition.description,
-          type: DialogFieldType.textarea,
-          maxLines: 3,
-        ),
-        DialogField(
-          key: 'state',
-          label: 'State',
-          initialValue: partition.state.name,
-          type: DialogFieldType.dropdown,
-          options: ['CREATED', 'ACTIVE', 'INACTIVE', 'DELETED'],
-        ),
-      ],
+      barrierDismissible: false,
+      builder: (ctx) => _EditPartitionDialog(
+        partition: partition,
+        allowAutoAccess: _boolProp('allow_auto_access'),
+        defaultRole: _prop('default_role'),
+        supportEmail: _nestedProp('support_contacts', 'email'),
+        supportPhone: _nestedProp('support_contacts', 'msisdn'),
+      ),
     );
-    if (values == null || !context.mounted) return;
+    if (result == null || !context.mounted) return;
 
     try {
       final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.updatePartition(
         id: partitionId,
-        name: values['name'],
-        description: values['description'],
-        state: STATE.values
-            .where((s) => s.name == values['state'])
-            .firstOrNull,
+        name: result.name,
+        description: result.description,
+        domain: result.domain,
+        state: result.state,
+        properties: result.toPropertiesStruct(),
       );
       ref.invalidate(partitionDetailProvider(partitionId));
       ref.invalidate(partitionsProvider);
@@ -207,191 +230,711 @@ class _OverviewTab extends ConsumerWidget {
 
   final PartitionObject partition;
 
+  String _prop(String key) {
+    if (!partition.hasProperties()) return '';
+    final fields = partition.properties.fields;
+    if (!fields.containsKey(key)) return '';
+    final v = fields[key]!;
+    if (v.hasStringValue()) return v.stringValue;
+    if (v.hasBoolValue()) return v.boolValue.toString();
+    return '';
+  }
+
+  String _nestedProp(String parent, String child) {
+    if (!partition.hasProperties()) return '';
+    final fields = partition.properties.fields;
+    if (!fields.containsKey(parent)) return '';
+    final v = fields[parent]!;
+    if (!v.hasStructValue()) return '';
+    final nested = v.structValue.fields;
+    if (!nested.containsKey(child)) return '';
+    final cv = nested[child]!;
+    if (cv.hasStringValue()) return cv.stringValue;
+    return '';
+  }
+
+  bool _boolProp(String key, {bool defaultValue = true}) {
+    if (!partition.hasProperties()) return defaultValue;
+    final fields = partition.properties.fields;
+    if (!fields.containsKey(key)) return defaultValue;
+    final v = fields[key]!;
+    if (v.hasBoolValue()) return v.boolValue;
+    if (v.hasStringValue()) return v.stringValue == 'true';
+    return defaultValue;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncTenant = ref.watch(tenantDetailProvider(partition.tenantId));
     final asyncPartitions = ref.watch(partitionsProvider);
+
+    final allowAutoAccess = _boolProp('allow_auto_access');
+    final defaultRole = _prop('default_role');
+    final supportEmail = _nestedProp('support_contacts', 'email');
+    final supportPhone = _nestedProp('support_contacts', 'msisdn');
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Partition details card
-          _InfoCard(
-            title: 'Partition Details',
-            rows: [
-              ('Name', partition.name),
-              ('Description', partition.description),
-              ('State', partition.state.name),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Tenant link card
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-              side: BorderSide(color: AppColors.border),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Tenant',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 12),
-                  asyncTenant.when(
-                    loading: () => const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2)),
-                    error: (_, __) => Text(partition.tenantId,
-                        style: const TextStyle(
-                            fontFamily: 'monospace', fontSize: 12)),
-                    data: (tenant) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.business_outlined,
-                          color: AppColors.tertiary),
-                      title: Text(tenant.name,
-                          style:
-                              const TextStyle(fontWeight: FontWeight.w500)),
-                      subtitle: Text(tenant.id,
-                          style: const TextStyle(
-                              fontFamily: 'monospace', fontSize: 11)),
-                      trailing: const Icon(Icons.chevron_right, size: 20),
-                      onTap: () => context.go(
-                          '/services/tenancy/tenants/${tenant.id}'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Parent partition link
-          if (partition.hasParentId()) ...[
-            const SizedBox(height: 16),
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: BorderSide(color: AppColors.border),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
+          // ── Row 1: Details + Configuration side by side ──
+          LayoutBuilder(builder: (context, constraints) {
+            final wide = constraints.maxWidth > 700;
+            final cards = [
+              // Partition details
+              _buildCard(
+                context,
+                title: 'Partition Details',
+                icon: Icons.info_outline,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Parent Partition',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall
-                            ?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 12),
-                    asyncPartitions.when(
-                      loading: () => const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child:
-                              CircularProgressIndicator(strokeWidth: 2)),
-                      error: (_, __) => Text(partition.parentId,
-                          style: const TextStyle(
-                              fontFamily: 'monospace', fontSize: 12)),
-                      data: (partitions) {
-                        final parent = partitions
-                            .where((p) => p.id == partition.parentId)
-                            .firstOrNull;
-                        if (parent == null) {
-                          return Text(partition.parentId,
-                              style: const TextStyle(
-                                  fontFamily: 'monospace', fontSize: 12));
-                        }
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(Icons.account_tree_outlined,
-                              color: AppColors.tertiary),
-                          title: Text(parent.name,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w500)),
-                          subtitle: Text(parent.id,
-                              style: const TextStyle(
-                                  fontFamily: 'monospace', fontSize: 11)),
-                          trailing:
-                              const Icon(Icons.chevron_right, size: 20),
-                          onTap: () => context.go(
-                              '/services/tenancy/partitions/${parent.id}'),
-                        );
-                      },
+                    _DetailRow(label: 'Name', value: partition.name),
+                    _DetailRow(
+                        label: 'Description',
+                        value: partition.description.isNotEmpty
+                            ? partition.description
+                            : '—'),
+                    if (partition.domain.isNotEmpty)
+                      _DetailRow(
+                        label: 'Domain',
+                        value: partition.domain,
+                        icon: Icons.language,
+                      ),
+                    _DetailRow(label: 'State', value: partition.state.name),
+                    if (partition.hasCreatedAt())
+                      _DetailRow(
+                        label: 'Created',
+                        value: DateFormat.yMMMd()
+                            .format(partition.createdAt.toDateTime()),
+                      ),
+                  ],
+                ),
+              ),
+              // Configuration card
+              _buildCard(
+                context,
+                title: 'Configuration',
+                icon: Icons.settings_outlined,
+                child: Column(
+                  children: [
+                    _BoolRow(
+                      label: 'Auto Access',
+                      value: allowAutoAccess,
+                      description: allowAutoAccess
+                          ? 'Users get access automatically on login'
+                          : 'Users must be granted access explicitly',
+                    ),
+                    _DetailRow(
+                      label: 'Default Role',
+                      value: defaultRole.isNotEmpty ? defaultRole : '—',
+                      icon: Icons.badge_outlined,
                     ),
                   ],
                 ),
               ),
+            ];
+            if (wide) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: cards[0]),
+                  const SizedBox(width: 16),
+                  Expanded(child: cards[1]),
+                ],
+              );
+            }
+            return Column(children: [
+              cards[0],
+              const SizedBox(height: 16),
+              cards[1],
+            ]);
+          }),
+          const SizedBox(height: 16),
+
+          // ── Support Contacts card ──
+          if (supportEmail.isNotEmpty || supportPhone.isNotEmpty)
+            _buildCard(
+              context,
+              title: 'Support Contacts',
+              icon: Icons.support_agent_outlined,
+              child: Column(
+                children: [
+                  if (supportEmail.isNotEmpty)
+                    _DetailRow(
+                      label: 'Email',
+                      value: supportEmail,
+                      icon: Icons.email_outlined,
+                    ),
+                  if (supportPhone.isNotEmpty)
+                    _DetailRow(
+                      label: 'Phone',
+                      value: supportPhone,
+                      icon: Icons.phone_outlined,
+                    ),
+                ],
+              ),
+            ),
+          if (supportEmail.isNotEmpty || supportPhone.isNotEmpty)
+            const SizedBox(height: 16),
+
+          // ── Tenant link ──
+          _buildCard(
+            context,
+            title: 'Tenant',
+            icon: Icons.business_outlined,
+            child: asyncTenant.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(8),
+                child: Center(
+                    child: SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2))),
+              ),
+              error: (_, __) => _DetailRow(
+                  label: 'Tenant ID', value: partition.tenantId),
+              data: (tenant) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading:
+                    Icon(Icons.business_outlined, color: AppColors.tertiary),
+                title: Text(tenant.name,
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
+                subtitle: Text(tenant.id,
+                    style: const TextStyle(
+                        fontFamily: 'monospace', fontSize: 11)),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () =>
+                    context.go('/services/tenancy/tenants/${tenant.id}'),
+              ),
+            ),
+          ),
+
+          // ── Parent partition link ──
+          if (partition.hasParentId()) ...[
+            const SizedBox(height: 16),
+            _buildCard(
+              context,
+              title: 'Parent Partition',
+              icon: Icons.account_tree_outlined,
+              child: asyncPartitions.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Center(
+                      child: SizedBox(
+                          height: 20,
+                          width: 20,
+                          child:
+                              CircularProgressIndicator(strokeWidth: 2))),
+                ),
+                error: (_, __) => _DetailRow(
+                    label: 'Parent ID', value: partition.parentId),
+                data: (partitions) {
+                  final parent = partitions
+                      .where((p) => p.id == partition.parentId)
+                      .firstOrNull;
+                  if (parent == null) {
+                    return _DetailRow(
+                        label: 'Parent ID', value: partition.parentId);
+                  }
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.account_tree_outlined,
+                        color: AppColors.tertiary),
+                    title: Text(parent.name,
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    subtitle: Text(parent.id,
+                        style: const TextStyle(
+                            fontFamily: 'monospace', fontSize: 11)),
+                    trailing: const Icon(Icons.chevron_right, size: 20),
+                    onTap: () => context
+                        .go('/services/tenancy/partitions/${parent.id}'),
+                  );
+                },
+              ),
             ),
           ],
 
-          // Sibling / related partitions
+          // ── Related partitions ──
           const SizedBox(height: 16),
           asyncPartitions.when(
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
             data: (allPartitions) {
+              final children = allPartitions
+                  .where((p) => p.parentId == partition.id)
+                  .toList();
               final siblings = allPartitions
                   .where((p) =>
                       p.tenantId == partition.tenantId &&
-                      p.id != partition.id)
+                      p.id != partition.id &&
+                      p.parentId != partition.id)
                   .toList();
-              if (siblings.isEmpty) return const SizedBox.shrink();
-              return Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(color: AppColors.border),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Related Partitions',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 8),
-                      for (final sibling in siblings)
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          leading: Icon(
-                            sibling.parentId == partition.id
-                                ? Icons.subdirectory_arrow_right
-                                : Icons.account_tree_outlined,
-                            size: 18,
-                            color: AppColors.tertiary,
-                          ),
-                          title: Text(sibling.name,
-                              style: const TextStyle(fontSize: 14)),
-                          subtitle: Text(sibling.id,
-                              style: const TextStyle(
-                                  fontFamily: 'monospace', fontSize: 11)),
-                          trailing: StateBadge(sibling.state),
-                          onTap: () => context.go(
-                              '/services/tenancy/partitions/${sibling.id}'),
-                        ),
+              if (children.isEmpty && siblings.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return _buildCard(
+                context,
+                title: 'Related Partitions',
+                icon: Icons.account_tree_outlined,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (children.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text('Child Partitions',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.onSurfaceMuted)),
+                      ),
+                      for (final child in children)
+                        _PartitionLink(partition: child),
+                      if (siblings.isNotEmpty) const Divider(height: 20),
                     ],
-                  ),
+                    if (siblings.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text('Other Partitions',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.onSurfaceMuted)),
+                      ),
+                      for (final sib in siblings)
+                        _PartitionLink(partition: sib),
+                    ],
+                  ],
                 ),
               );
             },
           ),
+
+          // ── Raw Properties (for advanced users) ──
+          if (partition.hasProperties() &&
+              partition.properties.fields.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildCard(
+              context,
+              title: 'All Properties',
+              icon: Icons.data_object,
+              child: Column(
+                children: [
+                  for (final entry in partition.properties.fields.entries)
+                    _DetailRow(
+                      label: entry.key,
+                      value: _formatValue(entry.value),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  String _formatValue(Value v) {
+    if (v.hasStringValue()) return v.stringValue;
+    if (v.hasBoolValue()) return v.boolValue ? 'true' : 'false';
+    if (v.hasNumberValue()) return v.numberValue.toString();
+    if (v.hasStructValue()) {
+      return v.structValue.fields.entries
+          .map((e) => '${e.key}: ${_formatValue(e.value)}')
+          .join(', ');
+    }
+    return '—';
+  }
+
+  Widget _buildCard(BuildContext context,
+      {required String title,
+      required IconData icon,
+      required Widget child}) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: AppColors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 18, color: AppColors.tertiary),
+                const SizedBox(width: 8),
+                Text(title,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w600)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.label, required this.value, this.icon});
+
+  final String label;
+  final String value;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(label,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+          ),
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: AppColors.onSurfaceMuted),
+            const SizedBox(width: 4),
+          ],
+          Expanded(
+            child: Text(value,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(fontWeight: FontWeight.w500)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BoolRow extends StatelessWidget {
+  const _BoolRow(
+      {required this.label, required this.value, this.description});
+
+  final String label;
+  final bool value;
+  final String? description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(label,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+          ),
+          Icon(
+            value ? Icons.check_circle : Icons.cancel,
+            size: 16,
+            color: value ? AppColors.success : AppColors.onSurfaceMuted,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(value ? 'Enabled' : 'Disabled',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(fontWeight: FontWeight.w500)),
+                if (description != null)
+                  Text(description!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: 11, color: AppColors.onSurfaceMuted)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PartitionLink extends StatelessWidget {
+  const _PartitionLink({required this.partition});
+  final PartitionObject partition;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      leading: Icon(Icons.account_tree_outlined,
+          size: 18, color: AppColors.tertiary),
+      title: Text(partition.name, style: const TextStyle(fontSize: 14)),
+      subtitle: Text(partition.id,
+          style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
+      trailing: StateBadge(partition.state),
+      onTap: () =>
+          context.go('/services/tenancy/partitions/${partition.id}'),
+    );
+  }
+}
+
+// ─── Edit Partition Dialog ───────────────────────────────────────────────────
+
+class _EditPartitionResult {
+  const _EditPartitionResult({
+    required this.name,
+    required this.description,
+    this.domain,
+    this.state,
+    required this.allowAutoAccess,
+    this.defaultRole = '',
+    this.supportEmail = '',
+    this.supportPhone = '',
+  });
+
+  final String name;
+  final String description;
+  final String? domain;
+  final STATE? state;
+  final bool allowAutoAccess;
+  final String defaultRole;
+  final String supportEmail;
+  final String supportPhone;
+
+  Struct? toPropertiesStruct() {
+    final fields = <String, Value>{};
+    fields['allow_auto_access'] = Value(boolValue: allowAutoAccess);
+    if (defaultRole.isNotEmpty) {
+      fields['default_role'] = Value(stringValue: defaultRole);
+    }
+    final contactFields = <String, Value>{};
+    if (supportEmail.isNotEmpty) {
+      contactFields['email'] = Value(stringValue: supportEmail);
+    }
+    if (supportPhone.isNotEmpty) {
+      contactFields['msisdn'] = Value(stringValue: supportPhone);
+    }
+    if (contactFields.isNotEmpty) {
+      fields['support_contacts'] =
+          Value(structValue: Struct(fields: contactFields));
+    }
+    if (fields.isEmpty) return null;
+    return Struct(fields: fields);
+  }
+}
+
+class _EditPartitionDialog extends StatefulWidget {
+  const _EditPartitionDialog({
+    required this.partition,
+    required this.allowAutoAccess,
+    required this.defaultRole,
+    required this.supportEmail,
+    required this.supportPhone,
+  });
+
+  final PartitionObject partition;
+  final bool allowAutoAccess;
+  final String defaultRole;
+  final String supportEmail;
+  final String supportPhone;
+
+  @override
+  State<_EditPartitionDialog> createState() => _EditPartitionDialogState();
+}
+
+class _EditPartitionDialogState extends State<_EditPartitionDialog> {
+  late final TextEditingController _nameCtl;
+  late final TextEditingController _descCtl;
+  late final TextEditingController _domainCtl;
+  late final TextEditingController _roleCtl;
+  late final TextEditingController _emailCtl;
+  late final TextEditingController _phoneCtl;
+  late String _state;
+  late bool _autoAccess;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtl = TextEditingController(text: widget.partition.name);
+    _descCtl = TextEditingController(text: widget.partition.description);
+    _domainCtl = TextEditingController(text: widget.partition.domain);
+    _roleCtl = TextEditingController(text: widget.defaultRole);
+    _emailCtl = TextEditingController(text: widget.supportEmail);
+    _phoneCtl = TextEditingController(text: widget.supportPhone);
+    _state = widget.partition.state.name;
+    _autoAccess = widget.allowAutoAccess;
+  }
+
+  @override
+  void dispose() {
+    _nameCtl.dispose();
+    _descCtl.dispose();
+    _domainCtl.dispose();
+    _roleCtl.dispose();
+    _emailCtl.dispose();
+    _phoneCtl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Edit ${widget.partition.name}'),
+      content: SizedBox(
+        width: 500,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Basic ──
+              Text('Basic Information',
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelLarge
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _nameCtl,
+                decoration: const InputDecoration(labelText: 'Partition Name'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _descCtl,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  alignLabelWithHint: true,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _domainCtl,
+                decoration: const InputDecoration(
+                  labelText: 'Custom Domain',
+                  hintText: 'e.g. app.example.com',
+                  prefixIcon: Icon(Icons.language, size: 20),
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _state,
+                decoration: const InputDecoration(labelText: 'State'),
+                items: ['CREATED', 'ACTIVE', 'INACTIVE', 'DELETED']
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) setState(() => _state = v);
+                },
+              ),
+
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 12),
+
+              // ── Configuration ──
+              Text('Configuration',
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelLarge
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                title: const Text('Allow Auto Access'),
+                subtitle: const Text(
+                  'Grant access to users automatically on login',
+                  style: TextStyle(fontSize: 12),
+                ),
+                value: _autoAccess,
+                onChanged: (v) => setState(() => _autoAccess = v),
+                contentPadding: EdgeInsets.zero,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _roleCtl,
+                decoration: const InputDecoration(
+                  labelText: 'Default Role',
+                  hintText: 'e.g. user, member',
+                  prefixIcon: Icon(Icons.badge_outlined, size: 20),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 12),
+
+              // ── Support ──
+              Text('Support Contacts',
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelLarge
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _emailCtl,
+                decoration: const InputDecoration(
+                  labelText: 'Support Email',
+                  prefixIcon: Icon(Icons.email_outlined, size: 20),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _phoneCtl,
+                decoration: const InputDecoration(
+                  labelText: 'Support Phone',
+                  prefixIcon: Icon(Icons.phone_outlined, size: 20),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).pop(_EditPartitionResult(
+              name: _nameCtl.text.trim(),
+              description: _descCtl.text.trim(),
+              domain: _domainCtl.text.trim().isNotEmpty
+                  ? _domainCtl.text.trim()
+                  : null,
+              state: STATE.values
+                  .where((s) => s.name == _state)
+                  .firstOrNull,
+              allowAutoAccess: _autoAccess,
+              defaultRole: _roleCtl.text.trim(),
+              supportEmail: _emailCtl.text.trim(),
+              supportPhone: _phoneCtl.text.trim(),
+            ));
+          },
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }
@@ -1165,62 +1708,6 @@ class _PlaceholderTab extends StatelessWidget {
                   .bodySmall
                   ?.copyWith(color: AppColors.onSurfaceMuted)),
         ],
-      ),
-    );
-  }
-}
-
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.title, required this.rows});
-
-  final String title;
-  final List<(String, String)> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: AppColors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 16),
-            for (final (label, value) in rows)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 120,
-                      child: Text(label,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: AppColors.onSurfaceMuted)),
-                    ),
-                    Expanded(
-                      child: Text(value,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(fontWeight: FontWeight.w500)),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
       ),
     );
   }

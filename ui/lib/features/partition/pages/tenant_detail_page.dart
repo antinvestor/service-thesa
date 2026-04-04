@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/edit_dialog.dart';
 import '../../../core/widgets/page_header.dart';
 import '../data/partition_providers.dart';
 import '../data/partition_repository.dart';
@@ -59,56 +58,22 @@ class _TenantDetailContent extends ConsumerWidget {
   final String tenantId;
 
   Future<void> _editTenant(BuildContext context, WidgetRef ref) async {
-    final envName = switch (tenant.environment) {
-      TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION => 'Production',
-      TenantEnvironment.TENANT_ENVIRONMENT_STAGING => 'Staging',
-      _ => 'Production',
-    };
-    final values = await showEditDialog(
+    final result = await showDialog<_EditTenantResult>(
       context: context,
-      title: 'Edit ${tenant.name}',
-      fields: [
-        DialogField(
-            key: 'name', label: 'Tenant Name', initialValue: tenant.name),
-        DialogField(
-          key: 'description',
-          label: 'Description',
-          initialValue: tenant.description,
-          type: DialogFieldType.textarea,
-          maxLines: 3,
-        ),
-        DialogField(
-          key: 'environment',
-          label: 'Environment',
-          initialValue: envName,
-          type: DialogFieldType.dropdown,
-          options: const ['Production', 'Staging'],
-        ),
-        DialogField(
-          key: 'state',
-          label: 'State',
-          initialValue: tenant.state.name,
-          type: DialogFieldType.dropdown,
-          options: const ['CREATED', 'ACTIVE', 'INACTIVE', 'DELETED'],
-        ),
-      ],
+      barrierDismissible: false,
+      builder: (ctx) => _EditTenantDialog(tenant: tenant),
     );
-    if (values == null || !context.mounted) return;
+    if (result == null || !context.mounted) return;
 
     try {
-      final envStr = values['environment'] ?? 'Production';
-      final environment = envStr == 'Staging'
-          ? TenantEnvironment.TENANT_ENVIRONMENT_STAGING
-          : TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION;
       final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.updateTenant(
         id: tenantId,
-        name: values['name'],
-        description: values['description'],
-        environment: environment,
-        state: STATE.values
-            .where((s) => s.name == values['state'])
-            .firstOrNull,
+        name: result.name,
+        description: result.description,
+        environment: result.environment,
+        state: result.state,
+        properties: result.toPropertiesStruct(),
       );
       ref.invalidate(tenantDetailProvider(tenantId));
       ref.invalidate(tenantsProvider);
@@ -210,64 +175,376 @@ class _OverviewTab extends StatelessWidget {
 
   final TenantObject tenant;
 
+  String _envLabel() => switch (tenant.environment) {
+        TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION => 'Production',
+        TenantEnvironment.TENANT_ENVIRONMENT_STAGING => 'Staging',
+        _ => 'Unspecified',
+      };
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: AppColors.border),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tenant Details card
+          _buildCard(
+            context,
+            title: 'Tenant Details',
+            icon: Icons.business_outlined,
+            child: Column(
+              children: [
+                _TenantDetailRow(label: 'Name', value: tenant.name),
+                _TenantDetailRow(
+                  label: 'Description',
+                  value: tenant.description.isNotEmpty
+                      ? tenant.description
+                      : '—',
+                ),
+                _TenantDetailRow(
+                  label: 'Environment',
+                  value: _envLabel(),
+                  icon: tenant.environment ==
+                          TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION
+                      ? Icons.cloud_done_outlined
+                      : Icons.science_outlined,
+                ),
+                _TenantDetailRow(label: 'State', value: tenant.state.name),
+                if (tenant.hasCreatedAt())
+                  _TenantDetailRow(
+                    label: 'Created',
+                    value: DateFormat.yMMMd()
+                        .format(tenant.createdAt.toDateTime()),
+                  ),
+              ],
+            ),
+          ),
+
+          // Properties card (if any)
+          if (tenant.hasProperties() &&
+              tenant.properties.fields.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildCard(
+              context,
+              title: 'Properties',
+              icon: Icons.data_object,
+              child: Column(
+                children: [
+                  for (final entry in tenant.properties.fields.entries)
+                    _TenantDetailRow(
+                      label: entry.key,
+                      value: _formatValue(entry.value),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatValue(Value v) {
+    if (v.hasStringValue()) return v.stringValue;
+    if (v.hasBoolValue()) return v.boolValue ? 'true' : 'false';
+    if (v.hasNumberValue()) return v.numberValue.toString();
+    if (v.hasStructValue()) {
+      return v.structValue.fields.entries
+          .map((e) => '${e.key}: ${_formatValue(e.value)}')
+          .join(', ');
+    }
+    return '—';
+  }
+
+  Widget _buildCard(BuildContext context,
+      {required String title,
+      required IconData icon,
+      required Widget child}) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: AppColors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 18, color: AppColors.tertiary),
+                const SizedBox(width: 8),
+                Text(title,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w600)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            child,
+          ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+      ),
+    );
+  }
+}
+
+class _TenantDetailRow extends StatelessWidget {
+  const _TenantDetailRow({required this.label, required this.value, this.icon});
+
+  final String label;
+  final String value;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(label,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+          ),
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: AppColors.onSurfaceMuted),
+            const SizedBox(width: 4),
+          ],
+          Expanded(
+            child: Text(value,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(fontWeight: FontWeight.w500)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Edit Tenant Dialog ──────────────────────────────────────────────────────
+
+class _EditTenantResult {
+  const _EditTenantResult({
+    required this.name,
+    required this.description,
+    required this.environment,
+    this.state,
+    this.properties,
+  });
+
+  final String name;
+  final String description;
+  final TenantEnvironment environment;
+  final STATE? state;
+  final Map<String, String>? properties;
+
+  Struct? toPropertiesStruct() {
+    if (properties == null || properties!.isEmpty) return null;
+    final fields = <String, Value>{};
+    for (final entry in properties!.entries) {
+      if (entry.value.isNotEmpty) {
+        fields[entry.key] = Value(stringValue: entry.value);
+      }
+    }
+    if (fields.isEmpty) return null;
+    return Struct(fields: fields);
+  }
+}
+
+class _EditTenantDialog extends StatefulWidget {
+  const _EditTenantDialog({required this.tenant});
+  final TenantObject tenant;
+
+  @override
+  State<_EditTenantDialog> createState() => _EditTenantDialogState();
+}
+
+class _EditTenantDialogState extends State<_EditTenantDialog> {
+  late final TextEditingController _nameCtl;
+  late final TextEditingController _descCtl;
+  late String _env;
+  late String _state;
+  final _propControllers = <String, TextEditingController>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtl = TextEditingController(text: widget.tenant.name);
+    _descCtl = TextEditingController(text: widget.tenant.description);
+    _env = switch (widget.tenant.environment) {
+      TenantEnvironment.TENANT_ENVIRONMENT_STAGING => 'Staging',
+      _ => 'Production',
+    };
+    _state = widget.tenant.state.name;
+
+    // Initialize property controllers from existing properties
+    if (widget.tenant.hasProperties()) {
+      for (final entry in widget.tenant.properties.fields.entries) {
+        _propControllers[entry.key] = TextEditingController(
+            text: _valueToString(entry.value));
+      }
+    }
+  }
+
+  String _valueToString(Value v) {
+    if (v.hasStringValue()) return v.stringValue;
+    if (v.hasBoolValue()) return v.boolValue.toString();
+    if (v.hasNumberValue()) return v.numberValue.toString();
+    if (v.hasStructValue()) {
+      return v.structValue.fields.entries
+          .map((e) => '${e.key}: ${_valueToString(e.value)}')
+          .join(', ');
+    }
+    return '';
+  }
+
+  @override
+  void dispose() {
+    _nameCtl.dispose();
+    _descCtl.dispose();
+    for (final c in _propControllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _addProperty() {
+    final key = 'property_${_propControllers.length + 1}';
+    setState(() {
+      _propControllers[key] = TextEditingController();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Edit ${widget.tenant.name}'),
+      content: SizedBox(
+        width: 500,
+        child: SingleChildScrollView(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Tenant Details',
+              Text('Basic Information',
                   style: Theme.of(context)
                       .textTheme
-                      .titleSmall
+                      .labelLarge
                       ?.copyWith(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 16),
-              for (final (label, value) in [
-                ('Name', tenant.name),
-                ('Description', tenant.description),
-                ('Environment', switch (tenant.environment) {
-                  TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION => 'Production',
-                  TenantEnvironment.TENANT_ENVIRONMENT_STAGING => 'Staging',
-                  _ => 'Unspecified',
-                }),
-                ('State', tenant.state.name),
-              ])
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 120,
-                        child: Text(label,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: AppColors.onSurfaceMuted)),
-                      ),
-                      Expanded(
-                        child: Text(value,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(fontWeight: FontWeight.w500)),
-                      ),
-                    ],
-                  ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _nameCtl,
+                decoration: const InputDecoration(labelText: 'Tenant Name'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _descCtl,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  alignLabelWithHint: true,
                 ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _env,
+                decoration: const InputDecoration(labelText: 'Environment'),
+                items: ['Production', 'Staging']
+                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) setState(() => _env = v);
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _state,
+                decoration: const InputDecoration(labelText: 'State'),
+                items: ['CREATED', 'ACTIVE', 'INACTIVE', 'DELETED']
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) setState(() => _state = v);
+                },
+              ),
+
+              if (_propControllers.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
+                Text('Properties',
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelLarge
+                        ?.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                for (final entry in _propControllers.entries) ...[
+                  TextField(
+                    controller: entry.value,
+                    decoration: InputDecoration(
+                      labelText: entry.key,
+                      suffixIcon: IconButton(
+                        icon: Icon(Icons.close, size: 16,
+                            color: AppColors.error),
+                        onPressed: () {
+                          setState(() {
+                            _propControllers.remove(entry.key);
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ],
+
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: _addProperty,
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Add Property'),
+              ),
             ],
           ),
         ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final env = _env == 'Staging'
+                ? TenantEnvironment.TENANT_ENVIRONMENT_STAGING
+                : TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION;
+            final props = <String, String>{};
+            for (final entry in _propControllers.entries) {
+              props[entry.key] = entry.value.text.trim();
+            }
+            Navigator.of(context).pop(_EditTenantResult(
+              name: _nameCtl.text.trim(),
+              description: _descCtl.text.trim(),
+              environment: env,
+              state: STATE.values
+                  .where((s) => s.name == _state)
+                  .firstOrNull,
+              properties: props.isNotEmpty ? props : null,
+            ));
+          },
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }
