@@ -280,13 +280,22 @@ class _PartitionsTab extends ConsumerWidget {
   final String tenantId;
   final AsyncValue<List<PartitionObject>> partitions;
 
-  Future<void> _createPartition(BuildContext context, WidgetRef ref) async {
+  Future<void> _createPartition(
+      BuildContext context, WidgetRef ref, List<PartitionObject> existing) async {
+    final parentOptions = existing.map((p) => p.name).toList();
     final values = await showEditDialog(
       context: context,
       title: 'New Partition',
       saveLabel: 'Create',
       fields: [
         const DialogField(key: 'name', label: 'Partition Name'),
+        if (parentOptions.isNotEmpty)
+          DialogField(
+            key: 'parent',
+            label: 'Parent Partition (optional)',
+            type: DialogFieldType.dropdown,
+            options: parentOptions,
+          ),
         const DialogField(
           key: 'description',
           label: 'Description',
@@ -298,10 +307,15 @@ class _PartitionsTab extends ConsumerWidget {
     if (values == null || !context.mounted) return;
 
     try {
+      final parentName = values['parent'] ?? '';
+      final parentPartition = parentName.isNotEmpty
+          ? existing.where((p) => p.name == parentName).firstOrNull
+          : null;
       final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.createPartition(
         tenantId: tenantId,
         name: values['name'] ?? '',
+        parentId: parentPartition?.id,
         description: values['description'] ?? '',
       );
       ref.invalidate(partitionsProvider);
@@ -336,7 +350,7 @@ class _PartitionsTab extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () => _createPartition(context, ref),
+                    onPressed: () => _createPartition(context, ref, filtered),
                     icon: const Icon(Icons.add, size: 18),
                     label: const Text('New Partition'),
                   ),
