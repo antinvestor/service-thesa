@@ -272,7 +272,8 @@ func NewTestHarness(t *testing.T, opts ...HarnessOption) *TestHarness {
 			CORS: config.CORSConfig{
 				AllowedOrigins: []string{"http://localhost:3000"},
 				AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-				AllowedHeaders: []string{"Authorization", "Content-Type", "X-Partition-Id",
+				AllowedHeaders: []string{"Authorization", "Content-Type",
+					"X-Tenant-Id", "X-Partition-Id", "X-Access-Id",
 					"X-Correlation-Id", "X-Idempotency-Key"},
 				MaxAge: 86400,
 			},

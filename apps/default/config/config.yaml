@@ -20,7 +20,9 @@ server:
     allowed_headers:
       - Authorization
       - Content-Type
+      - X-Tenant-Id
       - X-Partition-Id
+      - X-Access-Id
       - X-Correlation-Id
       - X-Idempotency-Key
     max_age: 86400

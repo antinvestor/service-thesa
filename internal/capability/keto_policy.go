@@ -38,9 +38,17 @@ func NewKetoPolicyEvaluator(authorizer security.Authorizer, checks []CapabilityC
 	}
 }
 
+// InternalSystemRole is the role granted to root-tenant admin/owner users.
+// Users with this role are trusted for cross-tenant operations and receive
+// all capabilities without Keto evaluation.
+const InternalSystemRole = "internal"
+
 // ResolveCapabilities checks all known capabilities for the user via BatchCheck.
 // Each check goes through Keto's full OPL evaluation, so role-based and
 // computed permissions are correctly resolved.
+//
+// Users with the "internal" role (root-tenant owners/admins) are granted all
+// capabilities unconditionally, enabling cross-tenant administration.
 //
 // Capability strings use colons (e.g. "tenants:view") but Keto OPL relations
 // use underscores (e.g. "tenants_view"). The evaluator handles this mapping
@@ -51,6 +59,22 @@ func (e *KetoPolicyEvaluator) ResolveCapabilities(ctx context.Context, rctx *mod
 	if len(e.checks) == 0 {
 		log.Warn("capability: no checks configured, returning empty capabilities")
 		return make(model.CapabilitySet), nil
+	}
+
+	// Internal system users (root-tenant owners/admins) get all capabilities.
+	// This aligns with Frame's security model where the "internal" role
+	// enables cross-tenant impersonation via EnrichTenancyClaims.
+	if rctx.HasRole(InternalSystemRole) {
+		caps := make(model.CapabilitySet, len(e.checks))
+		for _, chk := range e.checks {
+			caps[chk.Capability] = true
+		}
+		log.Debug("capability: internal system user, granting all capabilities",
+			"subject_id", rctx.SubjectID,
+			"tenancy_path", rctx.TenantID+"/"+rctx.PartitionID,
+			"granted", len(caps),
+		)
+		return caps, nil
 	}
 
 	subject := security.SubjectRef{

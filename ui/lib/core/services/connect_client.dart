@@ -1,4 +1,5 @@
 import 'package:antinvestor_api_common/antinvestor_api_common.dart';
+import 'package:connectrpc/connect.dart' as connect;
 import 'package:antinvestor_api_device/antinvestor_api_device.dart';
 import 'package:antinvestor_api_ledger/antinvestor_api_ledger.dart';
 import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
@@ -15,6 +16,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/data/auth_service.dart' as auth;
 import 'api_config.dart';
+import 'tenant_context.dart';
+import 'tenant_interceptor.dart';
 import 'transport/transport.dart';
 
 // ─── Token Manager ───────────────────────────────────────────────────────────
@@ -89,6 +92,28 @@ final tokenRefreshCallbackProvider =
   };
 });
 
+// ─── Tenant Context Interceptor ──────────────────────────────────────────────
+
+/// Provides a Connect RPC interceptor that injects tenant override headers
+/// when the effective tenant context differs from the JWT default.
+/// This enables cross-tenant administration for "internal" role users.
+final tenantInterceptorProvider =
+    Provider<List<connect.Interceptor>>((ref) {
+  final jwt = ref.watch(jwtTenantContextProvider);
+  final jwtCtx = jwt.whenOrNull(data: (ctx) => ctx) ??
+      const TenantContext(tenantId: '', partitionId: '');
+
+  // Only create the interceptor for internal users who can switch tenants.
+  if (!jwtCtx.isInternal) return const [];
+
+  return [
+    tenantContextInterceptor(
+      getEffectiveContext: () => ref.read(effectiveTenantProvider),
+      getJwtContext: () => jwtCtx,
+    ),
+  ];
+});
+
 // ─── Partition Client ────────────────────────────────────────────────────────
 
 /// Partition API client provider.
@@ -99,6 +124,7 @@ final tenancyClientProvider =
     FutureProvider<TenancyClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
 
   await tokenManager.initialize();
 
@@ -107,6 +133,7 @@ final tenancyClientProvider =
     endpoint: ApiConfig.tenancyBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
+    additionalInterceptors: tenantInterceptors,
   );
 });
 
@@ -124,6 +151,7 @@ final profileClientProvider =
     FutureProvider<ProfileClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
 
   await tokenManager.initialize();
 
@@ -132,6 +160,7 @@ final profileClientProvider =
     endpoint: ApiConfig.profileBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
+    additionalInterceptors: tenantInterceptors,
   );
 });
 
@@ -149,6 +178,7 @@ final deviceClientProvider =
     FutureProvider<DeviceClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
 
   await tokenManager.initialize();
 
@@ -157,6 +187,7 @@ final deviceClientProvider =
     endpoint: ApiConfig.deviceBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
+    additionalInterceptors: tenantInterceptors,
   );
 });
 
@@ -173,6 +204,7 @@ final notificationClientProvider =
     FutureProvider<ConnectClientBase<NotificationServiceClient>>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   await tokenManager.initialize();
   return newClient<NotificationServiceClient>(
     defaultEndpoint: 'https://notification.antinvestor.com',
@@ -181,6 +213,7 @@ final notificationClientProvider =
     endpoint: ApiConfig.notificationBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
+    additionalInterceptors: tenantInterceptors,
   );
 });
 
@@ -196,12 +229,14 @@ final paymentClientProvider =
     FutureProvider<PaymentClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   await tokenManager.initialize();
   return newPaymentClient(
     createTransport: createTransportFactory(),
     endpoint: ApiConfig.paymentBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
+    additionalInterceptors: tenantInterceptors,
   );
 });
 
@@ -217,12 +252,14 @@ final ledgerClientProvider =
     FutureProvider<LedgerClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   await tokenManager.initialize();
   return newLedgerClient(
     createTransport: createTransportFactory(),
     endpoint: ApiConfig.ledgerBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
+    additionalInterceptors: tenantInterceptors,
   );
 });
 
@@ -238,12 +275,14 @@ final settingsClientProvider =
     FutureProvider<SettingsClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   await tokenManager.initialize();
   return newSettingsClient(
     createTransport: createTransportFactory(),
     endpoint: ApiConfig.settingsBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
+    additionalInterceptors: tenantInterceptors,
   );
 });
 

@@ -28,6 +28,10 @@ class TenantContext {
   /// Whether the user has admin or owner role.
   bool get isAdmin => roles.contains('admin') || isOwner;
 
+  /// Whether the user has the "internal" role (root-tenant owner/admin).
+  /// Internal users can switch tenant context for cross-tenant administration.
+  bool get isInternal => roles.contains('internal');
+
   TenantContext copyWith({
     String? tenantId,
     String? partitionId,
