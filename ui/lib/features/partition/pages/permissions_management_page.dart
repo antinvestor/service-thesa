@@ -1,3 +1,4 @@
+import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,12 +6,12 @@ import '../../../core/theme/app_colors.dart';
 import '../../profile/data/profile_repository.dart';
 import '../data/partition_providers.dart';
 import '../data/partition_repository.dart';
-import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 
 /// Permissions tab content for the partition detail page.
 ///
-/// Displays registered service namespaces, their permissions, role bindings,
-/// and allows granting/revoking individual permissions to profiles.
+/// Shows registered service namespaces and their role bindings. The "Manage
+/// Permissions" button opens a full-screen dialog where the admin picks a
+/// profile and then toggles individual permissions across all namespaces.
 class PermissionsTab extends ConsumerWidget {
   const PermissionsTab({super.key});
 
@@ -51,9 +52,11 @@ class PermissionsTab extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${namespaces.length} service namespace${namespaces.length == 1 ? '' : 's'}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.onSurfaceMuted),
+                  '${namespaces.length} service namespace${namespaces.length == 1 ? '' : 's'} registered',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: AppColors.onSurfaceMuted),
                 ),
                 Row(
                   children: [
@@ -65,9 +68,10 @@ class PermissionsTab extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
-                      onPressed: () => _showGrantDialog(context, ref, namespaces),
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Grant Permission'),
+                      onPressed: () => _openPermissionManager(
+                          context, ref, namespaces),
+                      icon: const Icon(Icons.security, size: 18),
+                      label: const Text('Manage Permissions'),
                     ),
                   ],
                 ),
@@ -85,7 +89,8 @@ class PermissionsTab extends ConsumerWidget {
                     SizedBox(height: 12),
                     Text('No service namespaces registered'),
                     SizedBox(height: 8),
-                    Text('Service namespaces appear when services register '
+                    Text(
+                        'Namespaces appear when services start and register '
                         'their permissions.'),
                   ],
                 ),
@@ -96,10 +101,8 @@ class PermissionsTab extends ConsumerWidget {
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: namespaces.length,
-                itemBuilder: (context, index) {
-                  final ns = namespaces[index];
-                  return _NamespaceCard(namespace: ns);
-                },
+                itemBuilder: (context, index) =>
+                    _NamespaceCard(namespace: namespaces[index]),
               ),
             ),
         ],
@@ -107,54 +110,33 @@ class PermissionsTab extends ConsumerWidget {
     );
   }
 
-  Future<void> _showGrantDialog(
+  void _openPermissionManager(
     BuildContext context,
     WidgetRef ref,
     List<ServiceNamespaceObject> namespaces,
-  ) async {
-    final result = await showDialog<_PermissionActionResult>(
-      context: context,
-      builder: (ctx) => _PermissionActionDialog(
-        namespaces: namespaces,
-        action: _PermissionAction.grant,
-        ref: ref,
-      ),
-    );
-    if (result == null || !context.mounted) return;
-
-    try {
-      final repo = await ref.read(partitionRepositoryProvider.future);
-      await repo.grantPermission(
-        namespace: result.namespace,
-        permission: result.permission,
-        profileId: result.profileId,
-      );
-      ref.invalidate(serviceNamespacesProvider);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  'Granted ${result.permission} to ${result.profileId}')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
-    }
+  ) {
+    Navigator.of(context).push(MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => _PermissionManagerPage(namespaces: namespaces, ref: ref),
+    ));
   }
 }
 
-// ─── Namespace Card ─────────────────────────────────────────────────────────
+// ─── Namespace Card (read-only overview) ────────────────────────────────────
 
-class _NamespaceCard extends ConsumerWidget {
+class _NamespaceCard extends StatelessWidget {
   const _NamespaceCard({required this.namespace});
-
   final ServiceNamespaceObject namespace;
 
+  String get _displayName {
+    final name = namespace.namespace.replaceFirst('service_', '');
+    return name.isNotEmpty
+        ? '${name[0].toUpperCase()}${name.substring(1)}'
+        : namespace.namespace;
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
@@ -164,14 +146,13 @@ class _NamespaceCard extends ConsumerWidget {
       ),
       child: ExpansionTile(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+            borderRadius: BorderRadius.circular(10)),
         leading: Icon(Icons.extension_outlined,
             size: 20, color: AppColors.tertiary),
-        title: Text(namespace.namespace,
+        title: Text(_displayName,
             style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(
-          '${namespace.permissions.length} permission${namespace.permissions.length == 1 ? '' : 's'}',
+          '${namespace.permissions.length} permissions',
           style: TextStyle(fontSize: 12, color: AppColors.onSurfaceMuted),
         ),
         children: [
@@ -180,26 +161,26 @@ class _NamespaceCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Available permissions
-                _SectionLabel('Available Permissions'),
+                _SectionLabel('Permissions'),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 6,
-                  children: namespace.permissions.map((p) {
-                    return Chip(
-                      label: Text(p, style: const TextStyle(fontSize: 12)),
-                      backgroundColor:
-                          AppColors.tertiary.withValues(alpha: 0.08),
-                      side: BorderSide(
-                          color: AppColors.tertiary.withValues(alpha: 0.2)),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                    );
-                  }).toList(),
+                  children: namespace.permissions
+                      .map((p) => Chip(
+                            label:
+                                Text(p, style: const TextStyle(fontSize: 12)),
+                            backgroundColor:
+                                AppColors.tertiary.withValues(alpha: 0.08),
+                            side: BorderSide(
+                                color: AppColors.tertiary
+                                    .withValues(alpha: 0.2)),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ))
+                      .toList(),
                 ),
-
-                // Role bindings
                 if (namespace.roleBindings.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   _SectionLabel('Role Bindings'),
@@ -247,106 +228,12 @@ class _NamespaceCard extends ConsumerWidget {
                       ),
                     ),
                 ],
-
-                // Action buttons
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () =>
-                          _showRevokeDialog(context, ref),
-                      icon: Icon(Icons.remove_circle_outline,
-                          size: 16, color: AppColors.error),
-                      label: Text('Revoke',
-                          style: TextStyle(color: AppColors.error)),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: () =>
-                          _showGrantForNamespace(context, ref),
-                      icon: const Icon(Icons.add, size: 16),
-                      label: const Text('Grant'),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
         ],
       ),
     );
-  }
-
-  Future<void> _showGrantForNamespace(
-      BuildContext context, WidgetRef ref) async {
-    final result = await showDialog<_PermissionActionResult>(
-      context: context,
-      builder: (ctx) => _PermissionActionDialog(
-        namespaces: [namespace],
-        action: _PermissionAction.grant,
-        ref: ref,
-        preselectedNamespace: namespace.namespace,
-      ),
-    );
-    if (result == null || !context.mounted) return;
-
-    try {
-      final repo = await ref.read(partitionRepositoryProvider.future);
-      await repo.grantPermission(
-        namespace: result.namespace,
-        permission: result.permission,
-        profileId: result.profileId,
-      );
-      ref.invalidate(serviceNamespacesProvider);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  'Granted ${result.permission} to ${result.profileId}')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
-    }
-  }
-
-  Future<void> _showRevokeDialog(BuildContext context, WidgetRef ref) async {
-    final result = await showDialog<_PermissionActionResult>(
-      context: context,
-      builder: (ctx) => _PermissionActionDialog(
-        namespaces: [namespace],
-        action: _PermissionAction.revoke,
-        ref: ref,
-        preselectedNamespace: namespace.namespace,
-      ),
-    );
-    if (result == null || !context.mounted) return;
-
-    try {
-      final repo = await ref.read(partitionRepositoryProvider.future);
-      await repo.revokePermission(
-        namespace: result.namespace,
-        permission: result.permission,
-        profileId: result.profileId,
-      );
-      ref.invalidate(serviceNamespacesProvider);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  'Revoked ${result.permission} from ${result.profileId}')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
-      }
-    }
   }
 }
 
@@ -362,64 +249,33 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-// ─── Permission Action Dialog ───────────────────────────────────────────────
+// ─── Permission Manager (full-screen multi-select) ──────────────────────────
 
-enum _PermissionAction { grant, revoke }
-
-class _PermissionActionResult {
-  const _PermissionActionResult({
-    required this.namespace,
-    required this.permission,
-    required this.profileId,
-  });
-
-  final String namespace;
-  final String permission;
-  final String profileId;
-}
-
-class _PermissionActionDialog extends StatefulWidget {
-  const _PermissionActionDialog({
+class _PermissionManagerPage extends StatefulWidget {
+  const _PermissionManagerPage({
     required this.namespaces,
-    required this.action,
     required this.ref,
-    this.preselectedNamespace,
   });
 
   final List<ServiceNamespaceObject> namespaces;
-  final _PermissionAction action;
   final WidgetRef ref;
-  final String? preselectedNamespace;
 
   @override
-  State<_PermissionActionDialog> createState() =>
-      _PermissionActionDialogState();
+  State<_PermissionManagerPage> createState() =>
+      _PermissionManagerPageState();
 }
 
-class _PermissionActionDialogState extends State<_PermissionActionDialog> {
+class _PermissionManagerPageState extends State<_PermissionManagerPage> {
   final _contactCtl = TextEditingController();
   final _profileIdCtl = TextEditingController();
   String? _profileName;
   bool _searching = false;
   String? _searchError;
+  bool _profileResolved = false;
 
-  late String? _selectedNamespace;
-  String? _selectedPermission;
-
-  List<String> get _availablePermissions {
-    if (_selectedNamespace == null) return [];
-    final ns = widget.namespaces
-        .where((n) => n.namespace == _selectedNamespace)
-        .firstOrNull;
-    return ns?.permissions ?? [];
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedNamespace = widget.preselectedNamespace ??
-        (widget.namespaces.isNotEmpty ? widget.namespaces.first.namespace : null);
-  }
+  /// namespace → set of selected permissions
+  final Map<String, Set<String>> _selected = {};
+  bool _saving = false;
 
   @override
   void dispose() {
@@ -436,10 +292,12 @@ class _PermissionActionDialogState extends State<_PermissionActionDialog> {
       _searching = true;
       _searchError = null;
       _profileName = null;
+      _profileResolved = false;
     });
 
     try {
-      final repo = await widget.ref.read(profileRepositoryProvider.future);
+      final repo =
+          await widget.ref.read(profileRepositoryProvider.future);
       final profile = await repo.getByContact(contact);
       final nameField = profile.properties.fields['name'];
       final name = (nameField != null && nameField.hasStringValue())
@@ -450,6 +308,7 @@ class _PermissionActionDialogState extends State<_PermissionActionDialog> {
       setState(() {
         _profileIdCtl.text = profile.id;
         _profileName = name;
+        _profileResolved = true;
         _searching = false;
       });
     } catch (e) {
@@ -460,177 +319,347 @@ class _PermissionActionDialogState extends State<_PermissionActionDialog> {
     }
   }
 
-  bool get _isValid =>
-      _selectedNamespace != null &&
-      _selectedPermission != null &&
-      _profileIdCtl.text.trim().isNotEmpty;
+  void _resolveManualProfile() {
+    if (_profileIdCtl.text.trim().isNotEmpty) {
+      setState(() {
+        _profileResolved = true;
+        _profileName = null;
+      });
+    }
+  }
+
+  bool _isSelected(String namespace, String permission) =>
+      _selected[namespace]?.contains(permission) ?? false;
+
+  void _toggle(String namespace, String permission) {
+    setState(() {
+      final set = _selected.putIfAbsent(namespace, () => {});
+      if (set.contains(permission)) {
+        set.remove(permission);
+      } else {
+        set.add(permission);
+      }
+    });
+  }
+
+  void _selectAll(String namespace, List<String> permissions) {
+    setState(() {
+      _selected[namespace] = Set.from(permissions);
+    });
+  }
+
+  void _deselectAll(String namespace) {
+    setState(() {
+      _selected[namespace]?.clear();
+    });
+  }
+
+  int get _totalSelected =>
+      _selected.values.fold(0, (sum, s) => sum + s.length);
+
+  Future<void> _applyChanges() async {
+    final profileId = _profileIdCtl.text.trim();
+    if (profileId.isEmpty || _totalSelected == 0) return;
+
+    setState(() => _saving = true);
+
+    try {
+      final repo =
+          await widget.ref.read(partitionRepositoryProvider.future);
+
+      for (final entry in _selected.entries) {
+        for (final perm in entry.value) {
+          await repo.grantPermission(
+            namespace: entry.key,
+            permission: perm,
+            profileId: profileId,
+          );
+        }
+      }
+
+      widget.ref.invalidate(serviceNamespacesProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Granted $_totalSelected permissions to $profileId')),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        setState(() => _saving = false);
+      }
+    }
+  }
+
+  Future<void> _revokeSelected() async {
+    final profileId = _profileIdCtl.text.trim();
+    if (profileId.isEmpty || _totalSelected == 0) return;
+
+    setState(() => _saving = true);
+
+    try {
+      final repo =
+          await widget.ref.read(partitionRepositoryProvider.future);
+
+      for (final entry in _selected.entries) {
+        for (final perm in entry.value) {
+          await repo.revokePermission(
+            namespace: entry.key,
+            permission: perm,
+            profileId: profileId,
+          );
+        }
+      }
+
+      widget.ref.invalidate(serviceNamespacesProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Revoked $_totalSelected permissions from $profileId')),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        setState(() => _saving = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isGrant = widget.action == _PermissionAction.grant;
-    final title = isGrant ? 'Grant Permission' : 'Revoke Permission';
-    final actionLabel = isGrant ? 'Grant' : 'Revoke';
-
-    return AlertDialog(
-      title: Text(title),
-      content: SizedBox(
-        width: 500,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Namespace selector
-              Text('Service Namespace',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.onSurfaceMuted)),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _selectedNamespace,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.extension_outlined, size: 20),
-                ),
-                items: widget.namespaces
-                    .map((ns) => DropdownMenuItem(
-                          value: ns.namespace,
-                          child: Text(ns.namespace),
-                        ))
-                    .toList(),
-                onChanged: (v) {
-                  setState(() {
-                    _selectedNamespace = v;
-                    _selectedPermission = null;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Permission selector
-              Text('Permission',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.onSurfaceMuted)),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _selectedPermission,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.lock_outline, size: 20),
-                ),
-                items: _availablePermissions
-                    .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                    .toList(),
-                onChanged: (v) => setState(() => _selectedPermission = v),
-              ),
-              const SizedBox(height: 20),
-
-              // Profile search
-              const Divider(),
-              const SizedBox(height: 12),
-              Text('Search profile by contact (email or phone)',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.onSurfaceMuted)),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _contactCtl,
-                      decoration: const InputDecoration(
-                        labelText: 'Contact',
-                        hintText: 'e.g. user@example.com or +256...',
-                        prefixIcon: Icon(Icons.search, size: 20),
-                      ),
-                      onSubmitted: (_) => _searchProfile(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: _searching ? null : _searchProfile,
-                    child: _searching
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child:
-                                CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Search'),
-                  ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Manage Permissions'),
+        actions: [
+          if (_totalSelected > 0 && _profileResolved) ...[
+            TextButton.icon(
+              onPressed: _saving ? null : _revokeSelected,
+              icon: Icon(Icons.remove_circle_outline,
+                  size: 18, color: AppColors.error),
+              label: Text('Revoke (${_totalSelected})',
+                  style: TextStyle(color: AppColors.error)),
+            ),
+            const SizedBox(width: 8),
+            FilledButton.icon(
+              onPressed: _saving ? null : _applyChanges,
+              icon: const Icon(Icons.check, size: 18),
+              label: Text('Grant (${_totalSelected})'),
+            ),
+            const SizedBox(width: 12),
+          ],
+        ],
+      ),
+      body: _saving
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildProfileSection(),
+                if (_profileResolved) ...[
+                  const Divider(height: 1),
+                  Expanded(child: _buildPermissionsGrid()),
                 ],
-              ),
-              if (_searchError != null) ...[
-                const SizedBox(height: 8),
-                Text(_searchError!,
-                    style:
-                        TextStyle(color: AppColors.error, fontSize: 12)),
               ],
-              if (_profileName != null) ...[
-                const SizedBox(height: 12),
-                Card(
-                  color: AppColors.tertiary.withValues(alpha: 0.05),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor:
-                          AppColors.tertiary.withValues(alpha: 0.15),
-                      child: Text(
-                        _profileName!.isNotEmpty
-                            ? _profileName!
-                                .substring(0, 1)
-                                .toUpperCase()
-                            : '?',
-                        style: TextStyle(color: AppColors.tertiary),
-                      ),
-                    ),
-                    title: Text(_profileName!,
-                        style:
-                            const TextStyle(fontWeight: FontWeight.w500)),
-                    subtitle: Text(_profileIdCtl.text,
-                        style: const TextStyle(
-                            fontFamily: 'monospace', fontSize: 11)),
+            ),
+    );
+  }
+
+  Widget _buildProfileSection() {
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Select Profile',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _contactCtl,
+                  decoration: const InputDecoration(
+                    labelText: 'Search by contact (email or phone)',
+                    prefixIcon: Icon(Icons.search, size: 20),
+                    isDense: true,
                   ),
+                  onSubmitted: (_) => _searchProfile(),
                 ),
-              ],
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 8),
-              Text('Or enter Profile ID directly',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.onSurfaceMuted)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _profileIdCtl,
-                decoration: const InputDecoration(
-                  labelText: 'Profile ID',
-                  hintText: 'Paste profile ID...',
-                  prefixIcon: Icon(Icons.person_outlined, size: 20),
-                ),
-                onChanged: (_) => setState(() {}),
               ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: _searching ? null : _searchProfile,
+                child: _searching
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Search'),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextField(
+                  controller: _profileIdCtl,
+                  decoration: const InputDecoration(
+                    labelText: 'Or enter Profile ID directly',
+                    prefixIcon: Icon(Icons.person_outlined, size: 20),
+                    isDense: true,
+                  ),
+                  onChanged: (_) => setState(() => _profileResolved = false),
+                  onSubmitted: (_) => _resolveManualProfile(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (!_profileResolved && _profileIdCtl.text.trim().isNotEmpty)
+                OutlinedButton(
+                  onPressed: _resolveManualProfile,
+                  child: const Text('Use'),
+                ),
             ],
           ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: _isValid
-              ? () => Navigator.of(context).pop(_PermissionActionResult(
-                    namespace: _selectedNamespace!,
-                    permission: _selectedPermission!,
-                    profileId: _profileIdCtl.text.trim(),
-                  ))
-              : null,
-          style: isGrant
-              ? null
-              : ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  foregroundColor: Colors.white,
+          if (_searchError != null) ...[
+            const SizedBox(height: 8),
+            Text(_searchError!,
+                style: TextStyle(color: AppColors.error, fontSize: 12)),
+          ],
+          if (_profileName != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor:
+                      AppColors.tertiary.withValues(alpha: 0.15),
+                  child: Text(
+                    _profileName!.isNotEmpty
+                        ? _profileName![0].toUpperCase()
+                        : '?',
+                    style: TextStyle(
+                        color: AppColors.tertiary, fontSize: 12),
+                  ),
                 ),
-          child: Text(actionLabel),
-        ),
-      ],
+                const SizedBox(width: 8),
+                Text(_profileName!,
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
+                const SizedBox(width: 8),
+                Text(_profileIdCtl.text,
+                    style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        color: AppColors.onSurfaceMuted)),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionsGrid() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: widget.namespaces.length,
+      itemBuilder: (context, index) {
+        final ns = widget.namespaces[index];
+        final nsName = ns.namespace;
+        final displayName = nsName.replaceFirst('service_', '');
+        final title = displayName.isNotEmpty
+            ? '${displayName[0].toUpperCase()}${displayName.substring(1)}'
+            : nsName;
+        final selectedCount = _selected[nsName]?.length ?? 0;
+        final allSelected = selectedCount == ns.permissions.length &&
+            ns.permissions.isNotEmpty;
+
+        return Card(
+          elevation: 0,
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: BorderSide(color: AppColors.border),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.extension_outlined,
+                        size: 18, color: AppColors.tertiary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(title,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 15)),
+                    ),
+                    TextButton(
+                      onPressed: () => allSelected
+                          ? _deselectAll(nsName)
+                          : _selectAll(nsName, ns.permissions.toList()),
+                      child:
+                          Text(allSelected ? 'Deselect All' : 'Select All'),
+                    ),
+                    if (selectedCount > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.tertiary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text('$selectedCount',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: ns.permissions.map((perm) {
+                    final selected = _isSelected(nsName, perm);
+                    return FilterChip(
+                      label: Text(perm,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: selected ? Colors.white : null,
+                          )),
+                      selected: selected,
+                      onSelected: (_) => _toggle(nsName, perm),
+                      selectedColor: AppColors.tertiary,
+                      checkmarkColor: Colors.white,
+                      side: BorderSide(
+                        color: selected
+                            ? AppColors.tertiary
+                            : AppColors.border,
+                      ),
+                      materialTapTargetSize:
+                          MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
