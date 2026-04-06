@@ -14,6 +14,7 @@ import '../../profile/widgets/profile_badge.dart';
 import '../data/partition_providers.dart';
 import '../data/partition_repository.dart';
 import '../widgets/state_badge.dart';
+import 'permissions_management_page.dart';
 
 /// Detail page for a single partition at
 /// /services/tenancy/partitions/:partitionId.
@@ -163,7 +164,7 @@ class _PartitionDetailContent extends ConsumerWidget {
     final isActiveContext = effectiveCtx.partitionId == partitionId;
 
     return DefaultTabController(
-      length: 5,
+      length: 6,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -260,6 +261,7 @@ class _PartitionDetailContent extends ConsumerWidget {
               Tab(text: 'Overview'),
               Tab(text: 'Roles'),
               Tab(text: 'Access'),
+              Tab(text: 'Permissions'),
               Tab(text: 'Service Accounts'),
               Tab(text: 'Clients'),
             ],
@@ -271,6 +273,7 @@ class _PartitionDetailContent extends ConsumerWidget {
                 _OverviewTab(partition: partition),
                 _RolesTab(partitionId: partitionId),
                 _AccessTab(partitionId: partitionId),
+                const PermissionsTab(),
                 _ServiceAccountsTab(partitionId: partitionId),
                 _ClientsTab(partitionId: partitionId),
               ],

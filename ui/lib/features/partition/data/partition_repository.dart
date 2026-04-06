@@ -1,7 +1,12 @@
+import 'dart:convert';
+
 import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 
+import '../../../core/services/api_config.dart';
 import '../../../core/services/connect_client.dart';
+import '../../../core/services/tenant_context.dart';
 
 /// Repository wrapping [TenancyServiceClient] with error handling
 /// and stream-to-list conversion for all partition service entities.
@@ -318,10 +323,160 @@ class PartitionRepository {
       _client.removeClient(RemoveClientRequest(id: id));
 }
 
-// ─── Riverpod Provider ───────────────────────────────────────────────────────
+// ─── Permissions Model ──────────────────────────────────────────────────────
+
+/// A registered service namespace with its available permissions and role bindings.
+class ServiceNamespace {
+  const ServiceNamespace({
+    required this.namespace,
+    required this.permissions,
+    required this.roleBindings,
+    required this.registeredAt,
+  });
+
+  final String namespace;
+  final List<String> permissions;
+  final Map<String, List<String>> roleBindings;
+  final String registeredAt;
+
+  factory ServiceNamespace.fromJson(Map<String, dynamic> json) {
+    final roleBindingsRaw = json['role_bindings'] as Map<String, dynamic>? ?? {};
+    final roleBindings = roleBindingsRaw.map(
+      (key, value) => MapEntry(
+        key,
+        (value as List<dynamic>).map((e) => e.toString()).toList(),
+      ),
+    );
+    return ServiceNamespace(
+      namespace: json['namespace'] as String? ?? '',
+      permissions: (json['permissions'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      roleBindings: roleBindings,
+      registeredAt: json['registered_at'] as String? ?? '',
+    );
+  }
+}
+
+// ─── Permissions Repository (REST) ──────────────────────────────────────────
+
+/// Repository for the REST-based permissions management endpoints.
+///
+/// These endpoints are not Connect RPC; they are standard REST on the
+/// tenancy gateway, authenticated with the same OAuth2 bearer token.
+class PermissionsRepository {
+  PermissionsRepository({
+    required this.baseUrl,
+    required this.accessToken,
+    required this.effectiveContext,
+    required this.jwtContext,
+  });
+
+  final String baseUrl;
+  final String accessToken;
+  final TenantContext effectiveContext;
+  final TenantContext jwtContext;
+
+  Map<String, String> get _headers {
+    final headers = <String, String>{
+      'Authorization': 'Bearer $accessToken',
+      'Content-Type': 'application/json',
+    };
+    // Inject tenant override headers for cross-tenant administration.
+    if (effectiveContext.tenantId.isNotEmpty &&
+        effectiveContext.partitionId.isNotEmpty &&
+        (effectiveContext.tenantId != jwtContext.tenantId ||
+            effectiveContext.partitionId != jwtContext.partitionId)) {
+      headers['X-Tenant-Id'] = effectiveContext.tenantId;
+      headers['X-Partition-Id'] = effectiveContext.partitionId;
+      if (effectiveContext.accessId.isNotEmpty) {
+        headers['X-Access-Id'] = effectiveContext.accessId;
+      }
+    }
+    return headers;
+  }
+
+  Future<List<ServiceNamespace>> listServiceNamespaces() async {
+    final uri = Uri.parse('$baseUrl/api/permissions/');
+    final response = await http.get(uri, headers: _headers);
+    if (response.statusCode != 200) {
+      throw Exception(
+          'Failed to load permissions (${response.statusCode}): ${response.body}');
+    }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final data = body['data'] as List<dynamic>? ?? [];
+    return data
+        .map((e) => ServiceNamespace.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> grantPermission({
+    required String namespace,
+    required String permission,
+    required String profileId,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/permissions/grant');
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: jsonEncode({
+        'namespace': namespace,
+        'permission': permission,
+        'profile_id': profileId,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+          'Failed to grant permission (${response.statusCode}): ${response.body}');
+    }
+  }
+
+  Future<void> revokePermission({
+    required String namespace,
+    required String permission,
+    required String profileId,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/permissions/revoke');
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: jsonEncode({
+        'namespace': namespace,
+        'permission': permission,
+        'profile_id': profileId,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+          'Failed to revoke permission (${response.statusCode}): ${response.body}');
+    }
+  }
+}
+
+// ─── Riverpod Providers ─────────────────────────────────────────────────────
 
 final partitionRepositoryProvider =
     FutureProvider<PartitionRepository>((ref) async {
   final client = await ref.watch(tenancyServiceClientProvider.future);
   return PartitionRepository(client);
+});
+
+final permissionsRepositoryProvider =
+    FutureProvider<PermissionsRepository>((ref) async {
+  final tokenManager = ref.watch(tokenManagerProvider);
+  await tokenManager.initialize();
+  final accessToken = tokenManager.accessToken ?? '';
+
+  final jwtCtx = ref.watch(jwtTenantContextProvider);
+  final jwt = jwtCtx.whenOrNull(data: (ctx) => ctx) ??
+      const TenantContext(tenantId: '', partitionId: '');
+  final effective = ref.watch(effectiveTenantProvider);
+
+  return PermissionsRepository(
+    baseUrl: ApiConfig.tenancyBaseUrl,
+    accessToken: accessToken,
+    effectiveContext: effective,
+    jwtContext: jwt,
+  );
 });
