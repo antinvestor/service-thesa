@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../profile/data/profile_repository.dart';
 import '../data/partition_providers.dart';
 import '../data/partition_repository.dart';
+import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 
 /// Permissions tab content for the partition detail page.
 ///
@@ -109,7 +110,7 @@ class PermissionsTab extends ConsumerWidget {
   Future<void> _showGrantDialog(
     BuildContext context,
     WidgetRef ref,
-    List<ServiceNamespace> namespaces,
+    List<ServiceNamespaceObject> namespaces,
   ) async {
     final result = await showDialog<_PermissionActionResult>(
       context: context,
@@ -150,7 +151,7 @@ class PermissionsTab extends ConsumerWidget {
 class _NamespaceCard extends ConsumerWidget {
   const _NamespaceCard({required this.namespace});
 
-  final ServiceNamespace namespace;
+  final ServiceNamespaceObject namespace;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -231,7 +232,7 @@ class _NamespaceCard extends ConsumerWidget {
                             child: Wrap(
                               spacing: 6,
                               runSpacing: 4,
-                              children: entry.value
+                              children: entry.value.permissions
                                   .map((p) => Text(p,
                                       style: Theme.of(context)
                                           .textTheme
@@ -385,7 +386,7 @@ class _PermissionActionDialog extends StatefulWidget {
     this.preselectedNamespace,
   });
 
-  final List<ServiceNamespace> namespaces;
+  final List<ServiceNamespaceObject> namespaces;
   final _PermissionAction action;
   final WidgetRef ref;
   final String? preselectedNamespace;

@@ -1,43 +1,16 @@
-import 'dart:convert';
-
 import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
 
-import '../../../core/services/api_config.dart';
 import '../../../core/services/connect_client.dart';
-import '../../../core/services/tenant_context.dart';
 
 /// Repository wrapping [TenancyServiceClient] with error handling
-/// and stream-to-list conversion for all partition service entities.
-///
-/// Also provides permission management methods. These currently use REST
-/// because the generated Dart client (antinvestor_api_tenancy) does not yet
-/// include ListServiceNamespaces / GrantPermission / RevokePermission RPCs.
-/// Once the BSR-generated code is updated, replace the REST calls with:
-///   _client.listServiceNamespaces(...)
-///   _client.grantPermission(...)
-///   _client.revokePermission(...)
+/// and stream-to-list conversion for all partition service entities,
+/// including permission namespace management via Connect RPC.
 class PartitionRepository {
-  PartitionRepository({
-    required TenancyServiceClient client,
-    required String baseUrl,
-    required String accessToken,
-    required TenantContext effectiveContext,
-    required TenantContext jwtContext,
-  })  : _client = client,
-        _baseUrl = baseUrl,
-        _accessToken = accessToken,
-        _effectiveContext = effectiveContext,
-        _jwtContext = jwtContext;
+  PartitionRepository({required TenancyServiceClient client})
+      : _client = client;
 
   final TenancyServiceClient _client;
-
-  // HTTP credentials for REST-based permission endpoints (temporary).
-  final String _baseUrl;
-  final String _accessToken;
-  final TenantContext _effectiveContext;
-  final TenantContext _jwtContext;
 
   /// Collect items from a streaming list RPC where each chunk has a repeated field.
   Future<List<T>> _collectStream<T>(
@@ -346,134 +319,36 @@ class PartitionRepository {
   Future<void> removeClient(String id) async =>
       _client.removeClient(RemoveClientRequest(id: id));
 
-  // ── Permissions (REST until proto codegen catches up) ───────────────────
+  // ── Permissions ──────────────────────────────────────────────────────────
 
-  /// HTTP headers for REST-based permission endpoints.
-  /// Includes tenant override headers for cross-tenant administration.
-  Map<String, String> get _permissionHeaders {
-    final headers = <String, String>{
-      'Authorization': 'Bearer $_accessToken',
-      'Content-Type': 'application/json',
-    };
-    if (_effectiveContext.tenantId.isNotEmpty &&
-        _effectiveContext.partitionId.isNotEmpty &&
-        (_effectiveContext.tenantId != _jwtContext.tenantId ||
-            _effectiveContext.partitionId != _jwtContext.partitionId)) {
-      headers['X-Tenant-Id'] = _effectiveContext.tenantId;
-      headers['X-Partition-Id'] = _effectiveContext.partitionId;
-      if (_effectiveContext.accessId.isNotEmpty) {
-        headers['X-Access-Id'] = _effectiveContext.accessId;
-      }
-    }
-    return headers;
-  }
+  /// List all registered service namespaces with their permissions and role bindings.
+  Future<List<ServiceNamespaceObject>> listServiceNamespaces() async =>
+      (await _client.listServiceNamespaces(ListServiceNamespacesRequest()))
+          .data;
 
-  /// List registered service namespaces and their permissions.
-  ///
-  /// TODO: Replace with `_client.listServiceNamespaces(ListServiceNamespacesRequest())`
-  /// once the generated Dart client includes the RPC.
-  Future<List<ServiceNamespace>> listServiceNamespaces() async {
-    final uri = Uri.parse('$_baseUrl/api/permissions/');
-    final response = await http.get(uri, headers: _permissionHeaders);
-    if (response.statusCode != 200) {
-      throw Exception(
-          'Failed to load permissions (${response.statusCode}): ${response.body}');
-    }
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    final data = body['data'] as List<dynamic>? ?? [];
-    return data
-        .map((e) => ServiceNamespace.fromJson(e as Map<String, dynamic>))
-        .toList();
-  }
-
-  /// Grant a permission to a profile within a namespace.
-  ///
-  /// TODO: Replace with `_client.grantPermission(GrantPermissionRequest(...))`
-  /// once the generated Dart client includes the RPC.
+  /// Grant a specific permission to a profile within a service namespace.
   Future<void> grantPermission({
     required String namespace,
     required String permission,
     required String profileId,
-  }) async {
-    final uri = Uri.parse('$_baseUrl/api/permissions/grant');
-    final response = await http.post(
-      uri,
-      headers: _permissionHeaders,
-      body: jsonEncode({
-        'namespace': namespace,
-        'permission': permission,
-        'profile_id': profileId,
-      }),
-    );
-    if (response.statusCode != 200) {
-      throw Exception(
-          'Failed to grant permission (${response.statusCode}): ${response.body}');
-    }
-  }
+  }) async =>
+      _client.grantPermission(GrantPermissionRequest(
+        namespace: namespace,
+        permission: permission,
+        profileId: profileId,
+      ));
 
-  /// Revoke a permission from a profile within a namespace.
-  ///
-  /// TODO: Replace with `_client.revokePermission(RevokePermissionRequest(...))`
-  /// once the generated Dart client includes the RPC.
+  /// Revoke a specific permission from a profile within a service namespace.
   Future<void> revokePermission({
     required String namespace,
     required String permission,
     required String profileId,
-  }) async {
-    final uri = Uri.parse('$_baseUrl/api/permissions/revoke');
-    final response = await http.post(
-      uri,
-      headers: _permissionHeaders,
-      body: jsonEncode({
-        'namespace': namespace,
-        'permission': permission,
-        'profile_id': profileId,
-      }),
-    );
-    if (response.statusCode != 200) {
-      throw Exception(
-          'Failed to revoke permission (${response.statusCode}): ${response.body}');
-    }
-  }
-}
-
-// ─── Permissions Model ──────────────────────────────────────────────────────
-
-/// A registered service namespace with its available permissions and role bindings.
-///
-/// TODO: Replace with the proto-generated `ServiceNamespaceObject` once
-/// the generated Dart client includes ListServiceNamespaces.
-class ServiceNamespace {
-  const ServiceNamespace({
-    required this.namespace,
-    required this.permissions,
-    required this.roleBindings,
-    required this.registeredAt,
-  });
-
-  final String namespace;
-  final List<String> permissions;
-  final Map<String, List<String>> roleBindings;
-  final String registeredAt;
-
-  factory ServiceNamespace.fromJson(Map<String, dynamic> json) {
-    final roleBindingsRaw = json['role_bindings'] as Map<String, dynamic>? ?? {};
-    final roleBindings = roleBindingsRaw.map(
-      (key, value) => MapEntry(
-        key,
-        (value as List<dynamic>).map((e) => e.toString()).toList(),
-      ),
-    );
-    return ServiceNamespace(
-      namespace: json['namespace'] as String? ?? '',
-      permissions: (json['permissions'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
-      roleBindings: roleBindings,
-      registeredAt: json['registered_at'] as String? ?? '',
-    );
-  }
+  }) async =>
+      _client.revokePermission(RevokePermissionRequest(
+        namespace: namespace,
+        permission: permission,
+        profileId: profileId,
+      ));
 }
 
 // ─── Riverpod Providers ─────────────────────────────────────────────────────
@@ -481,21 +356,5 @@ class ServiceNamespace {
 final partitionRepositoryProvider =
     FutureProvider<PartitionRepository>((ref) async {
   final client = await ref.watch(tenancyServiceClientProvider.future);
-
-  final tokenManager = ref.watch(tokenManagerProvider);
-  await tokenManager.initialize();
-  final accessToken = tokenManager.accessToken ?? '';
-
-  final jwtCtx = ref.watch(jwtTenantContextProvider);
-  final jwt = jwtCtx.whenOrNull(data: (ctx) => ctx) ??
-      const TenantContext(tenantId: '', partitionId: '');
-  final effective = ref.watch(effectiveTenantProvider);
-
-  return PartitionRepository(
-    client: client,
-    baseUrl: ApiConfig.tenancyBaseUrl,
-    accessToken: accessToken,
-    effectiveContext: effective,
-    jwtContext: jwt,
-  );
+  return PartitionRepository(client: client);
 });

@@ -41,7 +41,7 @@ dependencies:
   intl: ^0.20.2
   connectrpc: ^1.0.0
   antinvestor_api_common: ^1.52.0
-  antinvestor_api_tenancy: ^1.52.0
+  antinvestor_api_tenancy: ^1.54.0
   fixnum: ^1.1.0
   protobuf: ^4.0.0
   antinvestor_api_profile: ^1.52.0
@@ -68,7 +68,6 @@ dependencies:
   url_launcher: ^6.3.2
   web: ^1.1.1
   csv: ^8.0.0
-  http: ^1.3.0
 
 dev_dependencies:
   flutter_test:
@@ -80,6 +79,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+
+dependency_overrides:
+  antinvestor_api_tenancy:
+    path: /home/j/code/antinvestor/service-authentication/sdk/dart/tenancy
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -88,11 +88,10 @@ packages:
   antinvestor_api_tenancy:
     dependency: "direct main"
     description:
-      name: antinvestor_api_tenancy
-      sha256: "4da15378363bb26c1a6cc17c4247f2f5da78f84bf16d40040b7b6cfe753c5f9c"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.53.0"
+      path: "/home/j/code/antinvestor/service-authentication/sdk/dart/tenancy"
+      relative: false
+    source: path
+    version: "1.54.0"
   archive:
     dependency: transitive
     description:
@@ -397,7 +396,7 @@ packages:
     source: hosted
     version: "1.0.2"
   http:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: http
       sha256: "87721a4a50b19c7f1d49001e51409bddc46303966ce89a65af4f4e6004896412"
