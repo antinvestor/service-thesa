@@ -110,6 +110,6 @@ final clientsForPartitionProvider =
 /// Registered service namespaces and their permissions.
 final serviceNamespacesProvider =
     FutureProvider<List<ServiceNamespace>>((ref) async {
-  final repo = await ref.watch(permissionsRepositoryProvider.future);
+  final repo = await ref.watch(partitionRepositoryProvider.future);
   return repo.listServiceNamespaces();
 });

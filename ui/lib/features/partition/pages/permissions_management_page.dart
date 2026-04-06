@@ -122,7 +122,7 @@ class PermissionsTab extends ConsumerWidget {
     if (result == null || !context.mounted) return;
 
     try {
-      final repo = await ref.read(permissionsRepositoryProvider.future);
+      final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.grantPermission(
         namespace: result.namespace,
         permission: result.permission,
@@ -291,7 +291,7 @@ class _NamespaceCard extends ConsumerWidget {
     if (result == null || !context.mounted) return;
 
     try {
-      final repo = await ref.read(permissionsRepositoryProvider.future);
+      final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.grantPermission(
         namespace: result.namespace,
         permission: result.permission,
@@ -326,7 +326,7 @@ class _NamespaceCard extends ConsumerWidget {
     if (result == null || !context.mounted) return;
 
     try {
-      final repo = await ref.read(permissionsRepositoryProvider.future);
+      final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.revokePermission(
         namespace: result.namespace,
         permission: result.permission,
