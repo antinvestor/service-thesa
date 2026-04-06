@@ -68,23 +68,31 @@ class TenantPicker extends ConsumerWidget {
               Icon(Icons.business_outlined,
                   size: 16, color: AppColors.tertiary),
               const SizedBox(width: 6),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Tenant: $tenantName',
-                      style: const TextStyle(
-                          fontSize: 11, fontWeight: FontWeight.w600)),
-                  if (partitionName.isNotEmpty)
-                    Text('Partition: $partitionName',
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Tenant: $tenantName',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                         style: const TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.w500)),
-                  Text(effectiveCtx.partitionId,
-                      style: TextStyle(
-                          fontSize: 9,
-                          fontFamily: 'monospace',
-                          color: AppColors.onSurfaceMuted)),
-                ],
+                            fontSize: 11, fontWeight: FontWeight.w600)),
+                    if (partitionName.isNotEmpty)
+                      Text('Partition: $partitionName',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: const TextStyle(
+                              fontSize: 11, fontWeight: FontWeight.w500)),
+                    Text(effectiveCtx.partitionId,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(
+                            fontSize: 9,
+                            fontFamily: 'monospace',
+                            color: AppColors.onSurfaceMuted)),
+                  ],
+                ),
               ),
               if (hasOverride) ...[
                 const SizedBox(width: 4),

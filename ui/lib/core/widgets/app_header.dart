@@ -26,6 +26,9 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final width = MediaQuery.sizeOf(context).width;
+    final isCompact = width < 800;
+
     return Container(
       height: 64,
       decoration: BoxDecoration(
@@ -35,20 +38,21 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          if (showMenuButton)
+          if (showMenuButton) ...[
             IconButton(
               onPressed: onMenuTap,
               icon: const Icon(Icons.menu),
               tooltip: 'Menu',
             ),
-          if (showMenuButton) const SizedBox(width: 8),
-          // Search bar
+            const SizedBox(width: 8),
+          ],
+          // Search bar — flexible, collapses first
           Expanded(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Search analytics, portfolios, or users...',
+                  hintText: isCompact ? 'Search...' : 'Search analytics, portfolios, or users...',
                   prefixIcon: const Icon(Icons.search,
                       size: 20, color: AppColors.onSurfaceMuted),
                   isDense: true,
@@ -57,18 +61,20 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           // Tenant context picker
-          const TenantPicker(),
-          const SizedBox(width: 12),
-          // Action icons
-          _HeaderIconButton(
-              icon: Icons.notifications_outlined, tooltip: 'Notifications'),
-          _HeaderIconButton(icon: Icons.history, tooltip: 'History'),
-          _HeaderIconButton(icon: Icons.apps, tooltip: 'Apps'),
-          const SizedBox(width: 12),
+          const Flexible(child: TenantPicker()),
+          const SizedBox(width: 8),
+          // Action icons — hide on very narrow screens
+          if (!isCompact) ...[
+            _HeaderIconButton(
+                icon: Icons.notifications_outlined, tooltip: 'Notifications'),
+            _HeaderIconButton(icon: Icons.history, tooltip: 'History'),
+            _HeaderIconButton(icon: Icons.apps, tooltip: 'Apps'),
+            const SizedBox(width: 8),
+          ],
           // User avatar section
-          _UserAvatar(ref: ref),
+          Flexible(child: _UserAvatar(ref: ref, compact: isCompact)),
         ],
       ),
     );
@@ -93,11 +99,11 @@ class _HeaderIconButton extends StatelessWidget {
 }
 
 class _UserAvatar extends StatelessWidget {
-  const _UserAvatar({required this.ref});
+  const _UserAvatar({required this.ref, this.compact = false});
 
   final WidgetRef ref;
+  final bool compact;
 
-  /// Build a display name from JWT claims, trying several standard OIDC fields.
   static String _resolveName(Map<String, dynamic>? info) {
     if (info == null) return 'Admin';
 
@@ -120,7 +126,6 @@ class _UserAvatar extends StatelessWidget {
     return 'Admin';
   }
 
-  /// Resolve an email or username to display as subtitle.
   static String _resolveSubtitle(Map<String, dynamic>? info) {
     if (info == null) return 'Admin Console';
 
@@ -152,15 +157,24 @@ class _UserAvatar extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(name, style: Theme.of(context).textTheme.titleSmall),
-            Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-          ],
-        ),
-        const SizedBox(width: 10),
+        if (!compact)
+          Flexible(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(name,
+                    style: Theme.of(context).textTheme.titleSmall,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1),
+                Text(subtitle,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1),
+              ],
+            ),
+          ),
+        if (!compact) const SizedBox(width: 10),
         CircleAvatar(
           radius: 18,
           backgroundColor: AppColors.tertiary,
