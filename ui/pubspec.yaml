@@ -82,7 +82,10 @@ dev_dependencies:
 
 dependency_overrides:
   antinvestor_api_tenancy:
-    path: /home/j/code/antinvestor/service-authentication/sdk/dart/tenancy
+    git:
+      url: https://github.com/antinvestor/service-authentication.git
+      path: sdk/dart/tenancy
+      ref: main
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

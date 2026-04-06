@@ -88,9 +88,11 @@ packages:
   antinvestor_api_tenancy:
     dependency: "direct main"
     description:
-      path: "/home/j/code/antinvestor/service-authentication/sdk/dart/tenancy"
-      relative: false
-    source: path
+      path: "sdk/dart/tenancy"
+      ref: main
+      resolved-ref: b84a5905ff2ed21ed839261119833dd71500f2ea
+      url: "https://github.com/antinvestor/service-authentication.git"
+    source: git
     version: "1.54.0"
   archive:
     dependency: transitive
