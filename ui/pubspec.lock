@@ -88,11 +88,10 @@ packages:
   antinvestor_api_tenancy:
     dependency: "direct main"
     description:
-      path: "sdk/dart/tenancy"
-      ref: main
-      resolved-ref: b84a5905ff2ed21ed839261119833dd71500f2ea
-      url: "https://github.com/antinvestor/service-authentication.git"
-    source: git
+      name: antinvestor_api_tenancy
+      sha256: "38d430d840d0b0771a2ceb9dfe2517d93a2025bfe9446c9f47ae2b5bbb81f9e2"
+      url: "https://pub.dev"
+    source: hosted
     version: "1.54.0"
   archive:
     dependency: transitive
