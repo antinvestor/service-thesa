@@ -299,7 +299,7 @@ class _PermissionManagerPageState extends State<_PermissionManagerPage> {
       final repo =
           await widget.ref.read(profileRepositoryProvider.future);
       final profile = await repo.getByContact(contact);
-      final nameField = profile.properties.fields['name'];
+      final nameField = profile.properties.fields['au_name'];
       final name = (nameField != null && nameField.hasStringValue())
           ? nameField.stringValue
           : profile.contacts.isNotEmpty

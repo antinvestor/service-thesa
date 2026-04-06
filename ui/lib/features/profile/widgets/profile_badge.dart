@@ -20,9 +20,9 @@ final profileLookupProvider =
 
 /// Extract a display name from a ProfileObject.
 String profileDisplayName(ProfileObject profile) {
-  // Try properties.fields['name']
+  // Try properties.fields['au_name']
   if (profile.hasProperties()) {
-    final nameField = profile.properties.fields['name'];
+    final nameField = profile.properties.fields['au_name'];
     if (nameField != null && nameField.hasStringValue()) {
       final name = nameField.stringValue;
       if (name.isNotEmpty) return name;

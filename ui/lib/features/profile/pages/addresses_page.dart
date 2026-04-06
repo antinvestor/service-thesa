@@ -36,7 +36,7 @@ final addressesProvider =
 String _profileName(ProfileObject profile) {
   if (profile.hasProperties() &&
       profile.properties.fields.containsKey('name')) {
-    final n = profile.properties.fields['name']!;
+    final n = profile.properties.fields['au_name']!;
     if (n.hasStringValue() && n.stringValue.isNotEmpty) return n.stringValue;
   }
   if (profile.contacts.isNotEmpty) return profile.contacts.first.detail;

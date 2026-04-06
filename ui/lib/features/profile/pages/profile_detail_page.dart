@@ -74,7 +74,7 @@ class _ProfileDetailContent extends ConsumerWidget {
   String get _displayName {
     if (profile.hasProperties() &&
         profile.properties.fields.containsKey('name')) {
-      return profile.properties.fields['name']!.stringValue;
+      return profile.properties.fields['au_name']!.stringValue;
     }
     return 'Profile $profileId';
   }
@@ -82,7 +82,7 @@ class _ProfileDetailContent extends ConsumerWidget {
   Future<void> _editProfile(BuildContext context, WidgetRef ref) async {
     final currentName = profile.hasProperties() &&
             profile.properties.fields.containsKey('name')
-        ? profile.properties.fields['name']!.stringValue
+        ? profile.properties.fields['au_name']!.stringValue
         : '';
     final values = await showEditDialog(
       context: context,
@@ -234,7 +234,7 @@ class _OverviewTab extends StatelessWidget {
   String get _displayName {
     if (profile.hasProperties() &&
         profile.properties.fields.containsKey('name')) {
-      final n = profile.properties.fields['name']!;
+      final n = profile.properties.fields['au_name']!;
       if (n.hasStringValue() && n.stringValue.isNotEmpty) return n.stringValue;
     }
     if (profile.contacts.isNotEmpty) return profile.contacts.first.detail;

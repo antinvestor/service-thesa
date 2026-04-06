@@ -168,8 +168,8 @@ class ProfilesPage extends ConsumerWidget {
 /// Tries the 'name' field in properties, then the first contact detail,
 /// then falls back to a truncated ID.
 String _profileDisplayName(ProfileObject profile) {
-  // Try properties.fields['name']
-  final nameField = profile.properties.fields['name'];
+  // Try properties.fields['au_name']
+  final nameField = profile.properties.fields['au_name'];
   if (nameField != null && nameField.hasStringValue()) {
     final name = nameField.stringValue;
     if (name.isNotEmpty) return name;
