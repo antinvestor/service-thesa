@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/data/auth_state_provider.dart';
 import '../../features/auth/ui/login_page.dart';
+import '../../features/auth/ui/splash_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
 import '../../features/payment/pages/account_detail_page.dart';
 import '../../features/profile/pages/device_detail_page.dart';
@@ -14,45 +15,63 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Creates the app router with auth-aware redirect logic.
 ///
-/// Uses [authStateProvider] to redirect:
-/// - Unauthenticated users → /login
-/// - Authenticated users on /login → /
-/// - /logout triggers logout + redirect to /login
+/// Three states are handled:
+/// - **Loading**: auth is being determined → show splash (no redirect)
+/// - **Unauthenticated**: redirect to /login
+/// - **Authenticated**: redirect away from /login and /auth/callback to /
 GoRouter createAppRouter(Ref ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
-      final isLoggedIn = authState.when(
-        data: (s) => s == AuthState.authenticated,
-        loading: () => false,
-        error: (_, _) => false,
-      );
       final path = state.uri.toString();
       final isLoginRoute = path == '/login';
       final isLogoutRoute = path == '/logout';
       final isAuthCallback = path.startsWith('/auth/callback');
+      final isSplash = path == '/splash';
 
-      // Handle logout route
+      // Handle logout — always process immediately
       if (isLogoutRoute) {
-        // Trigger logout asynchronously; redirect will handle the rest
         ref.read(authStateProvider.notifier).logout();
         return '/login';
       }
 
-      // Allow auth callback through only while unauthenticated
-      if (isAuthCallback && !isLoggedIn) return null;
+      // Determine auth status with proper loading handling
+      final isLoading = authState.isLoading;
+      final isAuthenticated = authState.whenOrNull(
+            data: (s) => s == AuthState.authenticated,
+          ) ??
+          false;
 
-      // Redirect unauthenticated users to login
-      if (!isLoggedIn && !isLoginRoute) return '/login';
+      // While auth is loading, send to splash unless already there or on
+      // the callback route (which needs to complete the OAuth flow).
+      if (isLoading) {
+        if (isAuthCallback || isSplash) return null;
+        return '/splash';
+      }
 
-      // Redirect authenticated users away from login or callback
-      if (isLoggedIn && (isLoginRoute || isAuthCallback)) return '/';
+      // Auth callback while unauthenticated — let it through so the
+      // OAuth exchange can complete.
+      if (isAuthCallback && !isAuthenticated) return null;
 
-      return null; // No redirect needed
+      // Unauthenticated user on any protected route → login
+      if (!isAuthenticated && !isLoginRoute) return '/login';
+
+      // Authenticated user on login, callback, or splash → dashboard
+      if (isAuthenticated && (isLoginRoute || isAuthCallback || isSplash)) {
+        return '/';
+      }
+
+      return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: SplashPage(),
+        ),
+      ),
       GoRoute(
         path: '/login',
         pageBuilder: (context, state) => const NoTransitionPage(
@@ -63,11 +82,11 @@ GoRouter createAppRouter(Ref ref) {
         path: '/logout',
         redirect: (context, state) => '/login',
       ),
-      // Web OAuth redirect callback — handled by auth platform
+      // Web OAuth redirect callback — shows splash while processing
       GoRoute(
         path: '/auth/callback',
         pageBuilder: (context, state) => const NoTransitionPage(
-          child: LoginPage(),
+          child: SplashPage(),
         ),
       ),
       ShellRoute(
@@ -89,7 +108,6 @@ GoRouter createAppRouter(Ref ref) {
             path: '/settings',
             redirect: (context, state) => '/services/settings/all',
           ),
-          // Service analytics page: /services/:serviceId
           GoRoute(
             path: '/services/:serviceId',
             pageBuilder: (context, state) {
@@ -102,7 +120,6 @@ GoRouter createAppRouter(Ref ref) {
               );
             },
             routes: [
-              // Sub-feature entity list: /services/:serviceId/:featureId
               GoRoute(
                 path: ':featureId',
                 pageBuilder: (context, state) {
@@ -117,7 +134,6 @@ GoRouter createAppRouter(Ref ref) {
                   );
                 },
                 routes: [
-                  // Entity detail: /services/:serviceId/:featureId/:entityId
                   GoRoute(
                     path: ':entityId',
                     pageBuilder: (context, state) {
@@ -133,7 +149,6 @@ GoRouter createAppRouter(Ref ref) {
                       );
                     },
                     routes: [
-                      // Device detail: /services/profile/profiles/:profileId/devices/:deviceId
                       GoRoute(
                         path: 'devices/:deviceId',
                         pageBuilder: (context, state) {
@@ -147,12 +162,12 @@ GoRouter createAppRouter(Ref ref) {
                           );
                         },
                       ),
-                      // Account detail: /services/payment/ledgers/:ledgerId/accounts/:accountId
                       GoRoute(
                         path: 'accounts/:accountId',
                         pageBuilder: (context, state) {
                           final ledgerId = state.pathParameters['entityId']!;
-                          final accountId = state.pathParameters['accountId']!;
+                          final accountId =
+                              state.pathParameters['accountId']!;
                           return NoTransitionPage(
                             child: AccountDetailPage(
                               ledgerId: ledgerId,
