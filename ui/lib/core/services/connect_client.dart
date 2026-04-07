@@ -103,8 +103,9 @@ final tenantInterceptorProvider =
   final jwtCtx = jwt.whenOrNull(data: (ctx) => ctx) ??
       const TenantContext(tenantId: '', partitionId: '');
 
-  // Only create the interceptor for internal users who can switch tenants.
-  if (!jwtCtx.isInternal) return const [];
+  // Create the interceptor for internal users (cross-tenant) and owners
+  // (cross-partition within their tenant) who can switch context.
+  if (!jwtCtx.isInternal && !jwtCtx.isOwner) return const [];
 
   return [
     tenantContextInterceptor(

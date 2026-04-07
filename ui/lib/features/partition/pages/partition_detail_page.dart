@@ -273,7 +273,12 @@ class _PartitionDetailContent extends ConsumerWidget {
                 _OverviewTab(partition: partition),
                 _RolesTab(partitionId: partitionId),
                 _AccessTab(partitionId: partitionId),
-                const PermissionsTab(),
+                PermissionsTab(
+                  partitionId: partitionId,
+                  tenantId: partition.tenantId,
+                  isRootPartition: !partition.hasParentId() ||
+                      partition.parentId.isEmpty,
+                ),
                 _ServiceAccountsTab(partitionId: partitionId),
                 _ClientsTab(partitionId: partitionId),
               ],

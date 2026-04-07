@@ -32,6 +32,11 @@ class TenantContext {
   /// Internal users can switch tenant context for cross-tenant administration.
   bool get isInternal => roles.contains('internal');
 
+  /// Whether the user can switch partition context.
+  /// Internal users can switch across tenants; owners can switch across
+  /// partitions within their tenant.
+  bool get canSwitchContext => isInternal || isOwner;
+
   TenantContext copyWith({
     String? tenantId,
     String? partitionId,

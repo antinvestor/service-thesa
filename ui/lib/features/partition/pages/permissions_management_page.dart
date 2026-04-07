@@ -2,6 +2,7 @@ import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/services/tenant_context.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../profile/data/profile_repository.dart';
 import '../data/partition_providers.dart';
@@ -12,8 +13,23 @@ import '../data/partition_repository.dart';
 /// Shows registered service namespaces and their role bindings. The "Manage
 /// Permissions" button opens a full-screen dialog where the admin picks a
 /// profile and then toggles individual permissions across all namespaces.
+///
+/// Access rules:
+/// - **Owner of the root partition**: sees all namespaces and all permissions;
+///   can grant/revoke any permission to any user.
+/// - **Other users**: can only see and assign the permissions their own roles
+///   grant them within each namespace's role bindings.
 class PermissionsTab extends ConsumerWidget {
-  const PermissionsTab({super.key});
+  const PermissionsTab({
+    super.key,
+    required this.partitionId,
+    required this.tenantId,
+    required this.isRootPartition,
+  });
+
+  final String partitionId;
+  final String tenantId;
+  final bool isRootPartition;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,82 +60,169 @@ class PermissionsTab extends ConsumerWidget {
           ],
         ),
       ),
-      data: (namespaces) => Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${namespaces.length} service namespace${namespaces.length == 1 ? '' : 's'} registered',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: AppColors.onSurfaceMuted),
-                ),
-                Row(
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () =>
-                          ref.invalidate(serviceNamespacesProvider),
-                      icon: const Icon(Icons.refresh, size: 16),
-                      label: const Text('Refresh'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: () => _openPermissionManager(
-                          context, ref, namespaces),
-                      icon: const Icon(Icons.security, size: 18),
-                      label: const Text('Manage Permissions'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (namespaces.isEmpty)
-            const Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.admin_panel_settings_outlined,
-                        size: 48, color: Colors.grey),
-                    SizedBox(height: 12),
-                    Text('No service namespaces registered'),
-                    SizedBox(height: 8),
-                    Text(
-                        'Namespaces appear when services start and register '
-                        'their permissions.'),
-                  ],
-                ),
-              ),
-            )
-          else
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: namespaces.length,
-                itemBuilder: (context, index) =>
-                    _NamespaceCard(namespace: namespaces[index]),
+      data: (namespaces) {
+        final jwtCtx = ref.watch(effectiveTenantProvider);
+        final isSuperUser = _isSuperUser(jwtCtx);
+        final userRoles = jwtCtx.roles;
+
+        // Filter namespaces: super users see everything, others only see
+        // namespaces where their roles grant at least one permission.
+        final visibleNamespaces = isSuperUser
+            ? namespaces
+            : _filterNamespacesByRoles(namespaces, userRoles);
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${visibleNamespaces.length} service namespace${visibleNamespaces.length == 1 ? '' : 's'} registered',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: AppColors.onSurfaceMuted),
+                  ),
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () =>
+                            ref.invalidate(serviceNamespacesProvider),
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Refresh'),
+                      ),
+                      if (visibleNamespaces.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () => _openPermissionManager(
+                            context,
+                            ref,
+                            namespaces,
+                            isSuperUser,
+                            userRoles,
+                          ),
+                          icon: const Icon(Icons.security, size: 18),
+                          label: const Text('Manage Permissions'),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ),
             ),
-        ],
-      ),
+            if (visibleNamespaces.isEmpty)
+              const Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.admin_panel_settings_outlined,
+                          size: 48, color: Colors.grey),
+                      SizedBox(height: 12),
+                      Text('No service namespaces registered'),
+                      SizedBox(height: 8),
+                      Text(
+                          'Namespaces appear when services start and register '
+                          'their permissions.'),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: visibleNamespaces.length,
+                  itemBuilder: (context, index) =>
+                      _NamespaceCard(namespace: visibleNamespaces[index]),
+                ),
+              ),
+          ],
+        );
+      },
     );
+  }
+
+  /// Returns true if the current user is a super user who can assign any
+  /// permission: an owner of the root partition or an internal user.
+  bool _isSuperUser(TenantContext ctx) {
+    if (ctx.isInternal) return true;
+    return ctx.isOwner && isRootPartition;
   }
 
   void _openPermissionManager(
     BuildContext context,
     WidgetRef ref,
     List<ServiceNamespaceObject> namespaces,
+    bool isSuperUser,
+    List<String> userRoles,
   ) {
+    // Ensure the active context matches this partition so that
+    // grant/revoke calls target the correct partition scope.
+    final jwt = ref.read(jwtTenantContextProvider);
+    final jwtCtx = jwt.whenOrNull(data: (c) => c) ??
+        const TenantContext(tenantId: '', partitionId: '');
+    if (jwtCtx.canSwitchContext && jwtCtx.partitionId != partitionId) {
+      ref.read(activeTenantProvider.notifier).set(
+        jwtCtx.copyWith(
+          tenantId: tenantId,
+          partitionId: partitionId,
+        ),
+      );
+    }
+
     Navigator.of(context).push(MaterialPageRoute(
       fullscreenDialog: true,
-      builder: (_) => _PermissionManagerPage(namespaces: namespaces, ref: ref),
+      builder: (_) => _PermissionManagerPage(
+        namespaces: namespaces,
+        ref: ref,
+        partitionId: partitionId,
+        tenantId: tenantId,
+        isSuperUser: isSuperUser,
+        userRoles: userRoles,
+      ),
     ));
   }
+}
+
+/// Filters namespaces to only include those where the user's roles grant
+/// at least one permission, and trims each namespace's permission list to
+/// only the permissions the user's roles provide.
+List<ServiceNamespaceObject> _filterNamespacesByRoles(
+  List<ServiceNamespaceObject> namespaces,
+  List<String> userRoles,
+) {
+  final result = <ServiceNamespaceObject>[];
+  for (final ns in namespaces) {
+    final allowedPerms = _permissionsForRoles(ns, userRoles);
+    if (allowedPerms.isNotEmpty) {
+      result.add(ServiceNamespaceObject(
+        namespace: ns.namespace,
+        permissions: allowedPerms,
+        roleBindings: ns.roleBindings,
+        registeredAt: ns.hasRegisteredAt() ? ns.registeredAt : null,
+      ));
+    }
+  }
+  return result;
+}
+
+/// Collects the union of permissions granted by [roles] within a namespace's
+/// role bindings.
+Set<String> _permissionsForRoles(
+  ServiceNamespaceObject ns,
+  List<String> roles,
+) {
+  final allowed = <String>{};
+  for (final role in roles) {
+    final binding = ns.roleBindings[role];
+    if (binding != null) {
+      allowed.addAll(binding.permissions);
+    }
+  }
+  return allowed;
 }
 
 // ─── Namespace Card (read-only overview) ────────────────────────────────────
@@ -255,10 +358,18 @@ class _PermissionManagerPage extends StatefulWidget {
   const _PermissionManagerPage({
     required this.namespaces,
     required this.ref,
+    required this.partitionId,
+    required this.tenantId,
+    required this.isSuperUser,
+    required this.userRoles,
   });
 
   final List<ServiceNamespaceObject> namespaces;
   final WidgetRef ref;
+  final String partitionId;
+  final String tenantId;
+  final bool isSuperUser;
+  final List<String> userRoles;
 
   @override
   State<_PermissionManagerPage> createState() =>
@@ -276,6 +387,19 @@ class _PermissionManagerPageState extends State<_PermissionManagerPage> {
   /// namespace → set of selected permissions
   final Map<String, Set<String>> _selected = {};
   bool _saving = false;
+
+  /// The namespaces and permissions this user is allowed to assign.
+  late final List<ServiceNamespaceObject> _assignableNamespaces;
+
+  @override
+  void initState() {
+    super.initState();
+    // Super users see all namespaces and all permissions.
+    // Other users only see the permissions their roles grant.
+    _assignableNamespaces = widget.isSuperUser
+        ? widget.namespaces
+        : _filterNamespacesByRoles(widget.namespaces, widget.userRoles);
+  }
 
   @override
   void dispose() {
@@ -446,14 +570,14 @@ class _PermissionManagerPageState extends State<_PermissionManagerPage> {
               onPressed: _saving ? null : _revokeSelected,
               icon: Icon(Icons.remove_circle_outline,
                   size: 18, color: AppColors.error),
-              label: Text('Revoke (${_totalSelected})',
+              label: Text('Revoke ($_totalSelected)',
                   style: TextStyle(color: AppColors.error)),
             ),
             const SizedBox(width: 8),
             FilledButton.icon(
               onPressed: _saving ? null : _applyChanges,
               icon: const Icon(Icons.check, size: 18),
-              label: Text('Grant (${_totalSelected})'),
+              label: Text('Grant ($_totalSelected)'),
             ),
             const SizedBox(width: 12),
           ],
@@ -463,6 +587,7 @@ class _PermissionManagerPageState extends State<_PermissionManagerPage> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
+                _buildContextBanner(),
                 _buildProfileSection(),
                 if (_profileResolved) ...[
                   const Divider(height: 1),
@@ -470,6 +595,37 @@ class _PermissionManagerPageState extends State<_PermissionManagerPage> {
                 ],
               ],
             ),
+    );
+  }
+
+  /// Shows the active partition context and the user's permission scope.
+  Widget _buildContextBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: widget.isSuperUser
+          ? AppColors.success.withValues(alpha: 0.06)
+          : AppColors.tertiary.withValues(alpha: 0.06),
+      child: Row(
+        children: [
+          Icon(
+            widget.isSuperUser ? Icons.shield_outlined : Icons.info_outline,
+            size: 16,
+            color: widget.isSuperUser ? AppColors.success : AppColors.tertiary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              widget.isSuperUser
+                  ? 'Root partition owner — all permissions across all '
+                      'namespaces are available for assignment.'
+                  : 'You can only assign permissions granted by your '
+                      'current roles.',
+              style: TextStyle(fontSize: 12, color: AppColors.onSurfaceMuted),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -569,11 +725,27 @@ class _PermissionManagerPageState extends State<_PermissionManagerPage> {
   }
 
   Widget _buildPermissionsGrid() {
+    if (_assignableNamespaces.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.block, size: 48, color: Colors.grey),
+            SizedBox(height: 12),
+            Text('No assignable permissions'),
+            SizedBox(height: 8),
+            Text('Your current roles do not grant any permissions '
+                'that can be assigned to others.'),
+          ],
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: widget.namespaces.length,
+      itemCount: _assignableNamespaces.length,
       itemBuilder: (context, index) {
-        final ns = widget.namespaces[index];
+        final ns = _assignableNamespaces[index];
         final nsName = ns.namespace;
         final displayName = nsName.replaceFirst('service_', '');
         final title = displayName.isNotEmpty
