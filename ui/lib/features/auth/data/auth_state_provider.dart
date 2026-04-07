@@ -39,10 +39,14 @@ class AuthStateNotifier extends AsyncNotifier<AuthState> {
     state = const AsyncValue.loading();
     try {
       final authRepo = ref.read(authRepositoryProvider);
-      await authRepo.login();
+      final isAuthenticated = await authRepo.login();
       if (!ref.mounted) return;
-      _scheduleTokenRefresh();
-      state = const AsyncValue.data(AuthState.authenticated);
+      if (isAuthenticated) {
+        _scheduleTokenRefresh();
+        state = const AsyncValue.data(AuthState.authenticated);
+        return;
+      }
+      state = const AsyncValue.data(AuthState.unauthenticated);
     } catch (e, stack) {
       if (ref.mounted) state = AsyncValue.error(e, stack);
       rethrow;

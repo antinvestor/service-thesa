@@ -19,17 +19,17 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 /// - **Loading**: auth is being determined → show splash (no redirect)
 /// - **Unauthenticated**: redirect to /login
 /// - **Authenticated**: redirect away from /login and /auth/callback to /
-GoRouter createAppRouter(Ref ref) {
+GoRouter createAppRouter(Ref ref, {String initialLocation = '/'}) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/',
+    initialLocation: initialLocation,
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
-      final path = state.uri.toString();
-      final isLoginRoute = path == '/login';
-      final isLogoutRoute = path == '/logout';
-      final isAuthCallback = path.startsWith('/auth/callback');
-      final isSplash = path == '/splash';
+      final routePath = state.uri.path;
+      final isLoginRoute = routePath == '/login';
+      final isLogoutRoute = routePath == '/logout';
+      final isAuthCallback = routePath == '/auth/callback';
+      final isSplash = routePath == '/splash';
 
       // Handle logout — always process immediately
       if (isLogoutRoute) {

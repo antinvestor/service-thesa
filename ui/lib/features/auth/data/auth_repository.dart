@@ -16,12 +16,12 @@ class AuthRepository {
       _storage.write(key: key, value: value);
   Future<void> deleteToken(String key) => _storage.delete(key: key);
 
-  Future<void> login() async {
+  Future<bool> login() async {
     final token = await _authService.authenticate();
     // On web, authenticate() returns null because it redirects the browser
     // to the OAuth provider. This is not an error — the callback will
     // complete the flow when the browser returns.
-    if (token == null) return;
+    return token != null;
   }
 
   Future<void> logout() => _authService.logout();
