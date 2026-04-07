@@ -1,0 +1,20 @@
+name: Update Release Branch
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  update-release-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Push to release branch
+        run: |
+          git push origin HEAD:refs/heads/release --force
+          echo "Updated release branch to ${{ github.sha }} (tag: ${{ github.ref_name }})"
