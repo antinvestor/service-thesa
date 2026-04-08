@@ -1,0 +1,404 @@
+openapi: 3.0.3
+info:
+  title: Redirect Service API
+  description: URL shortening, affiliate tracking, and click telemetry.
+  version: "1.0.0"
+
+paths:
+  /redirect.v1.RedirectService/CreateLink:
+    post:
+      operationId: createLink
+      summary: Create a new redirect link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLinkRequest'
+      responses:
+        '200':
+          description: Link created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateLinkResponse'
+
+  /redirect.v1.RedirectService/GetLink:
+    post:
+      operationId: getLink
+      summary: Get link details by ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLinkRequest'
+      responses:
+        '200':
+          description: Link details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLinkResponse'
+
+  /redirect.v1.RedirectService/UpdateLink:
+    post:
+      operationId: updateLink
+      summary: Update an existing link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLinkRequest'
+      responses:
+        '200':
+          description: Link updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateLinkResponse'
+
+  /redirect.v1.RedirectService/DeleteLink:
+    post:
+      operationId: deleteLink
+      summary: Delete a link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteLinkRequest'
+      responses:
+        '200':
+          description: Link deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteLinkResponse'
+
+  /redirect.v1.RedirectService/ListLinks:
+    post:
+      operationId: listLinks
+      summary: Search and list links
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListLinksRequest'
+      responses:
+        '200':
+          description: Links list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLinksResponse'
+
+  /redirect.v1.RedirectService/GetLinkStats:
+    post:
+      operationId: getLinkStats
+      summary: Get aggregate click statistics for a link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetLinkStatsRequest'
+      responses:
+        '200':
+          description: Link statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLinkStatsResponse'
+
+  /redirect.v1.RedirectService/ListClicks:
+    post:
+      operationId: listClicks
+      summary: List detailed click events for a link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListClicksRequest'
+      responses:
+        '200':
+          description: Click events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListClicksResponse'
+
+components:
+  schemas:
+    Link:
+      type: object
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        destination_url:
+          type: string
+          format: uri
+        title:
+          type: string
+        affiliate_id:
+          type: string
+        campaign:
+          type: string
+        source:
+          type: string
+        medium:
+          type: string
+        content:
+          type: string
+        term:
+          type: string
+        tags:
+          type: object
+        max_clicks:
+          type: integer
+          format: int64
+        expires_at:
+          type: string
+          format: date-time
+        state:
+          type: string
+          enum: [LINK_STATE_UNSPECIFIED, LINK_STATE_ACTIVE, LINK_STATE_PAUSED, LINK_STATE_EXPIRED, LINK_STATE_DELETED]
+        click_count:
+          type: integer
+          format: int64
+        unique_click_count:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+        modified_at:
+          type: string
+          format: date-time
+
+    Click:
+      type: object
+      properties:
+        id:
+          type: string
+        link_id:
+          type: string
+        affiliate_id:
+          type: string
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        referer:
+          type: string
+        accept_language:
+          type: string
+        country:
+          type: string
+        city:
+          type: string
+        device_type:
+          type: string
+          enum: [DEVICE_TYPE_UNSPECIFIED, DEVICE_TYPE_DESKTOP, DEVICE_TYPE_MOBILE, DEVICE_TYPE_TABLET, DEVICE_TYPE_BOT]
+        browser:
+          type: string
+        os:
+          type: string
+        slug:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    LinkStats:
+      type: object
+      properties:
+        link_id:
+          type: string
+        total_clicks:
+          type: integer
+          format: int64
+        unique_clicks:
+          type: integer
+          format: int64
+        referrers:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        countries:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        devices:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        browsers:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        operating_systems:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        clicks_per_day:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+
+    CreateLinkRequest:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Link'
+
+    CreateLinkResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Link'
+
+    GetLinkRequest:
+      type: object
+      properties:
+        id:
+          type: string
+
+    GetLinkResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Link'
+
+    UpdateLinkRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        destination_url:
+          type: string
+        title:
+          type: string
+        campaign:
+          type: string
+        source:
+          type: string
+        medium:
+          type: string
+        content:
+          type: string
+        term:
+          type: string
+        tags:
+          type: object
+        max_clicks:
+          type: integer
+          format: int64
+        expires_at:
+          type: string
+          format: date-time
+        state:
+          type: string
+          enum: [LINK_STATE_UNSPECIFIED, LINK_STATE_ACTIVE, LINK_STATE_PAUSED, LINK_STATE_EXPIRED, LINK_STATE_DELETED]
+
+    UpdateLinkResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Link'
+
+    DeleteLinkRequest:
+      type: object
+      properties:
+        id:
+          type: string
+
+    DeleteLinkResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+
+    ListLinksRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        affiliate_id:
+          type: string
+        campaign:
+          type: string
+        state:
+          type: string
+          enum: [LINK_STATE_UNSPECIFIED, LINK_STATE_ACTIVE, LINK_STATE_PAUSED, LINK_STATE_EXPIRED, LINK_STATE_DELETED]
+        page_size:
+          type: integer
+        page_token:
+          type: string
+
+    ListLinksResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+        next_page_token:
+          type: string
+
+    GetLinkStatsRequest:
+      type: object
+      properties:
+        link_id:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+
+    GetLinkStatsResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LinkStats'
+
+    ListClicksRequest:
+      type: object
+      properties:
+        link_id:
+          type: string
+        affiliate_id:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        page_size:
+          type: integer
+        page_token:
+          type: string
+
+    ListClicksResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Click'
+        next_page_token:
+          type: string

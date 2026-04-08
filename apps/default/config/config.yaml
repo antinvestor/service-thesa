@@ -64,6 +64,8 @@ specs:
       spec_file: property-svc.yaml
     - service_id: foundry-svc
       spec_file: foundry-svc.yaml
+    - service_id: redirect-svc
+      spec_file: redirect-svc.yaml
 
 services:
   tenancy-svc:
@@ -253,6 +255,24 @@ services:
     retry:
       max_attempts: 2
       backoff_initial: 200ms
+      backoff_multiplier: 2.0
+      idempotent_only: true
+
+  redirect-svc:
+    base_url: "https://api.stawi.org/redirect"
+    authorization_namespace: "service_redirect"
+    timeout: 10s
+    pagination:
+      style: cursor
+      page_param: page_token
+      size_param: page_size
+    circuit_breaker:
+      failure_threshold: 5
+      success_threshold: 2
+      timeout: 30s
+    retry:
+      max_attempts: 3
+      backoff_initial: 100ms
       backoff_multiplier: 2.0
       idempotent_only: true
 

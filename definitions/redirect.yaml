@@ -1,0 +1,521 @@
+domain: redirect
+version: "1.0.0"
+
+navigation:
+  label: Redirect Links
+  icon: link
+  order: 12
+  capabilities:
+    - "links:view"
+  children:
+    - label: All Links
+      icon: shortcut
+      route: /redirect/links
+      page_id: redirect.links
+      capabilities:
+        - "links:view"
+      order: 1
+
+pages:
+  - id: redirect.links
+    title: Redirect Links
+    route: /redirect/links
+    layout: table
+    capabilities:
+      - "links:view"
+    breadcrumb:
+      - label: Home
+        route: /
+      - label: Redirect Links
+        route: /redirect/links
+    table:
+      data_source:
+        operation_id: listLinks
+        service_id: redirect-svc
+        mapping:
+          items_path: data
+      columns:
+        - field: title
+          label: Title
+          type: text
+          sortable: true
+        - field: slug
+          label: Slug
+          type: text
+          sortable: true
+        - field: destination_url
+          label: Destination
+          type: link
+          sortable: false
+        - field: affiliate_id
+          label: Affiliate
+          type: text
+          sortable: true
+        - field: campaign
+          label: Campaign
+          type: text
+          sortable: true
+        - field: click_count
+          label: Clicks
+          type: number
+          sortable: true
+        - field: unique_click_count
+          label: Unique
+          type: number
+          sortable: true
+        - field: state
+          label: State
+          type: badge
+          sortable: true
+          status_map:
+            LINK_STATE_ACTIVE: success
+            LINK_STATE_PAUSED: warning
+            LINK_STATE_EXPIRED: error
+            LINK_STATE_DELETED: error
+      filters:
+        - field: state
+          label: State
+          type: select
+          options:
+            static:
+              - label: Active
+                value: LINK_STATE_ACTIVE
+              - label: Paused
+                value: LINK_STATE_PAUSED
+              - label: Expired
+                value: LINK_STATE_EXPIRED
+        - field: affiliate_id
+          label: Affiliate ID
+          type: text
+        - field: campaign
+          label: Campaign
+          type: text
+      row_actions:
+        - id: view_stats
+          label: Statistics
+          icon: bar_chart
+          style: default
+          type: navigate
+          route: "/redirect/links/{id}/stats"
+        - id: edit_link
+          label: Edit
+          icon: edit
+          style: default
+          type: form
+          form_id: redirect.edit_link_form
+          capabilities:
+            - "links:manage"
+        - id: pause_link
+          label: Pause
+          icon: pause
+          style: warning
+          type: command
+          command_id: redirect.pauseLink
+          capabilities:
+            - "links:manage"
+          confirmation:
+            title: Pause Link
+            message: "Pause redirect for {title}?"
+            confirm: Pause
+            cancel: Cancel
+            style: warning
+        - id: delete_link
+          label: Delete
+          icon: delete
+          style: danger
+          type: command
+          command_id: redirect.deleteLink
+          capabilities:
+            - "links:manage"
+          confirmation:
+            title: Delete Link
+            message: "Are you sure you want to delete {title}? This cannot be undone."
+            confirm: Delete
+            cancel: Cancel
+            style: danger
+      default_sort: created_at
+      sort_dir: desc
+      page_size: 25
+    actions:
+      - id: create_link
+        label: Create Link
+        icon: add_link
+        style: primary
+        type: form
+        form_id: redirect.create_link_form
+        capabilities:
+          - "links:manage"
+
+  - id: redirect.link_stats
+    title: Link Statistics
+    route: /redirect/links/{id}/stats
+    layout: detail
+    capabilities:
+      - "links:view"
+    breadcrumb:
+      - label: Home
+        route: /
+      - label: Redirect Links
+        route: /redirect/links
+      - label: Statistics
+        route: /redirect/links/{id}/stats
+    sections:
+      - id: overview
+        title: Link Details
+        layout: grid
+        columns: 2
+        data_source:
+          operation_id: getLink
+          service_id: redirect-svc
+          mapping:
+            items_path: data
+        fields:
+          - field: title
+            label: Title
+            type: text
+            read_only: true
+          - field: slug
+            label: Slug
+            type: text
+            read_only: true
+          - field: destination_url
+            label: Destination URL
+            type: link
+            read_only: true
+          - field: affiliate_id
+            label: Affiliate ID
+            type: text
+            read_only: true
+          - field: campaign
+            label: Campaign
+            type: text
+            read_only: true
+          - field: source
+            label: Source
+            type: text
+            read_only: true
+          - field: medium
+            label: Medium
+            type: text
+            read_only: true
+          - field: state
+            label: State
+            type: badge
+            read_only: true
+          - field: click_count
+            label: Total Clicks
+            type: number
+            read_only: true
+          - field: unique_click_count
+            label: Unique Clicks
+            type: number
+            read_only: true
+          - field: max_clicks
+            label: Max Clicks
+            type: number
+            read_only: true
+          - field: expires_at
+            label: Expires At
+            type: datetime
+            read_only: true
+          - field: created_at
+            label: Created
+            type: datetime
+            read_only: true
+
+      - id: stats
+        title: Aggregate Statistics
+        layout: grid
+        columns: 2
+        data_source:
+          operation_id: getLinkStats
+          service_id: redirect-svc
+          mapping:
+            items_path: data
+            request_mapping:
+              link_id: "{id}"
+        fields:
+          - field: total_clicks
+            label: Total Clicks
+            type: number
+            read_only: true
+          - field: unique_clicks
+            label: Unique Clicks
+            type: number
+            read_only: true
+
+      - id: clicks
+        title: Recent Clicks
+        layout: table
+        data_source:
+          operation_id: listClicks
+          service_id: redirect-svc
+          mapping:
+            items_path: data
+            request_mapping:
+              link_id: "{id}"
+        table:
+          columns:
+            - field: created_at
+              label: Time
+              type: datetime
+              sortable: true
+            - field: country
+              label: Country
+              type: text
+            - field: city
+              label: City
+              type: text
+            - field: device_type
+              label: Device
+              type: badge
+              status_map:
+                DEVICE_TYPE_DESKTOP: info
+                DEVICE_TYPE_MOBILE: success
+                DEVICE_TYPE_TABLET: warning
+                DEVICE_TYPE_BOT: error
+            - field: browser
+              label: Browser
+              type: text
+            - field: os
+              label: OS
+              type: text
+            - field: referer
+              label: Referrer
+              type: text
+            - field: ip_address
+              label: IP Address
+              type: text
+          default_sort: created_at
+          sort_dir: desc
+          page_size: 50
+
+forms:
+  - id: redirect.create_link_form
+    title: Create Redirect Link
+    capabilities:
+      - "links:manage"
+    submit_command: redirect.createLink
+    success_route: /redirect/links
+    success_message: Link created successfully.
+    sections:
+      - id: basic
+        title: Link Details
+        layout: grid
+        columns: 2
+        fields:
+          - field: slug
+            label: Slug
+            type: text
+            required: true
+            hint: "Short code for the redirect URL (e.g., promo2026)"
+          - field: destination_url
+            label: Destination URL
+            type: url
+            required: true
+            hint: "Full URL to redirect to"
+          - field: title
+            label: Title
+            type: text
+            hint: "Human-readable name for this link"
+          - field: affiliate_id
+            label: Affiliate ID
+            type: text
+            hint: "Affiliate who owns this link"
+      - id: campaign
+        title: Campaign Tracking (UTM)
+        layout: grid
+        columns: 2
+        fields:
+          - field: campaign
+            label: Campaign
+            type: text
+          - field: source
+            label: Source
+            type: text
+          - field: medium
+            label: Medium
+            type: text
+          - field: content
+            label: Content
+            type: text
+          - field: term
+            label: Term
+            type: text
+      - id: limits
+        title: Limits
+        layout: grid
+        columns: 2
+        fields:
+          - field: max_clicks
+            label: Max Clicks (0 = unlimited)
+            type: number
+          - field: expires_at
+            label: Expires At
+            type: datetime
+
+  - id: redirect.edit_link_form
+    title: Edit Redirect Link
+    capabilities:
+      - "links:manage"
+    submit_command: redirect.updateLink
+    success_route: /redirect/links
+    success_message: Link updated successfully.
+    load_source:
+      operation_id: getLink
+      service_id: redirect-svc
+      mapping:
+        items_path: data
+    sections:
+      - id: basic
+        title: Link Details
+        layout: grid
+        columns: 2
+        fields:
+          - field: destination_url
+            label: Destination URL
+            type: url
+            required: true
+          - field: title
+            label: Title
+            type: text
+          - field: state
+            label: State
+            type: select
+            lookup:
+              static:
+                - label: Active
+                  value: LINK_STATE_ACTIVE
+                - label: Paused
+                  value: LINK_STATE_PAUSED
+      - id: campaign
+        title: Campaign Tracking (UTM)
+        layout: grid
+        columns: 2
+        fields:
+          - field: campaign
+            label: Campaign
+            type: text
+          - field: source
+            label: Source
+            type: text
+          - field: medium
+            label: Medium
+            type: text
+          - field: content
+            label: Content
+            type: text
+          - field: term
+            label: Term
+            type: text
+      - id: limits
+        title: Limits
+        layout: grid
+        columns: 2
+        fields:
+          - field: max_clicks
+            label: Max Clicks (0 = unlimited)
+            type: number
+          - field: expires_at
+            label: Expires At
+            type: datetime
+
+commands:
+  - id: redirect.createLink
+    capabilities:
+      - "links:manage"
+    operation:
+      type: openapi
+      operation_id: createLink
+      service_id: redirect-svc
+    input:
+      body_mapping: projection
+      field_projection:
+        data.slug: input.slug
+        data.destination_url: input.destination_url
+        data.title: input.title
+        data.affiliate_id: input.affiliate_id
+        data.campaign: input.campaign
+        data.source: input.source
+        data.medium: input.medium
+        data.content: input.content
+        data.term: input.term
+        data.max_clicks: input.max_clicks
+        data.expires_at: input.expires_at
+    output:
+      type: full
+      success_message: "Link created successfully."
+
+  - id: redirect.updateLink
+    capabilities:
+      - "links:manage"
+    operation:
+      type: openapi
+      operation_id: updateLink
+      service_id: redirect-svc
+    input:
+      body_mapping: projection
+      field_projection:
+        id: context.id
+        destination_url: input.destination_url
+        title: input.title
+        state: input.state
+        campaign: input.campaign
+        source: input.source
+        medium: input.medium
+        content: input.content
+        term: input.term
+        max_clicks: input.max_clicks
+        expires_at: input.expires_at
+    output:
+      type: full
+      success_message: "Link updated successfully."
+
+  - id: redirect.pauseLink
+    capabilities:
+      - "links:manage"
+    operation:
+      type: openapi
+      operation_id: updateLink
+      service_id: redirect-svc
+    input:
+      body_mapping: projection
+      field_projection:
+        id: input.id
+        state: "LINK_STATE_PAUSED"
+    output:
+      type: full
+      success_message: "Link paused."
+
+  - id: redirect.deleteLink
+    capabilities:
+      - "links:manage"
+    operation:
+      type: openapi
+      operation_id: deleteLink
+      service_id: redirect-svc
+    input:
+      body_mapping: projection
+      field_projection:
+        id: input.id
+    output:
+      type: full
+      success_message: "Link deleted."
+
+searches:
+  - id: redirect.search
+    domain: redirect
+    capabilities:
+      - "links:view"
+    operation:
+      type: openapi
+      operation_id: listLinks
+      service_id: redirect-svc
+    result_mapping:
+      items_path: data
+      title_field: title
+      subtitle_field: destination_url
+      id_field: id
+      route: "/redirect/links/{id}/stats"
+    weight: 0.5
+    max_results: 10
