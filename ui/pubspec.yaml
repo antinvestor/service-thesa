@@ -50,7 +50,15 @@ dependencies:
     git:
       url: https://github.com/antinvestor/service-profile.git
       path: sdk/dart/geolocation
+  antinvestor_api_files:
+    git:
+      url: https://github.com/antinvestor/service-files.git
+      path: sdk/dart/files
   antinvestor_api_notification: ^1.51.0
+  antinvestor_api_billing:
+    git:
+      url: https://github.com/antinvestor/service-payment.git
+      path: sdk/dart/billing
   antinvestor_api_payment:
     git:
       url: https://github.com/antinvestor/service-payment.git
@@ -68,6 +76,28 @@ dependencies:
   url_launcher: ^6.3.2
   web: ^1.1.1
   csv: ^8.0.0
+
+  # ── Antinvestor UI Libraries ─────────────────────────────────────────────
+  antinvestor_ui_core:
+    path: ../../common/ui_core
+  antinvestor_ui_profile:
+    path: ../../service-profile/ui/profile
+  antinvestor_ui_device:
+    path: ../../service-profile/ui/device
+  antinvestor_ui_settings:
+    path: ../../service-profile/ui/settings
+  antinvestor_ui_geolocation:
+    path: ../../service-profile/ui/geolocation
+  antinvestor_ui_payment:
+    path: ../../service-payment/ui/payment
+  antinvestor_ui_ledger:
+    path: ../../service-payment/ui/ledger
+  antinvestor_ui_billing:
+    path: ../../service-payment/ui/billing
+  antinvestor_ui_notification:
+    path: ../../service-notification/ui
+  antinvestor_ui_files:
+    path: ../../service-files/ui
 
 dev_dependencies:
   flutter_test:

@@ -1,7 +1,11 @@
+import 'package:antinvestor_ui_notification/antinvestor_ui_notification.dart'
+    show NotificationBadge;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../features/auth/data/auth_repository.dart';
+import '../services/tenant_context.dart';
 import '../theme/app_colors.dart';
 import 'tenant_picker.dart';
 
@@ -67,8 +71,21 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
           const SizedBox(width: 8),
           // Action icons — hide on very narrow screens
           if (!isCompact) ...[
-            _HeaderIconButton(
-                icon: Icons.notifications_outlined, tooltip: 'Notifications'),
+            // Live notification badge from antinvestor_ui_notification
+            Consumer(builder: (context, ref, _) {
+              final profileId = ref.watch(jwtTenantContextProvider).whenOrNull(
+                    data: (ctx) => ctx.profileId,
+                  ) ?? '';
+              return IconButton(
+                onPressed: () => context.go('/services/notification/notifications'),
+                tooltip: 'Notifications',
+                icon: NotificationBadge(
+                  recipientId: profileId,
+                  child: Icon(Icons.notifications_outlined,
+                      size: 22, color: AppColors.onSurfaceMuted),
+                ),
+              );
+            }),
             _HeaderIconButton(icon: Icons.history, tooltip: 'History'),
             _HeaderIconButton(icon: Icons.apps, tooltip: 'Apps'),
             const SizedBox(width: 8),

@@ -1,3 +1,5 @@
+import 'package:antinvestor_ui_settings/antinvestor_ui_settings.dart'
+    as settings_lib;
 import 'package:flutter/material.dart';
 
 import '../../core/services/service_definition.dart';
@@ -6,6 +8,7 @@ import 'pages/all_settings_page.dart';
 import 'pages/modules_page.dart';
 import 'pages/settings_analytics_page.dart';
 
+/// Settings Service with enhanced bulk edit from antinvestor_ui_settings library.
 const settingsServiceDef = ServiceDefinition(
   id: 'settings',
   label: 'Settings Service',
@@ -17,12 +20,19 @@ const settingsServiceDef = ServiceDefinition(
       label: 'All Settings',
       icon: Icons.tune_outlined,
       description: 'Browse and manage all settings',
+      hasDetailPage: true,
     ),
     SubFeatureDefinition(
       id: 'modules',
       label: 'Modules',
       icon: Icons.widgets_outlined,
       description: 'Explore settings grouped by module',
+    ),
+    SubFeatureDefinition(
+      id: 'bulk',
+      label: 'Bulk Edit',
+      icon: Icons.edit_note_outlined,
+      description: 'Edit multiple settings at once',
     ),
   ],
 );
@@ -34,10 +44,19 @@ void registerSettingsService() {
       analyticsBuilder: (context, service) =>
           SettingsAnalyticsPage(service: service),
       featureBuilders: {
+        // Thesa's own admin pages
         'all': (context, service, feature) =>
             AllSettingsPage(service: service, feature: feature),
         'modules': (context, service, feature) =>
             SettingsModulesPage(service: service, feature: feature),
+        // Bulk edit from antinvestor_ui_settings library
+        'bulk': (context, service, feature) =>
+            const settings_lib.SettingsBulkEditScreen(),
+      },
+      detailBuilders: {
+        // Setting detail/edit from library
+        'all': (context, service, feature, entityId) =>
+            settings_lib.SettingDetailScreen(settingKey: entityId),
       },
     ),
   );

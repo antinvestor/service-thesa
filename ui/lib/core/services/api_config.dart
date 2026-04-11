@@ -48,6 +48,16 @@ class ApiConfig {
     defaultValue: 'https://api.stawi.org/settings',
   );
 
+  static const String billingBaseUrl = String.fromEnvironment(
+    'BILLING_URL',
+    defaultValue: 'https://api.stawi.org/billing',
+  );
+
+  static const String filesBaseUrl = String.fromEnvironment(
+    'FILES_URL',
+    defaultValue: 'https://api.stawi.org/files',
+  );
+
   // OAuth2 configuration
   static const String oauth2IssuerUrl = String.fromEnvironment(
     'OAUTH2_ISSUER_URL',

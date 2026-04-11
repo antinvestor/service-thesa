@@ -1,6 +1,10 @@
+import 'package:antinvestor_api_billing/antinvestor_api_billing.dart'
+    hide SearchRequest, SearchResponse;
 import 'package:antinvestor_api_common/antinvestor_api_common.dart';
 import 'package:connectrpc/connect.dart' as connect;
 import 'package:antinvestor_api_device/antinvestor_api_device.dart';
+import 'package:antinvestor_api_files/antinvestor_api_files.dart'
+    hide SearchRequest, SearchResponse;
 import 'package:antinvestor_api_ledger/antinvestor_api_ledger.dart';
 import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
     hide SearchRequest, SearchResponse;
@@ -290,5 +294,50 @@ final settingsClientProvider =
 final settingsServiceClientProvider =
     FutureProvider<SettingsServiceClient>((ref) async {
   final client = await ref.watch(settingsClientProvider.future);
+  return client.stub;
+});
+
+// ─── Billing Client ────────────────────────────────────────────────────────
+
+/// Billing API uses a direct service client (no wrapper class).
+/// Creates an authenticated transport and returns BillingServiceClient.
+final billingServiceClientProvider =
+    FutureProvider<BillingServiceClient>((ref) async {
+  final tokenManager = ref.watch(tokenManagerProvider);
+  final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  await tokenManager.initialize();
+
+  final client = newClient<BillingServiceClient>(
+    defaultEndpoint: 'https://billing.antinvestor.com',
+    createServiceClient: BillingServiceClient.new,
+    createTransport: createTransportFactory(),
+    endpoint: ApiConfig.billingBaseUrl,
+    tokenManager: tokenManager,
+    onTokenRefresh: onTokenRefresh,
+    additionalInterceptors: tenantInterceptors,
+  );
+  return client.stub;
+});
+
+// ─── Files Client ──────────────────────────────────────────────────────────
+
+/// Files API uses a direct service client (no wrapper class).
+final filesServiceClientProvider =
+    FutureProvider<FilesServiceClient>((ref) async {
+  final tokenManager = ref.watch(tokenManagerProvider);
+  final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  await tokenManager.initialize();
+
+  final client = newClient<FilesServiceClient>(
+    defaultEndpoint: 'https://files.antinvestor.com',
+    createServiceClient: FilesServiceClient.new,
+    createTransport: createTransportFactory(),
+    endpoint: ApiConfig.filesBaseUrl,
+    tokenManager: tokenManager,
+    onTokenRefresh: onTokenRefresh,
+    additionalInterceptors: tenantInterceptors,
+  );
   return client.stub;
 });
