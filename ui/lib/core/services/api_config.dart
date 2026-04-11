@@ -58,6 +58,11 @@ class ApiConfig {
     defaultValue: 'https://api.stawi.org/files',
   );
 
+  static const String auditBaseUrl = String.fromEnvironment(
+    'AUDIT_URL',
+    defaultValue: 'https://api.stawi.org/audit',
+  );
+
   // OAuth2 configuration
   static const String oauth2IssuerUrl = String.fromEnvironment(
     'OAUTH2_ISSUER_URL',

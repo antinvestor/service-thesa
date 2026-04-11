@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
 import 'core/services/auth_bridge.dart';
 import 'core/services/tenant_context.dart';
+import 'features/audit/audit_service.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/billing/billing_service.dart';
 import 'features/files/files_service.dart';
@@ -31,6 +32,7 @@ void main() {
   registerFilesService();
   registerBillingService();
   registerGeolocationService();
+  registerAuditService();
 
   runApp(
     ProviderScope(

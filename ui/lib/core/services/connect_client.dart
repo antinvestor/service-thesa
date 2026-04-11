@@ -1,3 +1,5 @@
+import 'package:antinvestor_api_audit/antinvestor_api_audit.dart'
+    hide SearchRequest, SearchResponse;
 import 'package:antinvestor_api_billing/antinvestor_api_billing.dart'
     hide SearchRequest, SearchResponse;
 import 'package:antinvestor_api_common/antinvestor_api_common.dart';
@@ -335,6 +337,28 @@ final filesServiceClientProvider =
     createServiceClient: FilesServiceClient.new,
     createTransport: createTransportFactory(),
     endpoint: ApiConfig.filesBaseUrl,
+    tokenManager: tokenManager,
+    onTokenRefresh: onTokenRefresh,
+    additionalInterceptors: tenantInterceptors,
+  );
+  return client.stub;
+});
+
+// ─── Audit Client ──────────────────────────────────────────────────────────
+
+/// Audit API uses a direct service client (no wrapper class).
+final auditServiceClientProvider =
+    FutureProvider<AuditServiceClient>((ref) async {
+  final tokenManager = ref.watch(tokenManagerProvider);
+  final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  await tokenManager.initialize();
+
+  final client = newClient<AuditServiceClient>(
+    defaultEndpoint: 'https://audit.antinvestor.com',
+    createServiceClient: AuditServiceClient.new,
+    createTransport: createTransportFactory(),
+    endpoint: ApiConfig.auditBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
     additionalInterceptors: tenantInterceptors,

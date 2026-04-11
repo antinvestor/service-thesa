@@ -40,6 +40,10 @@ dependencies:
   fl_chart: ^1.2.0
   intl: ^0.20.2
   connectrpc: ^1.0.0
+  antinvestor_api_audit:
+    git:
+      url: https://github.com/antinvestor/service-authentication.git
+      path: sdk/dart/audit
   antinvestor_api_common: ^1.52.0
   antinvestor_api_tenancy: ^1.54.0
   fixnum: ^1.1.0
@@ -98,6 +102,8 @@ dependencies:
     path: ../../service-notification/ui
   antinvestor_ui_files:
     path: ../../service-files/ui
+  antinvestor_ui_audit:
+    path: ../../service-authentication/ui/audit
 
 dev_dependencies:
   flutter_test:
