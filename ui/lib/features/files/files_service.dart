@@ -1,3 +1,4 @@
+import 'package:antinvestor_ui_core/analytics/analytics_dashboard.dart';
 import 'package:antinvestor_ui_files/antinvestor_ui_files.dart';
 import 'package:flutter/material.dart';
 
@@ -45,7 +46,25 @@ void registerFilesService() {
   ServiceRegistry.instance.register(
     ServiceRegistration(
       definition: filesServiceDef,
-      analyticsBuilder: (context, service) => const FilesBrowserScreen(),
+      analyticsBuilder: (context, service) => const AnalyticsDashboard(
+            service: 'files',
+            title: 'File Management Analytics',
+            metrics: [
+              'total_files',
+              'total_storage',
+              'uploads_today',
+              'avg_file_size',
+            ],
+            charts: [
+              ChartConfig.timeSeries('upload_volume', label: 'Uploads'),
+              ChartConfig.distribution('file_types',
+                  groupBy: 'content_type', label: 'By Type'),
+            ],
+            tables: [
+              TableConfig.topN('top_uploaders',
+                  label: 'Top Uploaders', limit: 10),
+            ],
+          ),
       featureBuilders: {
         'browser': (context, service, feature) => const FilesBrowserScreen(),
         'upload': (context, service, feature) => const FileUploadScreen(),

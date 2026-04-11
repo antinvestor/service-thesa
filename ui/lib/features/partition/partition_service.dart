@@ -1,8 +1,8 @@
+import 'package:antinvestor_ui_core/analytics/analytics_dashboard.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/services/service_definition.dart';
 import '../../core/services/service_registry.dart';
-import 'pages/partition_analytics_page.dart';
 import 'pages/partition_detail_page.dart';
 import 'pages/partitions_page.dart';
 import 'pages/tenant_detail_page.dart';
@@ -41,8 +41,26 @@ void registerTenancyService() {
   ServiceRegistry.instance.register(
     ServiceRegistration(
       definition: tenancyServiceDef,
-      analyticsBuilder: (context, service) =>
-          PartitionAnalyticsPage(service: service),
+      analyticsBuilder: (context, service) => const AnalyticsDashboard(
+            service: 'tenancy',
+            title: 'Tenancy Analytics',
+            metrics: [
+              'total_tenants',
+              'total_partitions',
+              'active_users',
+              'new_tenants',
+            ],
+            charts: [
+              ChartConfig.timeSeries('tenant_growth',
+                  label: 'Tenant Growth'),
+              ChartConfig.distribution('tenants_by_plan',
+                  groupBy: 'plan', label: 'By Plan'),
+            ],
+            tables: [
+              TableConfig.topN('top_tenants',
+                  label: 'Largest Tenants', limit: 10),
+            ],
+          ),
       featureBuilders: {
         'tenants': (context, service, feature) =>
             TenantsPage(service: service, feature: feature),

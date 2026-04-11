@@ -1,3 +1,4 @@
+import 'package:antinvestor_ui_core/analytics/analytics_dashboard.dart';
 import 'package:antinvestor_ui_ledger/antinvestor_ui_ledger.dart' as ledger_lib;
 import 'package:antinvestor_ui_payment/antinvestor_ui_payment.dart'
     as payment_lib;
@@ -7,7 +8,6 @@ import '../../core/services/service_definition.dart';
 import '../../core/services/service_registry.dart';
 import 'pages/ledger_detail_page.dart';
 import 'pages/ledgers_page.dart';
-import 'pages/payment_analytics_page.dart';
 import 'pages/payments_page.dart';
 
 /// Payment Service definition with enhanced sub-features from UI libraries.
@@ -64,8 +64,30 @@ void registerPaymentService() {
   ServiceRegistry.instance.register(
     ServiceRegistration(
       definition: paymentServiceDef,
-      analyticsBuilder: (context, service) =>
-          PaymentAnalyticsPage(service: service),
+      analyticsBuilder: (context, service) => const AnalyticsDashboard(
+            service: 'payment',
+            title: 'Payment Analytics',
+            metrics: [
+              'total_payments',
+              'total_volume',
+              'success_rate',
+              'avg_processing_time',
+            ],
+            charts: [
+              ChartConfig.timeSeries('payment_volume',
+                  label: 'Payment Volume'),
+              ChartConfig.distribution('payment_routes',
+                  groupBy: 'route', label: 'By Route'),
+              ChartConfig.timeSeries('payment_amount',
+                  label: 'Payment Amount'),
+              ChartConfig.distribution('payment_status',
+                  groupBy: 'status', label: 'By Status'),
+            ],
+            tables: [
+              TableConfig.topN('top_recipients',
+                  label: 'Top Recipients', limit: 10),
+            ],
+          ),
       featureBuilders: {
         // Thesa's own admin pages
         'payments': (context, service, feature) =>

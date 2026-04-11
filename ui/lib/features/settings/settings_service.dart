@@ -1,3 +1,4 @@
+import 'package:antinvestor_ui_core/analytics/analytics_dashboard.dart';
 import 'package:antinvestor_ui_settings/antinvestor_ui_settings.dart'
     as settings_lib;
 import 'package:flutter/material.dart';
@@ -6,7 +7,6 @@ import '../../core/services/service_definition.dart';
 import '../../core/services/service_registry.dart';
 import 'pages/all_settings_page.dart';
 import 'pages/modules_page.dart';
-import 'pages/settings_analytics_page.dart';
 
 /// Settings Service with enhanced bulk edit from antinvestor_ui_settings library.
 const settingsServiceDef = ServiceDefinition(
@@ -41,8 +41,21 @@ void registerSettingsService() {
   ServiceRegistry.instance.register(
     ServiceRegistration(
       definition: settingsServiceDef,
-      analyticsBuilder: (context, service) =>
-          SettingsAnalyticsPage(service: service),
+      analyticsBuilder: (context, service) => const AnalyticsDashboard(
+            service: 'settings',
+            title: 'Settings Analytics',
+            metrics: [
+              'total_settings',
+              'recent_changes',
+              'modules_count',
+            ],
+            charts: [
+              ChartConfig.timeSeries('setting_changes',
+                  label: 'Configuration Changes'),
+              ChartConfig.distribution('settings_by_module',
+                  groupBy: 'module', label: 'By Module'),
+            ],
+          ),
       featureBuilders: {
         // Thesa's own admin pages
         'all': (context, service, feature) =>

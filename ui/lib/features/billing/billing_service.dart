@@ -1,4 +1,5 @@
 import 'package:antinvestor_ui_billing/antinvestor_ui_billing.dart';
+import 'package:antinvestor_ui_core/analytics/analytics_dashboard.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/services/service_definition.dart';
@@ -66,7 +67,25 @@ void registerBillingService() {
   ServiceRegistry.instance.register(
     ServiceRegistration(
       definition: billingServiceDef,
-      analyticsBuilder: (context, service) => const CatalogListScreen(),
+      analyticsBuilder: (context, service) => const AnalyticsDashboard(
+            service: 'billing',
+            title: 'Billing Analytics',
+            metrics: [
+              'active_subscriptions',
+              'mrr',
+              'outstanding_invoices',
+              'churn_rate',
+            ],
+            charts: [
+              ChartConfig.timeSeries('revenue', label: 'Revenue'),
+              ChartConfig.distribution('subscription_plans',
+                  groupBy: 'plan_name', label: 'By Plan'),
+            ],
+            tables: [
+              TableConfig.topN('top_customers',
+                  label: 'Top Customers by Revenue', limit: 10),
+            ],
+          ),
       featureBuilders: {
         'catalogs': (context, service, feature) => const CatalogListScreen(),
         'subscriptions': (context, service, feature) =>

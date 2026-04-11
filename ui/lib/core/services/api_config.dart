@@ -63,6 +63,12 @@ class ApiConfig {
     defaultValue: 'https://api.stawi.org/audit',
   );
 
+  /// Thesa BFF base URL for analytics and other aggregation APIs.
+  static const String thesaBaseUrl = String.fromEnvironment(
+    'THESA_URL',
+    defaultValue: 'https://api.stawi.org/thesa',
+  );
+
   // OAuth2 configuration
   static const String oauth2IssuerUrl = String.fromEnvironment(
     'OAUTH2_ISSUER_URL',

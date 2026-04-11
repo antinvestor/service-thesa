@@ -1,9 +1,13 @@
 import 'package:antinvestor_ui_core/api/api_base.dart';
+import 'package:antinvestor_ui_core/analytics/analytics_provider.dart';
 import 'package:antinvestor_ui_core/auth/role_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 
 import 'app.dart';
+import 'core/services/analytics_client.dart';
+import 'core/services/api_config.dart';
 import 'core/services/auth_bridge.dart';
 import 'core/services/tenant_context.dart';
 import 'features/audit/audit_service.dart';
@@ -48,6 +52,13 @@ void main() {
         currentUserRolesProvider.overrideWith((ref) async {
           final ctx = await ref.watch(jwtTenantContextProvider.future);
           return ctx.roles.toSet();
+        }),
+        // Analytics data source backed by Thesa's analytics REST API.
+        analyticsDataSourceProvider.overrideWith((ref) {
+          return ThesaAnalyticsDataSource(
+            http.Client(),
+            ApiConfig.thesaBaseUrl,
+          );
         }),
       ],
       child: const ThesaApp(),
