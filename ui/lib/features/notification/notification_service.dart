@@ -15,6 +15,7 @@ const notificationServiceDef = ServiceDefinition(
   label: 'Notification Service',
   icon: Icons.notifications_outlined,
   description: 'Send, manage, and track notification delivery with templates',
+  requiredPermissions: {'notification_search'},
   subFeatures: [
     SubFeatureDefinition(
       id: 'notifications',
@@ -22,12 +23,14 @@ const notificationServiceDef = ServiceDefinition(
       icon: Icons.inbox_outlined,
       description: 'View notification history and delivery status',
       hasDetailPage: true,
+      requiredPermissions: {'notification_search'},
     ),
     SubFeatureDefinition(
       id: 'compose',
       label: 'Compose',
       icon: Icons.send_outlined,
       description: 'Send new notifications',
+      requiredPermissions: {'notification_send'},
     ),
     SubFeatureDefinition(
       id: 'templates',
@@ -35,6 +38,7 @@ const notificationServiceDef = ServiceDefinition(
       icon: Icons.description_outlined,
       description: 'Manage notification templates',
       hasDetailPage: true,
+      requiredPermissions: {'template_manage'},
     ),
   ],
 );

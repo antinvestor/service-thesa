@@ -9,6 +9,7 @@ class SubFeatureDefinition {
     required this.icon,
     this.description = '',
     this.hasDetailPage = false,
+    this.requiredPermissions = const {},
   });
 
   /// Unique identifier used in routing (e.g., 'tenants' → /services/partition/tenants).
@@ -26,6 +27,10 @@ class SubFeatureDefinition {
   /// Whether clicking an entity row navigates to a detail page
   /// (e.g., /services/tenancy/partitions/:id) instead of showing a side panel.
   final bool hasDetailPage;
+
+  /// Proto-defined permission keys required to access this sub-feature.
+  /// If non-empty, the user must have at least one of these permissions.
+  final Set<String> requiredPermissions;
 }
 
 /// Defines an admin service that appears in the sidebar with nested navigation.
@@ -44,6 +49,7 @@ class ServiceDefinition {
     required this.subFeatures,
     this.description = '',
     this.activeIcon,
+    this.requiredPermissions = const {},
   });
 
   /// Unique identifier used in routing (e.g., 'partition' → /services/partition).
@@ -64,6 +70,10 @@ class ServiceDefinition {
   /// Sub-features (entity types) available under this service.
   /// The sidebar shows these as nested items when the service is expanded.
   final List<SubFeatureDefinition> subFeatures;
+
+  /// Proto-defined permission keys required to see this service at all.
+  /// If non-empty, the user must have at least one of these permissions.
+  final Set<String> requiredPermissions;
 
   /// Route prefix for this service.
   String get routePrefix => '/services/$id';

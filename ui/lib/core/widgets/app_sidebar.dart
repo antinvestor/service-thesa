@@ -1,3 +1,4 @@
+import 'package:antinvestor_ui_core/permissions/permission_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -35,7 +36,11 @@ class AppSidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final registry = ref.watch(serviceRegistryProvider);
-    final navItems = buildMainNavItems(registry);
+    final userPermissions =
+        ref.watch(userPermissionsProvider).valueOrNull ?? <String>{};
+    final navItems = userPermissions.isNotEmpty
+        ? buildFilteredNavItems(registry, userPermissions)
+        : buildMainNavItems(registry);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),

@@ -16,6 +16,7 @@ const paymentServiceDef = ServiceDefinition(
   label: 'Payment Service',
   icon: Icons.payment_outlined,
   description: 'Manage payments, ledgers, transactions, and reconciliation',
+  requiredPermissions: {'payment_search'},
   subFeatures: [
     SubFeatureDefinition(
       id: 'payments',
@@ -23,6 +24,7 @@ const paymentServiceDef = ServiceDefinition(
       icon: Icons.credit_card_outlined,
       description: 'View and manage payments',
       hasDetailPage: true,
+      requiredPermissions: {'payment_search'},
     ),
     SubFeatureDefinition(
       id: 'ledgers',
@@ -30,6 +32,7 @@ const paymentServiceDef = ServiceDefinition(
       icon: Icons.account_balance_outlined,
       description: 'Manage ledgers, accounts, and transactions',
       hasDetailPage: true,
+      requiredPermissions: {'ledger_view'},
     ),
     SubFeatureDefinition(
       id: 'transactions',
@@ -37,6 +40,7 @@ const paymentServiceDef = ServiceDefinition(
       icon: Icons.receipt_outlined,
       description: 'View and manage ledger transactions',
       hasDetailPage: true,
+      requiredPermissions: {'transaction_view'},
     ),
     SubFeatureDefinition(
       id: 'accounts',
@@ -44,18 +48,21 @@ const paymentServiceDef = ServiceDefinition(
       icon: Icons.account_balance_wallet_outlined,
       description: 'View ledger accounts and balances',
       hasDetailPage: true,
+      requiredPermissions: {'account_view'},
     ),
     SubFeatureDefinition(
       id: 'links',
       label: 'Payment Links',
       icon: Icons.link_outlined,
       description: 'Create and manage payment links',
+      requiredPermissions: {'payment_link_create'},
     ),
     SubFeatureDefinition(
       id: 'send',
       label: 'Send Payment',
       icon: Icons.send_outlined,
       description: 'Send a new payment',
+      requiredPermissions: {'payment_send'},
     ),
   ],
 );

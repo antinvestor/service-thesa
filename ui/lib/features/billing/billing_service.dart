@@ -13,6 +13,7 @@ const billingServiceDef = ServiceDefinition(
   activeIcon: Icons.receipt_long,
   description:
       'Manage catalogs, subscriptions, invoices, usage metering, and credits',
+  requiredPermissions: {'catalog_view', 'subscription_view'},
   subFeatures: [
     SubFeatureDefinition(
       id: 'catalogs',
@@ -20,6 +21,7 @@ const billingServiceDef = ServiceDefinition(
       icon: Icons.menu_book_outlined,
       description: 'Plan catalogs with pricing components and tiers',
       hasDetailPage: true,
+      requiredPermissions: {'catalog_view'},
     ),
     SubFeatureDefinition(
       id: 'subscriptions',
@@ -27,6 +29,7 @@ const billingServiceDef = ServiceDefinition(
       icon: Icons.autorenew_outlined,
       description: 'Customer subscription lifecycle',
       hasDetailPage: true,
+      requiredPermissions: {'subscription_view'},
     ),
     SubFeatureDefinition(
       id: 'invoices',
@@ -34,30 +37,35 @@ const billingServiceDef = ServiceDefinition(
       icon: Icons.description_outlined,
       description: 'Invoice management and payment recording',
       hasDetailPage: true,
+      requiredPermissions: {'invoice_view'},
     ),
     SubFeatureDefinition(
       id: 'usage',
       label: 'Usage Events',
       icon: Icons.bar_chart_outlined,
       description: 'Usage event ingestion and history',
+      requiredPermissions: {'usage_view'},
     ),
     SubFeatureDefinition(
       id: 'runs',
       label: 'Billing Runs',
       icon: Icons.play_circle_outline,
       description: 'Execute and monitor billing runs',
+      requiredPermissions: {'billing_run_execute'},
     ),
     SubFeatureDefinition(
       id: 'credits',
       label: 'Credits',
       icon: Icons.account_balance_wallet_outlined,
       description: 'Grant and manage prepaid credits',
+      requiredPermissions: {'credit_manage'},
     ),
     SubFeatureDefinition(
       id: 'discounts',
       label: 'Discounts',
       icon: Icons.local_offer_outlined,
       description: 'Create and manage discount rules',
+      requiredPermissions: {'discount_view'},
     ),
   ],
 );

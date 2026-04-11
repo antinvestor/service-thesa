@@ -15,6 +15,7 @@ const auditServiceDef = ServiceDefinition(
   icon: Icons.history_outlined,
   activeIcon: Icons.history,
   description: 'Browse, search, and verify tamper-proof audit trail entries',
+  requiredPermissions: {'audit_view'},
   subFeatures: [
     SubFeatureDefinition(
       id: 'log',
@@ -22,18 +23,21 @@ const auditServiceDef = ServiceDefinition(
       icon: Icons.list_alt_outlined,
       description: 'Browse and search all audit entries with filters',
       hasDetailPage: true,
+      requiredPermissions: {'audit_view'},
     ),
     SubFeatureDefinition(
       id: 'analytics',
       label: 'Analytics',
       icon: Icons.analytics_outlined,
       description: 'Audit trail analytics and KPI dashboard',
+      requiredPermissions: {'audit_view'},
     ),
     SubFeatureDefinition(
       id: 'integrity',
       label: 'Integrity Check',
       icon: Icons.verified_outlined,
       description: 'Verify hash chain integrity of the audit trail',
+      requiredPermissions: {'audit_verify'},
     ),
   ],
 );

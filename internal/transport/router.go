@@ -60,6 +60,7 @@ func NewRouter(deps Dependencies) http.Handler {
 
 	// Capabilities
 	mux.Handle("GET /ui/capabilities", authChain(handleCapabilities(deps.CapabilityResolver, deps.AppVersion)))
+	mux.Handle("POST /ui/capabilities/batch-check", authChain(handleBatchCheck(deps.CapabilityResolver)))
 
 	// Navigation & Pages
 	mux.Handle("GET /ui/navigation", authChain(handleNavigation(deps.MenuProvider)))

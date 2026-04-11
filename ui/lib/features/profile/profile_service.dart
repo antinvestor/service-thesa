@@ -14,6 +14,7 @@ const profileServiceDef = ServiceDefinition(
   label: 'Profile Service',
   icon: Icons.people_outlined,
   description: 'Manage profiles, contacts, addresses, relationships, and devices',
+  requiredPermissions: {'profile_view'},
   subFeatures: [
     SubFeatureDefinition(
       id: 'profiles',
@@ -21,36 +22,42 @@ const profileServiceDef = ServiceDefinition(
       icon: Icons.person_outlined,
       description: 'Search and manage profiles',
       hasDetailPage: true,
+      requiredPermissions: {'profile_view'},
     ),
     SubFeatureDefinition(
       id: 'contacts',
       label: 'Contacts',
       icon: Icons.contact_phone_outlined,
       description: 'View contacts across all profiles',
+      requiredPermissions: {'contact_manage'},
     ),
     SubFeatureDefinition(
       id: 'addresses',
       label: 'Addresses',
       icon: Icons.location_on_outlined,
       description: 'View addresses across all profiles',
+      requiredPermissions: {'address_manage'},
     ),
     SubFeatureDefinition(
       id: 'roster',
       label: 'Roster',
       icon: Icons.contacts_outlined,
       description: 'Search and manage profile rosters',
+      requiredPermissions: {'roster_view'},
     ),
     SubFeatureDefinition(
       id: 'relationships',
       label: 'Relationships',
       icon: Icons.people_alt_outlined,
       description: 'Manage profile relationships (members, affiliations)',
+      requiredPermissions: {'relationship_view'},
     ),
     SubFeatureDefinition(
       id: 'merge',
       label: 'Merge Profiles',
       icon: Icons.merge_outlined,
       description: 'Merge duplicate profiles into one',
+      requiredPermissions: {'profile_merge'},
     ),
     SubFeatureDefinition(
       id: 'devices',
@@ -58,6 +65,7 @@ const profileServiceDef = ServiceDefinition(
       icon: Icons.devices_outlined,
       description: 'View and manage linked devices',
       hasDetailPage: true,
+      requiredPermissions: {'device_view'},
     ),
   ],
 );

@@ -12,6 +12,7 @@ const geolocationServiceDef = ServiceDefinition(
   icon: Icons.map_outlined,
   activeIcon: Icons.map,
   description: 'Manage geographic areas, routes, and location tracking',
+  requiredPermissions: {'area_view', 'route_view'},
   subFeatures: [
     SubFeatureDefinition(
       id: 'areas',
@@ -19,6 +20,7 @@ const geolocationServiceDef = ServiceDefinition(
       icon: Icons.square_foot_outlined,
       description: 'Define and manage geographic areas and zones',
       hasDetailPage: true,
+      requiredPermissions: {'area_view'},
     ),
     SubFeatureDefinition(
       id: 'routes',
@@ -26,12 +28,14 @@ const geolocationServiceDef = ServiceDefinition(
       icon: Icons.route_outlined,
       description: 'Create and manage routes with waypoints',
       hasDetailPage: true,
+      requiredPermissions: {'route_view'},
     ),
     SubFeatureDefinition(
       id: 'events',
       label: 'Events',
       icon: Icons.place_outlined,
       description: 'View geo-fence enter/exit/dwell events',
+      requiredPermissions: {'event_view'},
     ),
   ],
 );

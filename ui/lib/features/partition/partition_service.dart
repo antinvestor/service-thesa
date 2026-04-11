@@ -18,6 +18,7 @@ const tenancyServiceDef = ServiceDefinition(
   label: 'Tenancy Service',
   icon: Icons.hub_outlined,
   description: 'Manage tenants, partitions, and access control',
+  requiredPermissions: {'tenancy_view'},
   subFeatures: [
     SubFeatureDefinition(
       id: 'tenants',
@@ -25,6 +26,7 @@ const tenancyServiceDef = ServiceDefinition(
       icon: Icons.domain_outlined,
       description: 'Manage tenant organizations',
       hasDetailPage: true,
+      requiredPermissions: {'tenancy_view'},
     ),
     SubFeatureDefinition(
       id: 'partitions',
@@ -32,6 +34,7 @@ const tenancyServiceDef = ServiceDefinition(
       icon: Icons.account_tree_outlined,
       description: 'Manage data partitions',
       hasDetailPage: true,
+      requiredPermissions: {'partition_view'},
     ),
   ],
 );

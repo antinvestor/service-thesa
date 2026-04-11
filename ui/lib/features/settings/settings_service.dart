@@ -14,6 +14,7 @@ const settingsServiceDef = ServiceDefinition(
   label: 'Settings Service',
   icon: Icons.settings_outlined,
   description: 'Manage application configuration and settings',
+  requiredPermissions: {'setting_view'},
   subFeatures: [
     SubFeatureDefinition(
       id: 'all',
@@ -21,18 +22,21 @@ const settingsServiceDef = ServiceDefinition(
       icon: Icons.tune_outlined,
       description: 'Browse and manage all settings',
       hasDetailPage: true,
+      requiredPermissions: {'setting_view'},
     ),
     SubFeatureDefinition(
       id: 'modules',
       label: 'Modules',
       icon: Icons.widgets_outlined,
       description: 'Explore settings grouped by module',
+      requiredPermissions: {'setting_view'},
     ),
     SubFeatureDefinition(
       id: 'bulk',
       label: 'Bulk Edit',
       icon: Icons.edit_note_outlined,
       description: 'Edit multiple settings at once',
+      requiredPermissions: {'setting_update'},
     ),
   ],
 );
