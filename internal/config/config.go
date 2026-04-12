@@ -22,9 +22,18 @@ type Config struct {
 	Specs         SpecsConfig              `yaml:"specs"`
 	Services      map[string]ServiceConfig `yaml:"services"`
 	Capability    CapabilityConfig         `yaml:"capability"`
+	Analytics     AnalyticsConfig          `yaml:"analytics"`
 	Search        SearchConfig             `yaml:"search"`
 	Lookup        LookupCacheConfig        `yaml:"lookup"`
 	Observability ObservabilityConfig      `yaml:"observability"`
+}
+
+// AnalyticsConfig describes analytics database settings.
+// The DSN must be provided via the ANALYTICS_DSN environment variable —
+// it is not stored in YAML to avoid committing credentials.
+type AnalyticsConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	DSN     string `yaml:"-"` // populated exclusively from ANALYTICS_DSN env var
 }
 
 // ServerConfig describes HTTP server settings.
@@ -239,5 +248,9 @@ func applyEnvOverrides(cfg *Config) {
 	}
 	if v := os.Getenv("THESA_OBSERVABILITY_LOG_LEVEL"); v != "" {
 		cfg.Observability.LogLevel = v
+	}
+	if v := os.Getenv("ANALYTICS_DSN"); v != "" {
+		cfg.Analytics.DSN = v
+		cfg.Analytics.Enabled = true
 	}
 }

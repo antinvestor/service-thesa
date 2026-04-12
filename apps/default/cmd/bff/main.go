@@ -4,16 +4,19 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"net/http"
 	"path/filepath"
 
+	_ "github.com/lib/pq"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/security/interceptors/httptor"
 	frameversion "github.com/pitabwire/frame/version"
 	"github.com/pitabwire/util"
 
+	"github.com/antinvestor/service-thesa/internal/analytics"
 	"github.com/antinvestor/service-thesa/internal/capability"
 	"github.com/antinvestor/service-thesa/internal/command"
 	"github.com/antinvestor/service-thesa/internal/config"
@@ -110,6 +113,33 @@ func main() {
 		cfg.Lookup.Cache.MaxEntries,
 	)
 
+	// Analytics engine — connects to the analytics TimescaleDB when enabled.
+	var analyticsEngine *analytics.Engine
+	if cfg.Analytics.Enabled && cfg.Analytics.DSN != "" {
+		analyticsDB, err := sql.Open("postgres", cfg.Analytics.DSN)
+		if err != nil {
+			log.WithError(err).Fatal("analytics database connection failed")
+		}
+		defer analyticsDB.Close()
+
+		analyticsDB.SetMaxOpenConns(10)
+		analyticsDB.SetMaxIdleConns(5)
+
+		analyticsReg := analytics.NewRegistry()
+		if err := analytics.RegisterDefaultServices(analyticsReg); err != nil {
+			log.WithError(err).Fatal("analytics service registration failed")
+		}
+		analyticsEngine = analytics.NewEngine(analyticsDB, analyticsReg, nil)
+
+		if err := analyticsEngine.Healthy(ctx); err != nil {
+			log.WithError(err).Warn("analytics database not reachable at startup")
+		}
+
+		log.Info("analytics engine enabled",
+			"services", len(analyticsReg.Services()),
+		)
+	}
+
 	// Build HTTP router.
 	authenticate := func(next http.Handler) http.Handler {
 		return httptor.AuthenticationMiddleware(next, authenticator)
@@ -128,6 +158,7 @@ func main() {
 		CommandExecutor:    cmdExecutor,
 		SearchProvider:     searchProvider,
 		LookupProvider:     lookupProvider,
+		AnalyticsEngine:    analyticsEngine,
 		AppVersion:         frameversion.Version,
 	})
 
@@ -140,6 +171,12 @@ func main() {
 		}
 		return nil
 	}))
+
+	if analyticsEngine != nil {
+		svc.AddHealthCheck(frame.CheckerFunc(func() error {
+			return analyticsEngine.Healthy(ctx)
+		}))
+	}
 
 	svc.AddHealthCheck(frame.CheckerFunc(func() error {
 		for _, svcID := range buildSpecServiceIDs(specSources) {

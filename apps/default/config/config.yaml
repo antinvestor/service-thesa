@@ -281,6 +281,12 @@ capability:
     ttl: 5m
     max_entries: 10000
 
+# Analytics engine — connects to a TimescaleDB instance populated via FDW
+# from service databases. Set ANALYTICS_DSN env var to enable.
+analytics:
+  enabled: false
+  # DSN is set exclusively via ANALYTICS_DSN env var (not stored in YAML)
+
 workflow:
   enabled: true
   store:
