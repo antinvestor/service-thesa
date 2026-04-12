@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 
 import '../../core/services/service_definition.dart';
 import '../../core/services/service_registry.dart';
-import 'pages/notifications_page.dart';
-import 'pages/templates_page.dart';
 
 /// Notification Service with enhanced compose and template editing from
 /// antinvestor_ui_notification library.
@@ -70,15 +68,12 @@ void registerNotificationService() {
             ],
           ),
       featureBuilders: {
-        // Thesa's own admin page for notification list
         'notifications': (context, service, feature) =>
-            NotificationsPage(service: service, feature: feature),
-        // Compose screen from antinvestor_ui_notification library
+            const notif_lib.NotificationInboxScreen(),
         'compose': (context, service, feature) =>
             const notif_lib.NotificationSendScreen(),
-        // Thesa's own template management
         'templates': (context, service, feature) =>
-            TemplatesPage(service: service, feature: feature),
+            const notif_lib.TemplateListScreen(),
       },
       detailBuilders: {
         // Detail view from library

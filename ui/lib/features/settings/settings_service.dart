@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 
 import '../../core/services/service_definition.dart';
 import '../../core/services/service_registry.dart';
-import 'pages/all_settings_page.dart';
-import 'pages/modules_page.dart';
 
 /// Settings Service with enhanced bulk edit from antinvestor_ui_settings library.
 const settingsServiceDef = ServiceDefinition(
@@ -61,12 +59,10 @@ void registerSettingsService() {
             ],
           ),
       featureBuilders: {
-        // Thesa's own admin pages
         'all': (context, service, feature) =>
-            AllSettingsPage(service: service, feature: feature),
+            const settings_lib.SettingsListScreen(),
         'modules': (context, service, feature) =>
-            SettingsModulesPage(service: service, feature: feature),
-        // Bulk edit from antinvestor_ui_settings library
+            const settings_lib.SettingsListScreen(),
         'bulk': (context, service, feature) =>
             const settings_lib.SettingsBulkEditScreen(),
       },

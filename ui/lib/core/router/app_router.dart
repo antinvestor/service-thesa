@@ -6,7 +6,6 @@ import '../../features/auth/data/auth_state_provider.dart';
 import '../../features/auth/ui/login_page.dart';
 import '../../features/auth/ui/splash_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
-import '../../features/payment/pages/account_detail_page.dart';
 import '../../features/profile/pages/device_detail_page.dart';
 import '../services/service_registry.dart';
 import '../widgets/responsive_scaffold.dart';
@@ -158,20 +157,6 @@ GoRouter createAppRouter(Ref ref, {String initialLocation = '/'}) {
                             child: DeviceDetailPage(
                               deviceId: deviceId,
                               profileId: profileId,
-                            ),
-                          );
-                        },
-                      ),
-                      GoRoute(
-                        path: 'accounts/:accountId',
-                        pageBuilder: (context, state) {
-                          final ledgerId = state.pathParameters['entityId']!;
-                          final accountId =
-                              state.pathParameters['accountId']!;
-                          return NoTransitionPage(
-                            child: AccountDetailPage(
-                              ledgerId: ledgerId,
-                              accountId: accountId,
                             ),
                           );
                         },
