@@ -269,7 +269,7 @@ class _CreatePartitionWizardState extends State<_CreatePartitionWizard> {
             // Tenant selector (only if not fixed)
             if (_hasTenantStep) ...[
               DropdownButtonFormField<String>(
-                value: _selectedTenantId,
+                initialValue: _selectedTenantId,
                 decoration: const InputDecoration(
                   labelText: 'Tenant *',
                   hintText: 'Select a tenant...',

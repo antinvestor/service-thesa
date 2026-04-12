@@ -26,7 +26,7 @@ class TenantPicker extends ConsumerWidget {
 
     return jwtContext.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (jwt) {
         // Resolve display names
         String tenantName = effectiveCtx.tenantId;

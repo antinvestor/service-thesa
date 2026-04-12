@@ -457,7 +457,7 @@ class _EditTenantDialogState extends State<_EditTenantDialog> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _env,
+                initialValue: _env,
                 decoration: const InputDecoration(labelText: 'Environment'),
                 items: ['Production', 'Staging']
                     .map((e) => DropdownMenuItem(value: e, child: Text(e)))
@@ -468,7 +468,7 @@ class _EditTenantDialogState extends State<_EditTenantDialog> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _state,
+                initialValue: _state,
                 decoration: const InputDecoration(labelText: 'State'),
                 items: ['CREATED', 'ACTIVE', 'INACTIVE', 'DELETED']
                     .map((s) => DropdownMenuItem(value: s, child: Text(s)))

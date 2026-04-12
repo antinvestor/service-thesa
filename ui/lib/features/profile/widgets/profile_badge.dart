@@ -70,7 +70,7 @@ class ProfileBadge extends ConsumerWidget {
 
     return asyncProfile.when(
       loading: () => _buildShimmer(context),
-      error: (_, __) => _buildFallback(context),
+      error: (_, _) => _buildFallback(context),
       data: (profile) {
         if (profile == null) return _buildFallback(context);
         return ProfileBadgeContent(

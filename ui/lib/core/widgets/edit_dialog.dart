@@ -138,7 +138,7 @@ class _EditDialogContentState extends State<_EditDialogContent> {
     switch (field.type) {
       case DialogFieldType.dropdown:
         return DropdownButtonFormField<String>(
-          value: _dropdownValues[field.key]?.isNotEmpty == true
+          initialValue: _dropdownValues[field.key]?.isNotEmpty == true
               ? _dropdownValues[field.key]
               : null,
           decoration: InputDecoration(

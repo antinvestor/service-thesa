@@ -37,7 +37,7 @@ class AppSidebar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final registry = ref.watch(serviceRegistryProvider);
     final userPermissions =
-        ref.watch(userPermissionsProvider).valueOrNull ?? <String>{};
+        ref.watch(userPermissionsProvider).value ?? <String>{};
     final navItems = userPermissions.isNotEmpty
         ? buildFilteredNavItems(registry, userPermissions)
         : buildMainNavItems(registry);

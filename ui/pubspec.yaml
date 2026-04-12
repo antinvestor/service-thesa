@@ -36,45 +36,25 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^3.3.1
   go_router: ^17.1.0
-  google_fonts: ^8.0.2
+  google_fonts: ^6.2.1
   fl_chart: ^1.2.0
   intl: ^0.20.2
   connectrpc: ^1.0.0
-  antinvestor_api_audit:
-    git:
-      url: https://github.com/antinvestor/service-authentication.git
-      path: sdk/dart/audit
+  antinvestor_api_audit: ^0.1.0
   antinvestor_api_common: ^1.52.0
   antinvestor_api_tenancy: ^1.54.0
   fixnum: ^1.1.0
   protobuf: ^4.0.0
   antinvestor_api_profile: ^1.52.0
   antinvestor_api_device: ^1.53.0
-  antinvestor_api_geolocation:
-    git:
-      url: https://github.com/antinvestor/service-profile.git
-      path: sdk/dart/geolocation
-  antinvestor_api_files:
-    git:
-      url: https://github.com/antinvestor/service-files.git
-      path: sdk/dart/files
+  antinvestor_api_geolocation: ^0.1.0
+  antinvestor_api_files: ^1.54.0
   antinvestor_api_notification: ^1.51.0
-  antinvestor_api_billing:
-    git:
-      url: https://github.com/antinvestor/service-payment.git
-      path: sdk/dart/billing
-  antinvestor_api_payment:
-    git:
-      url: https://github.com/antinvestor/service-payment.git
-      path: sdk/dart/payment
-  antinvestor_api_ledger:
-    git:
-      url: https://github.com/antinvestor/service-payment.git
-      path: sdk/dart/ledger
-  antinvestor_api_settings:
-    git:
-      url: https://github.com/antinvestor/service-profile.git
-      path: sdk/dart/settings
+  antinvestor_api_billing: ^0.1.0
+  antinvestor_api_payment: ^1.53.0
+  antinvestor_api_ledger: ^1.53.0
+  antinvestor_api_settings: ^1.53.0
+  http: ^1.3.0
   openid_client: ^0.4.10
   flutter_secure_storage: ^10.0.0
   url_launcher: ^6.3.2
@@ -102,6 +82,8 @@ dependencies:
     path: ../../service-notification/ui
   antinvestor_ui_files:
     path: ../../service-files/ui
+  antinvestor_ui_tenancy:
+    path: ../../service-authentication/ui/tenancy
   antinvestor_ui_audit:
     path: ../../service-authentication/ui/audit
 
@@ -118,6 +100,34 @@ dev_dependencies:
 
 dependency_overrides:
   jose: ^0.3.5+2
+  antinvestor_ui_core:
+    path: ../../common/ui_core
+  antinvestor_ui_profile:
+    path: ../../service-profile/ui/profile
+  antinvestor_ui_device:
+    path: ../../service-profile/ui/device
+  antinvestor_ui_settings:
+    path: ../../service-profile/ui/settings
+  antinvestor_ui_geolocation:
+    path: ../../service-profile/ui/geolocation
+  antinvestor_ui_payment:
+    path: ../../service-payment/ui/payment
+  antinvestor_ui_ledger:
+    path: ../../service-payment/ui/ledger
+  antinvestor_ui_billing:
+    path: ../../service-payment/ui/billing
+  antinvestor_ui_notification:
+    path: ../../service-notification/ui
+  antinvestor_ui_files:
+    path: ../../service-files/ui
+  antinvestor_ui_tenancy:
+    path: ../../service-authentication/ui/tenancy
+  antinvestor_ui_audit:
+    path: ../../service-authentication/ui/audit
+  antinvestor_api_settings:
+    path: ../../service-profile/sdk/dart/settings
+  antinvestor_api_ledger:
+    path: ../../service-payment/sdk/dart/ledger
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

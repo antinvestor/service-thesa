@@ -110,7 +110,7 @@ class AuthPlatformIO implements AuthPlatform {
 
         final credential = await flow.callback({
           'code': code,
-          if (state != null) 'state': state,
+          'state': ?state,
         });
 
         if (!completer.isCompleted) completer.complete(credential);

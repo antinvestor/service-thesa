@@ -1,17 +1,15 @@
-import 'package:antinvestor_api_audit/antinvestor_api_audit.dart'
-    hide SearchRequest, SearchResponse;
-import 'package:antinvestor_api_billing/antinvestor_api_billing.dart'
-    hide SearchRequest, SearchResponse;
+import 'package:antinvestor_api_audit/antinvestor_api_audit.dart';
+import 'package:antinvestor_api_billing/antinvestor_api_billing.dart';
 import 'package:antinvestor_api_common/antinvestor_api_common.dart';
 import 'package:connectrpc/connect.dart' as connect;
 import 'package:antinvestor_api_device/antinvestor_api_device.dart';
-import 'package:antinvestor_api_files/antinvestor_api_files.dart'
-    hide SearchRequest, SearchResponse;
+import 'package:antinvestor_api_files/antinvestor_api_files.dart';
 import 'package:antinvestor_api_ledger/antinvestor_api_ledger.dart';
 import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
     hide SearchRequest, SearchResponse;
 import 'package:antinvestor_api_payment/antinvestor_api_payment.dart'
-    hide SearchRequest, SearchResponse, STATE, STATUS;
+    hide SearchRequest, SearchResponse, STATE, STATUS,
+         LedgerServiceClient, BillingServiceClient;
 import 'package:antinvestor_api_profile/antinvestor_api_profile.dart'
     hide DeviceClient, newDeviceClient, Struct, STATE, STATUS;
 import 'package:antinvestor_api_settings/antinvestor_api_settings.dart';
@@ -233,12 +231,14 @@ final notificationServiceClientProvider =
 // ─── Payment Client ─────────────────────────────────────────────────────────
 
 final paymentClientProvider =
-    FutureProvider<PaymentClient>((ref) async {
+    FutureProvider<ConnectClientBase<PaymentServiceClient>>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   await tokenManager.initialize();
-  return newPaymentClient(
+  return newClient<PaymentServiceClient>(
+    defaultEndpoint: 'https://payment.antinvestor.com',
+    createServiceClient: PaymentServiceClient.new,
     createTransport: createTransportFactory(),
     endpoint: ApiConfig.paymentBaseUrl,
     tokenManager: tokenManager,
@@ -310,7 +310,7 @@ final billingServiceClientProvider =
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   await tokenManager.initialize();
 
-  final client = newClient<BillingServiceClient>(
+  final client = await newClient<BillingServiceClient>(
     defaultEndpoint: 'https://billing.antinvestor.com',
     createServiceClient: BillingServiceClient.new,
     createTransport: createTransportFactory(),
@@ -332,7 +332,7 @@ final filesServiceClientProvider =
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   await tokenManager.initialize();
 
-  final client = newClient<FilesServiceClient>(
+  final client = await newClient<FilesServiceClient>(
     defaultEndpoint: 'https://files.antinvestor.com',
     createServiceClient: FilesServiceClient.new,
     createTransport: createTransportFactory(),
@@ -354,7 +354,7 @@ final auditServiceClientProvider =
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   await tokenManager.initialize();
 
-  final client = newClient<AuditServiceClient>(
+  final client = await newClient<AuditServiceClient>(
     defaultEndpoint: 'https://audit.antinvestor.com',
     createServiceClient: AuditServiceClient.new,
     createTransport: createTransportFactory(),

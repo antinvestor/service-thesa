@@ -1,3 +1,5 @@
+import 'package:antinvestor_api_common/antinvestor_api_common.dart'
+    hide Timestamp, Struct;
 import 'package:antinvestor_api_geolocation/antinvestor_api_geolocation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fixnum/fixnum.dart';
@@ -10,13 +12,15 @@ import '../../../core/services/transport/transport.dart';
 
 /// Geolocation API client provider.
 final geolocationClientProvider =
-    FutureProvider<GeolocationClient>((ref) async {
+    FutureProvider<ConnectClientBase<GeolocationServiceClient>>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
 
   await tokenManager.initialize();
 
-  return newGeolocationClient(
+  return newClient<GeolocationServiceClient>(
+    defaultEndpoint: 'https://geolocation.antinvestor.com',
+    createServiceClient: GeolocationServiceClient.new,
     createTransport: createTransportFactory(),
     endpoint: ApiConfig.geolocationBaseUrl,
     tokenManager: tokenManager,
