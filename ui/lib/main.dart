@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
 import 'app.dart';
+import 'core/config/url_strategy.dart';
 import 'core/services/analytics_client.dart';
 import 'core/services/api_config.dart';
 import 'core/services/auth_bridge.dart';
@@ -27,6 +28,7 @@ import 'features/settings/settings_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  configureUrlStrategy();
 
   // Register admin services before app starts.
   // Existing services (thesa's own pages)

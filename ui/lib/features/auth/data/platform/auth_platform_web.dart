@@ -113,7 +113,7 @@ class AuthPlatformWeb implements AuthPlatform {
         scheme: uri.scheme,
         host: uri.host,
         port: uri.port,
-        path: uri.path,
+        path: '/auth/callback',
       );
 
       final flow = Flow.authorizationCodeWithPKCE(
