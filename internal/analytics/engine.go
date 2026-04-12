@@ -182,7 +182,7 @@ func (e *Engine) QueryTimeSeries(ctx context.Context, serviceID, metric string, 
 	if err != nil {
 		return nil, fmt.Errorf("time series %s: %w", metric, err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var points []TimeSeriesPoint
 	for rows.Next() {
@@ -236,7 +236,7 @@ func (e *Engine) QueryDistribution(ctx context.Context, serviceID, metric, group
 	if err != nil {
 		return nil, fmt.Errorf("distribution %s: %w", metric, err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var segments []DistributionSegment
 	for rows.Next() {
@@ -288,7 +288,7 @@ func (e *Engine) QueryTopN(ctx context.Context, serviceID, metric string, limit 
 	if err != nil {
 		return nil, fmt.Errorf("top-N %s: %w", metric, err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var items []TopNItem
 	for rows.Next() {

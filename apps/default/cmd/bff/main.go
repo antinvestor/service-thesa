@@ -120,7 +120,7 @@ func main() {
 		if err != nil {
 			log.WithError(err).Fatal("analytics database connection failed")
 		}
-		defer analyticsDB.Close()
+		defer func() { _ = analyticsDB.Close() }()
 
 		analyticsDB.SetMaxOpenConns(10)
 		analyticsDB.SetMaxIdleConns(5)
