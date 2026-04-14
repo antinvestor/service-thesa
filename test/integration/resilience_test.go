@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/antinvestor/service-thesa/internal/config"
+	"github.com/antinvestor/service-thesa/pkg/config"
 )
 
 // ==========================================================================

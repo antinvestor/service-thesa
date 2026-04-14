@@ -16,16 +16,16 @@ import (
 	frameversion "github.com/pitabwire/frame/version"
 	"github.com/pitabwire/util"
 
-	"github.com/antinvestor/service-thesa/internal/analytics"
-	"github.com/antinvestor/service-thesa/internal/capability"
-	"github.com/antinvestor/service-thesa/internal/command"
-	"github.com/antinvestor/service-thesa/internal/config"
-	"github.com/antinvestor/service-thesa/internal/definition"
-	"github.com/antinvestor/service-thesa/internal/invoker"
-	"github.com/antinvestor/service-thesa/internal/metadata"
-	"github.com/antinvestor/service-thesa/internal/openapi"
-	"github.com/antinvestor/service-thesa/internal/search"
-	"github.com/antinvestor/service-thesa/internal/transport"
+	"github.com/antinvestor/service-thesa/pkg/analytics"
+	"github.com/antinvestor/service-thesa/pkg/capability"
+	"github.com/antinvestor/service-thesa/pkg/command"
+	"github.com/antinvestor/service-thesa/pkg/config"
+	"github.com/antinvestor/service-thesa/pkg/definition"
+	"github.com/antinvestor/service-thesa/pkg/invoker"
+	"github.com/antinvestor/service-thesa/pkg/metadata"
+	"github.com/antinvestor/service-thesa/pkg/openapi"
+	"github.com/antinvestor/service-thesa/pkg/search"
+	"github.com/antinvestor/service-thesa/pkg/transport"
 )
 
 func main() {
