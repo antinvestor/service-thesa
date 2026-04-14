@@ -1,9 +1,31 @@
-import 'package:antinvestor_ui_core/api/api_base.dart';
+import 'package:antinvestor_ui_audit/antinvestor_ui_audit.dart'
+    show auditTransportProvider;
+import 'package:antinvestor_ui_billing/antinvestor_ui_billing.dart'
+    show billingTransportProvider;
 import 'package:antinvestor_ui_core/analytics/analytics_provider.dart';
+import 'package:antinvestor_ui_core/api/api_base.dart';
 import 'package:antinvestor_ui_core/auth/role_provider.dart';
 import 'package:antinvestor_ui_core/permissions/permission_manifest.dart';
 import 'package:antinvestor_ui_core/permissions/permission_provider.dart';
 import 'package:antinvestor_ui_core/permissions/permission_registry.dart';
+import 'package:antinvestor_ui_device/antinvestor_ui_device.dart'
+    show deviceTransportProvider;
+import 'package:antinvestor_ui_files/antinvestor_ui_files.dart'
+    show filesTransportProvider;
+import 'package:antinvestor_ui_geolocation/antinvestor_ui_geolocation.dart'
+    show geolocationTransportProvider;
+import 'package:antinvestor_ui_ledger/antinvestor_ui_ledger.dart'
+    show ledgerTransportProvider;
+import 'package:antinvestor_ui_notification/antinvestor_ui_notification.dart'
+    show notificationTransportProvider;
+import 'package:antinvestor_ui_payment/antinvestor_ui_payment.dart'
+    show paymentTransportProvider;
+import 'package:antinvestor_ui_profile/antinvestor_ui_profile.dart'
+    show profileTransportProvider;
+import 'package:antinvestor_ui_settings/antinvestor_ui_settings.dart'
+    show settingsTransportProvider;
+import 'package:antinvestor_ui_tenancy/antinvestor_ui_tenancy.dart'
+    show tenancyTransportProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -84,6 +106,56 @@ void main() {
             ApiConfig.thesaBaseUrl,
           );
           return checker.checkAll(token);
+        }),
+
+        // ── Library endpoint overrides ──────────────────────────────
+        // Each UI library defines a default transport with a compile-time
+        // endpoint. Override them here so all libraries use ApiConfig,
+        // which supports both a shared API_BASE_URL and per-service
+        // explicit overrides (see ApiConfig docs for resolution order).
+        profileTransportProvider.overrideWith((ref) {
+          final auth = ref.watch(authTokenProviderProvider);
+          return createTransport(auth, baseUrl: ApiConfig.profileBaseUrl);
+        }),
+        deviceTransportProvider.overrideWith((ref) {
+          final auth = ref.watch(authTokenProviderProvider);
+          return createTransport(auth, baseUrl: ApiConfig.deviceBaseUrl);
+        }),
+        settingsTransportProvider.overrideWith((ref) {
+          final auth = ref.watch(authTokenProviderProvider);
+          return createTransport(auth, baseUrl: ApiConfig.settingsBaseUrl);
+        }),
+        geolocationTransportProvider.overrideWith((ref) {
+          final auth = ref.watch(authTokenProviderProvider);
+          return createTransport(auth, baseUrl: ApiConfig.geolocationBaseUrl);
+        }),
+        tenancyTransportProvider.overrideWith((ref) {
+          final auth = ref.watch(authTokenProviderProvider);
+          return createTransport(auth, baseUrl: ApiConfig.tenancyBaseUrl);
+        }),
+        notificationTransportProvider.overrideWith((ref) {
+          final auth = ref.watch(authTokenProviderProvider);
+          return createTransport(auth, baseUrl: ApiConfig.notificationBaseUrl);
+        }),
+        paymentTransportProvider.overrideWith((ref) {
+          final auth = ref.watch(authTokenProviderProvider);
+          return createTransport(auth, baseUrl: ApiConfig.paymentBaseUrl);
+        }),
+        ledgerTransportProvider.overrideWith((ref) {
+          final auth = ref.watch(authTokenProviderProvider);
+          return createTransport(auth, baseUrl: ApiConfig.ledgerBaseUrl);
+        }),
+        billingTransportProvider.overrideWith((ref) {
+          final auth = ref.watch(authTokenProviderProvider);
+          return createTransport(auth, baseUrl: ApiConfig.billingBaseUrl);
+        }),
+        filesTransportProvider.overrideWith((ref) {
+          final auth = ref.watch(authTokenProviderProvider);
+          return createTransport(auth, baseUrl: ApiConfig.filesBaseUrl);
+        }),
+        auditTransportProvider.overrideWith((ref) {
+          final auth = ref.watch(authTokenProviderProvider);
+          return createTransport(auth, baseUrl: ApiConfig.auditBaseUrl);
         }),
       ],
       child: const ThesaApp(),

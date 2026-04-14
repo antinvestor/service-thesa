@@ -1,75 +1,120 @@
 /// API endpoint and OAuth2 configuration for Antinvestor Admin Console.
 ///
-/// Endpoints and credentials are configurable via `--dart-define`, e.g.:
-/// ```
-/// flutter run --dart-define=API_BASE_URL=https://api.antinvestor.com
+/// ## Endpoint resolution
+///
+/// Each service URL resolves in this priority order:
+///   1. Explicit per-service env var (e.g. `PROFILE_URL=https://profile.custom.io`)
+///   2. Shared base URL + service path  (e.g. `API_BASE_URL=https://api.example.com` → `.../profile`)
+///   3. Built-in default               (`https://api.stawi.org/profile`)
+///
+/// This means you can:
+/// - Set `API_BASE_URL` once to point all services at a single gateway.
+/// - Override individual services that live on a different host.
+///
+/// ```sh
+/// # All services behind one gateway:
+/// flutter run --dart-define=API_BASE_URL=https://api.example.com
+///
+/// # Same, but notification lives elsewhere:
+/// flutter run \
+///   --dart-define=API_BASE_URL=https://api.example.com \
+///   --dart-define=NOTIFICATION_URL=https://notify.internal.io
 /// ```
 class ApiConfig {
   const ApiConfig._();
 
-  // Service endpoints (configurable via --dart-define)
-  static const String tenancyBaseUrl = String.fromEnvironment(
-    'TENANCY_URL',
-    defaultValue: 'https://api.stawi.org/tenancy',
+  // ── Shared base URL ─────────────────────────────────────────────────────
+
+  /// When set, provides the default base for all service endpoints.
+  /// Individual `*_URL` vars take precedence over this.
+  static const String _apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://api.stawi.org',
   );
 
-  static const String profileBaseUrl = String.fromEnvironment(
-    'PROFILE_URL',
-    defaultValue: 'https://api.stawi.org/profile',
-  );
+  // ── Per-service endpoint overrides ──────────────────────────────────────
+  //
+  // Each constant first checks for an explicit env var. If empty (not
+  // supplied), it falls back to `_apiBaseUrl + /path`.
 
-  static const String deviceBaseUrl = String.fromEnvironment(
-    'DEVICE_URL',
-    defaultValue: 'https://api.stawi.org/devices',
-  );
+  static const String _tenancyExplicit = String.fromEnvironment('TENANCY_URL');
+  static String get tenancyBaseUrl =>
+      _tenancyExplicit.isNotEmpty ? _tenancyExplicit : '$_apiBaseUrl/tenancy';
 
-  static const String geolocationBaseUrl = String.fromEnvironment(
-    'GEOLOCATION_URL',
-    defaultValue: 'https://api.stawi.org/geolocation',
-  );
+  static const String _profileExplicit = String.fromEnvironment('PROFILE_URL');
+  static String get profileBaseUrl =>
+      _profileExplicit.isNotEmpty ? _profileExplicit : '$_apiBaseUrl/profile';
 
-  static const String notificationBaseUrl = String.fromEnvironment(
-    'NOTIFICATION_URL',
-    defaultValue: 'https://api.stawi.org/notification',
-  );
+  static const String _deviceExplicit = String.fromEnvironment('DEVICE_URL');
+  static String get deviceBaseUrl =>
+      _deviceExplicit.isNotEmpty ? _deviceExplicit : '$_apiBaseUrl/devices';
 
-  static const String paymentBaseUrl = String.fromEnvironment(
-    'PAYMENT_URL',
-    defaultValue: 'https://api.stawi.org/payment',
-  );
+  static const String _geolocationExplicit =
+      String.fromEnvironment('GEOLOCATION_URL');
+  static String get geolocationBaseUrl => _geolocationExplicit.isNotEmpty
+      ? _geolocationExplicit
+      : '$_apiBaseUrl/geolocation';
 
-  static const String ledgerBaseUrl = String.fromEnvironment(
-    'LEDGER_URL',
-    defaultValue: 'https://api.stawi.org/ledger',
-  );
+  static const String _notificationExplicit =
+      String.fromEnvironment('NOTIFICATION_URL');
+  static String get notificationBaseUrl => _notificationExplicit.isNotEmpty
+      ? _notificationExplicit
+      : '$_apiBaseUrl/notification';
 
-  static const String settingsBaseUrl = String.fromEnvironment(
-    'SETTINGS_URL',
-    defaultValue: 'https://api.stawi.org/settings',
-  );
+  static const String _paymentExplicit =
+      String.fromEnvironment('PAYMENT_URL');
+  static String get paymentBaseUrl =>
+      _paymentExplicit.isNotEmpty ? _paymentExplicit : '$_apiBaseUrl/payment';
 
-  static const String billingBaseUrl = String.fromEnvironment(
-    'BILLING_URL',
-    defaultValue: 'https://api.stawi.org/billing',
-  );
+  static const String _ledgerExplicit = String.fromEnvironment('LEDGER_URL');
+  static String get ledgerBaseUrl =>
+      _ledgerExplicit.isNotEmpty ? _ledgerExplicit : '$_apiBaseUrl/ledger';
 
-  static const String filesBaseUrl = String.fromEnvironment(
-    'FILES_URL',
-    defaultValue: 'https://api.stawi.org/files',
-  );
+  static const String _settingsExplicit =
+      String.fromEnvironment('SETTINGS_URL');
+  static String get settingsBaseUrl =>
+      _settingsExplicit.isNotEmpty ? _settingsExplicit : '$_apiBaseUrl/settings';
 
-  static const String auditBaseUrl = String.fromEnvironment(
-    'AUDIT_URL',
-    defaultValue: 'https://api.stawi.org/audit',
-  );
+  static const String _billingExplicit =
+      String.fromEnvironment('BILLING_URL');
+  static String get billingBaseUrl =>
+      _billingExplicit.isNotEmpty ? _billingExplicit : '$_apiBaseUrl/billing';
+
+  static const String _filesExplicit = String.fromEnvironment('FILES_URL');
+  static String get filesBaseUrl =>
+      _filesExplicit.isNotEmpty ? _filesExplicit : '$_apiBaseUrl/files';
+
+  static const String _auditExplicit = String.fromEnvironment('AUDIT_URL');
+  static String get auditBaseUrl =>
+      _auditExplicit.isNotEmpty ? _auditExplicit : '$_apiBaseUrl/audit';
+
+  static const String _thesaExplicit = String.fromEnvironment('THESA_URL');
 
   /// Thesa BFF base URL for analytics and other aggregation APIs.
-  static const String thesaBaseUrl = String.fromEnvironment(
-    'THESA_URL',
-    defaultValue: 'https://api.stawi.org/thesa',
-  );
+  static String get thesaBaseUrl =>
+      _thesaExplicit.isNotEmpty ? _thesaExplicit : '$_apiBaseUrl/thesa';
 
-  // OAuth2 configuration
+  // ── All endpoints (for iteration / diagnostics) ─────────────────────────
+
+  /// Returns a map of service name → resolved endpoint URL.
+  /// Useful for debugging and health checks.
+  static Map<String, String> get allEndpoints => {
+        'tenancy': tenancyBaseUrl,
+        'profile': profileBaseUrl,
+        'device': deviceBaseUrl,
+        'geolocation': geolocationBaseUrl,
+        'notification': notificationBaseUrl,
+        'payment': paymentBaseUrl,
+        'ledger': ledgerBaseUrl,
+        'settings': settingsBaseUrl,
+        'billing': billingBaseUrl,
+        'files': filesBaseUrl,
+        'audit': auditBaseUrl,
+        'thesa': thesaBaseUrl,
+      };
+
+  // ── OAuth2 configuration ────────────────────────────────────────────────
+
   static const String oauth2IssuerUrl = String.fromEnvironment(
     'OAUTH2_ISSUER_URL',
     defaultValue: 'https://oauth2.stawi.org',
@@ -79,7 +124,8 @@ class ApiConfig {
     defaultValue: 'd6qbqdkpf2t52mcunf3g',
   );
 
-  // Connection settings
+  // ── Connection settings ─────────────────────────────────────────────────
+
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 60);
   static const Duration idleTimeout = Duration(seconds: 120);

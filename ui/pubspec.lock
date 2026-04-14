@@ -68,9 +68,10 @@ packages:
   antinvestor_api_ledger:
     dependency: "direct main"
     description:
-      path: "../../service-payment/sdk/dart/ledger"
-      relative: true
-    source: path
+      name: antinvestor_api_ledger
+      sha256: "5723a6e003f9b11dcf7368519d2f77dc888a9758b158246d833afc2b117eb6e3"
+      url: "https://pub.dev"
+    source: hosted
     version: "1.53.0"
   antinvestor_api_notification:
     dependency: "direct main"
@@ -99,9 +100,10 @@ packages:
   antinvestor_api_settings:
     dependency: "direct main"
     description:
-      path: "../../service-profile/sdk/dart/settings"
-      relative: true
-    source: path
+      name: antinvestor_api_settings
+      sha256: "29c8373fcfee948fee93e3dd752d6b58fedfb6e3c6c50ba2bba8cb1448cd7c6a"
+      url: "https://pub.dev"
+    source: hosted
     version: "1.53.0"
   antinvestor_api_tenancy:
     dependency: "direct main"
@@ -114,87 +116,99 @@ packages:
   antinvestor_ui_audit:
     dependency: "direct main"
     description:
-      path: "../../service-authentication/ui/audit"
-      relative: true
-    source: path
-    version: "0.1.0"
+      name: antinvestor_ui_audit
+      sha256: a770db59522f436d3505262a630aaebea8975ba3cc33d342c4bbb76abf975d3f
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   antinvestor_ui_billing:
     dependency: "direct main"
     description:
-      path: "../../service-payment/ui/billing"
-      relative: true
-    source: path
-    version: "0.1.1"
+      name: antinvestor_ui_billing
+      sha256: "7ad81299c19ba11e871bfc4e70877cc643b44b68e4a637d0688ed7440b0e06af"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   antinvestor_ui_core:
     dependency: "direct main"
     description:
-      path: "../../common/ui_core"
-      relative: true
-    source: path
-    version: "0.1.1"
+      name: antinvestor_ui_core
+      sha256: "7b8a0cdc83cfef3781e4c9f77a4ae7fb238267ed0f2cb40a8d3a2b43d1a6c5a8"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   antinvestor_ui_device:
     dependency: "direct main"
     description:
-      path: "../../service-profile/ui/device"
-      relative: true
-    source: path
-    version: "0.1.1"
+      name: antinvestor_ui_device
+      sha256: "283c6abd6d2f6ff9673b65030aa7b06c7528e9ac8d239a45fcd728c0731838e2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   antinvestor_ui_files:
     dependency: "direct main"
     description:
-      path: "../../service-files/ui"
-      relative: true
-    source: path
-    version: "0.1.1"
+      name: antinvestor_ui_files
+      sha256: c5eb1998db12698070ee124bbaa25292f7ee2f36b882cae068362abf523083ab
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   antinvestor_ui_geolocation:
     dependency: "direct main"
     description:
-      path: "../../service-profile/ui/geolocation"
-      relative: true
-    source: path
-    version: "0.1.1"
+      name: antinvestor_ui_geolocation
+      sha256: "35b6dfe5bff9a3a080c2d97a6cfe673aaf5bfc4db2951bcfef6c90c5ee471ed9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   antinvestor_ui_ledger:
     dependency: "direct main"
     description:
-      path: "../../service-payment/ui/ledger"
-      relative: true
-    source: path
-    version: "0.1.1"
+      name: antinvestor_ui_ledger
+      sha256: "61d70a8bd45b521ededf46554c3b3e17b4c06a0bec39c898182fd9cb4be0422a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   antinvestor_ui_notification:
     dependency: "direct main"
     description:
-      path: "../../service-notification/ui"
-      relative: true
-    source: path
-    version: "0.1.1"
+      name: antinvestor_ui_notification
+      sha256: "4b3307fbdc9cfae4ea5593cce80aaaf53a03c02801f945471d76287d5daec5d9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   antinvestor_ui_payment:
     dependency: "direct main"
     description:
-      path: "../../service-payment/ui/payment"
-      relative: true
-    source: path
-    version: "0.1.1"
+      name: antinvestor_ui_payment
+      sha256: aa49a61df6ecf0e66bd74cf34ce87010de4a67331cf19b9b9285874c47db5fc1
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   antinvestor_ui_profile:
     dependency: "direct main"
     description:
-      path: "../../service-profile/ui/profile"
-      relative: true
-    source: path
-    version: "0.1.1"
+      name: antinvestor_ui_profile
+      sha256: b828c3bbe0230b9563252d599df98eb62caf9e57a2b5689fc0b9ddc04834d494
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   antinvestor_ui_settings:
     dependency: "direct main"
     description:
-      path: "../../service-profile/ui/settings"
-      relative: true
-    source: path
-    version: "0.1.1"
+      name: antinvestor_ui_settings
+      sha256: "211912f8bffe98f272422e5de830f2a467c8e820127eb04ecc46dd1600811b5e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   antinvestor_ui_tenancy:
     dependency: "direct main"
     description:
-      path: "../../service-authentication/ui/tenancy"
-      relative: true
-    source: path
-    version: "0.1.0"
+      name: antinvestor_ui_tenancy
+      sha256: "30103ef5cf26bafd3883bd998c6847a11ca9331a896e6a582198c4f2ba07a588"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   archive:
     dependency: transitive
     description:
@@ -598,10 +612,10 @@ packages:
     dependency: "direct main"
     description:
       name: go_router
-      sha256: "48fb2f42ad057476fa4b733cb95e9f9ea7b0b010bb349ea491dca7dbdb18ffc4"
+      sha256: "5540e4a3f416dd4a93458257b908eb88353cbd0fb5b0a3d1bd7d849ba1e88735"
       url: "https://pub.dev"
     source: hosted
-    version: "17.2.0"
+    version: "17.2.1"
   google_fonts:
     dependency: "direct main"
     description:

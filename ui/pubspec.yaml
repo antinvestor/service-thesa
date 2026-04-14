@@ -61,31 +61,19 @@ dependencies:
   web: ^1.1.1
   csv: ^8.0.0
 
-  # ── Antinvestor UI Libraries ─────────────────────────────────────────────
-  antinvestor_ui_core:
-    path: ../../common/ui_core
-  antinvestor_ui_profile:
-    path: ../../service-profile/ui/profile
-  antinvestor_ui_device:
-    path: ../../service-profile/ui/device
-  antinvestor_ui_settings:
-    path: ../../service-profile/ui/settings
-  antinvestor_ui_geolocation:
-    path: ../../service-profile/ui/geolocation
-  antinvestor_ui_payment:
-    path: ../../service-payment/ui/payment
-  antinvestor_ui_ledger:
-    path: ../../service-payment/ui/ledger
-  antinvestor_ui_billing:
-    path: ../../service-payment/ui/billing
-  antinvestor_ui_notification:
-    path: ../../service-notification/ui
-  antinvestor_ui_files:
-    path: ../../service-files/ui
-  antinvestor_ui_tenancy:
-    path: ../../service-authentication/ui/tenancy
-  antinvestor_ui_audit:
-    path: ../../service-authentication/ui/audit
+  # ── Antinvestor UI Libraries (published on pub.dev) ───────────────────────
+  antinvestor_ui_core: ^0.2.0
+  antinvestor_ui_profile: ^0.2.0
+  antinvestor_ui_device: ^0.2.0
+  antinvestor_ui_settings: ^0.2.0
+  antinvestor_ui_geolocation: ^0.2.0
+  antinvestor_ui_payment: ^0.2.0
+  antinvestor_ui_ledger: ^0.2.0
+  antinvestor_ui_billing: ^0.2.0
+  antinvestor_ui_notification: ^0.2.0
+  antinvestor_ui_files: ^0.2.0
+  antinvestor_ui_tenancy: ^0.2.0
+  antinvestor_ui_audit: ^0.2.0
 
 dev_dependencies:
   flutter_test:
@@ -100,34 +88,6 @@ dev_dependencies:
 
 dependency_overrides:
   jose: ^0.3.5+2
-  antinvestor_ui_core:
-    path: ../../common/ui_core
-  antinvestor_ui_profile:
-    path: ../../service-profile/ui/profile
-  antinvestor_ui_device:
-    path: ../../service-profile/ui/device
-  antinvestor_ui_settings:
-    path: ../../service-profile/ui/settings
-  antinvestor_ui_geolocation:
-    path: ../../service-profile/ui/geolocation
-  antinvestor_ui_payment:
-    path: ../../service-payment/ui/payment
-  antinvestor_ui_ledger:
-    path: ../../service-payment/ui/ledger
-  antinvestor_ui_billing:
-    path: ../../service-payment/ui/billing
-  antinvestor_ui_notification:
-    path: ../../service-notification/ui
-  antinvestor_ui_files:
-    path: ../../service-files/ui
-  antinvestor_ui_tenancy:
-    path: ../../service-authentication/ui/tenancy
-  antinvestor_ui_audit:
-    path: ../../service-authentication/ui/audit
-  antinvestor_api_settings:
-    path: ../../service-profile/sdk/dart/settings
-  antinvestor_api_ledger:
-    path: ../../service-payment/sdk/dart/ledger
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
