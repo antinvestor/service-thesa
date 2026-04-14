@@ -88,6 +88,12 @@ class ApiConfig {
   static String get auditBaseUrl =>
       _auditExplicit.isNotEmpty ? _auditExplicit : '$_apiBaseUrl/audit';
 
+  static const String _trustageExplicit =
+      String.fromEnvironment('TRUSTAGE_URL');
+  static String get trustageBaseUrl => _trustageExplicit.isNotEmpty
+      ? _trustageExplicit
+      : '$_apiBaseUrl/trustage';
+
   static const String _thesaExplicit = String.fromEnvironment('THESA_URL');
 
   /// Thesa BFF base URL for analytics and other aggregation APIs.
@@ -110,6 +116,7 @@ class ApiConfig {
         'billing': billingBaseUrl,
         'files': filesBaseUrl,
         'audit': auditBaseUrl,
+        'trustage': trustageBaseUrl,
         'thesa': thesaBaseUrl,
       };
 

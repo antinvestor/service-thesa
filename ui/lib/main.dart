@@ -26,6 +26,8 @@ import 'package:antinvestor_ui_settings/antinvestor_ui_settings.dart'
     show settingsTransportProvider;
 import 'package:antinvestor_ui_tenancy/antinvestor_ui_tenancy.dart'
     show tenancyTransportProvider;
+import 'package:antinvestor_ui_trustage/antinvestor_ui_trustage.dart'
+    show trustageTransportProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -47,6 +49,7 @@ import 'features/partition/partition_service.dart';
 import 'features/payment/payment_service.dart';
 import 'features/profile/profile_service.dart';
 import 'features/settings/settings_service.dart';
+import 'features/trustage/trustage_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,6 +68,7 @@ void main() {
   registerBillingService();
   registerGeolocationService();
   registerAuditService();
+  registerTrustageService();
 
   // Register permission manifests from all service UI libraries.
   // These declare the proto-defined permissions each service needs,
@@ -156,6 +160,10 @@ void main() {
         auditTransportProvider.overrideWith((ref) {
           final auth = ref.watch(authTokenProviderProvider);
           return createTransport(auth, baseUrl: ApiConfig.auditBaseUrl);
+        }),
+        trustageTransportProvider.overrideWith((ref) {
+          final auth = ref.watch(authTokenProviderProvider);
+          return createTransport(auth, baseUrl: ApiConfig.trustageBaseUrl);
         }),
       ],
       child: const ThesaApp(),
@@ -308,6 +316,17 @@ void _registerPermissionManifests() {
       PermissionEntry(key: 'audit_search', label: 'Search Audit Entries', scope: PermissionScope.feature),
       PermissionEntry(key: 'audit_export', label: 'Export Audit Data', scope: PermissionScope.action),
       PermissionEntry(key: 'audit_verify', label: 'Verify Integrity', scope: PermissionScope.action),
+    ],
+  ));
+
+  // Trustage (Orchestrator) service
+  registry.register(const PermissionManifest(
+    namespace: 'service_trustage',
+    permissions: [
+      PermissionEntry(key: 'trustage_read', label: 'View Workflows & Runs', scope: PermissionScope.service),
+      PermissionEntry(key: 'trustage_operate', label: 'Retry, Resume, Send Signals', scope: PermissionScope.action),
+      PermissionEntry(key: 'trustage_ingest', label: 'Trigger Events', scope: PermissionScope.action),
+      PermissionEntry(key: 'trustage_manage', label: 'Create & Activate Workflows', scope: PermissionScope.action),
     ],
   ));
 }

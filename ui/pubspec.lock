@@ -49,6 +49,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.53.13"
+  antinvestor_api_event:
+    dependency: "direct overridden"
+    description:
+      path: "../../service-trustage/sdk/dart/event"
+      relative: true
+    source: path
+    version: "0.1.0"
   antinvestor_api_files:
     dependency: "direct main"
     description:
@@ -97,6 +104,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.53.0"
+  antinvestor_api_runtime:
+    dependency: "direct overridden"
+    description:
+      path: "../../service-trustage/sdk/dart/runtime"
+      relative: true
+    source: path
+    version: "0.1.0"
   antinvestor_api_settings:
     dependency: "direct main"
     description:
@@ -105,6 +119,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.53.0"
+  antinvestor_api_signal:
+    dependency: "direct overridden"
+    description:
+      path: "../../service-trustage/sdk/dart/signal"
+      relative: true
+    source: path
+    version: "0.1.0"
   antinvestor_api_tenancy:
     dependency: "direct main"
     description:
@@ -113,6 +134,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.54.0"
+  antinvestor_api_workflow:
+    dependency: "direct overridden"
+    description:
+      path: "../../service-trustage/sdk/dart/workflow"
+      relative: true
+    source: path
+    version: "0.1.0"
   antinvestor_ui_audit:
     dependency: "direct main"
     description:
@@ -132,11 +160,10 @@ packages:
   antinvestor_ui_core:
     dependency: "direct main"
     description:
-      name: antinvestor_ui_core
-      sha256: "7b8a0cdc83cfef3781e4c9f77a4ae7fb238267ed0f2cb40a8d3a2b43d1a6c5a8"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.0"
+      path: "../../common/ui_core"
+      relative: true
+    source: path
+    version: "0.3.0"
   antinvestor_ui_device:
     dependency: "direct main"
     description:
@@ -209,6 +236,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.0"
+  antinvestor_ui_trustage:
+    dependency: "direct main"
+    description:
+      path: "../../service-trustage/ui_trustage"
+      relative: true
+    source: path
+    version: "0.1.0"
   archive:
     dependency: transitive
     description:

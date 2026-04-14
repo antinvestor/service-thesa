@@ -74,6 +74,7 @@ dependencies:
   antinvestor_ui_files: ^0.2.0
   antinvestor_ui_tenancy: ^0.2.0
   antinvestor_ui_audit: ^0.2.0
+  antinvestor_ui_trustage: ^0.1.0
 
 dev_dependencies:
   flutter_test:
@@ -88,6 +89,18 @@ dev_dependencies:
 
 dependency_overrides:
   jose: ^0.3.5+2
+  antinvestor_ui_core:
+    path: ../../common/ui_core
+  antinvestor_ui_trustage:
+    path: ../../service-trustage/ui_trustage
+  antinvestor_api_runtime:
+    path: ../../service-trustage/sdk/dart/runtime
+  antinvestor_api_event:
+    path: ../../service-trustage/sdk/dart/event
+  antinvestor_api_signal:
+    path: ../../service-trustage/sdk/dart/signal
+  antinvestor_api_workflow:
+    path: ../../service-trustage/sdk/dart/workflow
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
