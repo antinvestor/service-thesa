@@ -50,11 +50,12 @@ packages:
     source: hosted
     version: "1.53.13"
   antinvestor_api_event:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: "../../service-trustage/sdk/dart/event"
-      relative: true
-    source: path
+      name: antinvestor_api_event
+      sha256: "0bd632804aa5bfdf2e458cc5c72d0a9cb96bb44b33a65ee123d3f9442a6a1135"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.1.0"
   antinvestor_api_files:
     dependency: "direct main"
@@ -105,11 +106,12 @@ packages:
     source: hosted
     version: "1.53.0"
   antinvestor_api_runtime:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: "../../service-trustage/sdk/dart/runtime"
-      relative: true
-    source: path
+      name: antinvestor_api_runtime
+      sha256: "1569864825907295f2df8940a38beb30bfcd32222d83240e62e62c7549df1306"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.1.0"
   antinvestor_api_settings:
     dependency: "direct main"
@@ -120,11 +122,12 @@ packages:
     source: hosted
     version: "1.53.0"
   antinvestor_api_signal:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: "../../service-trustage/sdk/dart/signal"
-      relative: true
-    source: path
+      name: antinvestor_api_signal
+      sha256: fc39e6cf497cb1a871c6a1a5a20f640c17b94fc60aecfb5b5e3843d46c86c03d
+      url: "https://pub.dev"
+    source: hosted
     version: "0.1.0"
   antinvestor_api_tenancy:
     dependency: "direct main"
@@ -135,11 +138,12 @@ packages:
     source: hosted
     version: "1.54.0"
   antinvestor_api_workflow:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: "../../service-trustage/sdk/dart/workflow"
-      relative: true
-    source: path
+      name: antinvestor_api_workflow
+      sha256: "2f93a897b959b2aafeb8c805ebf0d9f997ab24c6521bccf941c19c6e25ff7980"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.1.0"
   antinvestor_ui_audit:
     dependency: "direct main"
@@ -160,10 +164,11 @@ packages:
   antinvestor_ui_core:
     dependency: "direct main"
     description:
-      path: "../../common/ui_core"
-      relative: true
-    source: path
-    version: "0.3.0"
+      name: antinvestor_ui_core
+      sha256: "7b8a0cdc83cfef3781e4c9f77a4ae7fb238267ed0f2cb40a8d3a2b43d1a6c5a8"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   antinvestor_ui_device:
     dependency: "direct main"
     description:
@@ -239,9 +244,10 @@ packages:
   antinvestor_ui_trustage:
     dependency: "direct main"
     description:
-      path: "../../service-trustage/ui_trustage"
-      relative: true
-    source: path
+      name: antinvestor_ui_trustage
+      sha256: de947376ee269e3a99f9af3ccdf2cea8939415351b9da60f1bbb631ae665287d
+      url: "https://pub.dev"
+    source: hosted
     version: "0.1.0"
   archive:
     dependency: transitive
