@@ -24,28 +24,33 @@ class DashboardPage extends StatelessWidget {
           flex: 3,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const PageHeader(
-                  title: 'Overview',
-                  breadcrumbs: ['Dashboard', 'Analytics Dashboard'],
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const PageHeader(
+                      title: 'Overview',
+                      breadcrumbs: ['Dashboard', 'Analytics Dashboard'],
+                    ),
+                    const SizedBox(height: 24),
+                    // KPI Row
+                    _buildKpiRow(context, screenSize),
+                    const SizedBox(height: 24),
+                    // Chart
+                    const PortfolioChart(),
+                    const SizedBox(height: 24),
+                    // Distribution + Regional
+                    _buildBottomRow(context, screenSize),
+                    // Activity feed inline on mobile/tablet
+                    if (!showSideFeed) ...[
+                      const SizedBox(height: 24),
+                      const ActivityFeed(),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 24),
-                // KPI Row
-                _buildKpiRow(context, screenSize),
-                const SizedBox(height: 24),
-                // Chart
-                const PortfolioChart(),
-                const SizedBox(height: 24),
-                // Distribution + Regional
-                _buildBottomRow(context, screenSize),
-                // Activity feed inline on mobile/tablet
-                if (!showSideFeed) ...[
-                  const SizedBox(height: 24),
-                  const ActivityFeed(),
-                ],
-              ],
+              ),
             ),
           ),
         ),

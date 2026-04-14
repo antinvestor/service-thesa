@@ -18,7 +18,7 @@ typedef ProfileAddress = ({
 /// Provider that extracts all addresses from loaded profiles into a flat list.
 final addressesProvider =
     FutureProvider<List<ProfileAddress>>((ref) async {
-  final profiles = await ref.watch(profilesProvider.future);
+  final profiles = await ref.watch(profilesProvider('').future);
   final addresses = <ProfileAddress>[];
   for (final profile in profiles) {
     final name = _profileName(profile);
@@ -61,7 +61,6 @@ class AddressesPage extends ConsumerWidget {
       dataProvider: addressesProvider,
       title: 'Addresses',
       breadcrumbs: ['Services', service.label, 'Addresses'],
-      searchHint: 'Search addresses...',
       exportRow: (pa) => [
         pa.address.name,
         pa.address.city,

@@ -39,7 +39,6 @@ class InvestmentsPage extends StatelessWidget {
     return EntityListPage<_Investment>(
       title: 'Investments',
       breadcrumbs: const ['Dashboard', 'Investments'],
-      searchHint: 'Search investments...',
       addLabel: 'New Investment',
       onAdd: () {},
       items: _sampleInvestments,

@@ -40,7 +40,6 @@ class TransactionsPage extends StatelessWidget {
     return EntityListPage<_Transaction>(
       title: 'Transactions',
       breadcrumbs: const ['Dashboard', 'Transactions'],
-      searchHint: 'Search transactions...',
       items: _sampleTransactions,
       columns: const [
         DataColumn(label: Text('ID')),

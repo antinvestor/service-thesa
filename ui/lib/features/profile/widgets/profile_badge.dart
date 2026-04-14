@@ -30,7 +30,9 @@ String profileDisplayName(ProfileObject profile) {
     // Try given_name + family_name
     final given = profile.properties.fields['given_name'];
     final family = profile.properties.fields['family_name'];
-    if (given != null && given.hasStringValue() && given.stringValue.isNotEmpty) {
+    if (given != null &&
+        given.hasStringValue() &&
+        given.stringValue.isNotEmpty) {
       final parts = [
         given.stringValue,
         if (family != null && family.hasStringValue()) family.stringValue,
@@ -48,8 +50,24 @@ String profileDisplayName(ProfileObject profile) {
       : profile.id;
 }
 
+/// Extract a description / quote from a ProfileObject.
+String? profileDescription(ProfileObject profile) {
+  if (!profile.hasProperties()) return null;
+  // Try 'description', 'quote', 'bio' in order
+  for (final key in ['description', 'quote', 'bio']) {
+    final field = profile.properties.fields[key];
+    if (field != null && field.hasStringValue() && field.stringValue.isNotEmpty) {
+      return field.stringValue;
+    }
+  }
+  return null;
+}
+
 /// A badge that displays a profile's avatar, name, and contact verification
 /// status. Automatically fetches profile data from the API.
+///
+/// The badge auto-expands to show description and contacts when
+/// sufficient horizontal space is available (> 300px).
 ///
 /// Use [ProfileBadge.fromProfile] when you already have the ProfileObject.
 class ProfileBadge extends ConsumerWidget {
@@ -134,6 +152,9 @@ class ProfileBadge extends ConsumerWidget {
 
 /// Renders the profile badge content when the profile data is available.
 /// Can also be used directly when you already have a [ProfileObject].
+///
+/// Uses [LayoutBuilder] to auto-expand when horizontal space > 300px,
+/// showing description/quote and contact details alongside the name.
 class ProfileBadgeContent extends StatelessWidget {
   const ProfileBadgeContent({
     super.key,
@@ -160,24 +181,69 @@ class ProfileBadgeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = profileDisplayName(profile);
-    final radius = compact ? 14.0 : 16.0;
+    final badge = compact
+        ? _buildCompact(context)
+        : LayoutBuilder(
+            builder: (context, constraints) {
+              // Auto-expand when enough horizontal space is available.
+              final expanded = constraints.maxWidth > 300;
+              return expanded
+                  ? _buildExpanded(context)
+                  : _buildStandard(context);
+            },
+          );
 
-    final badge = Row(
+    if (onTap != null) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          child: badge,
+        ),
+      );
+    }
+    return badge;
+  }
+
+  /// Icon-only compact badge: avatar + name on one line.
+  Widget _buildCompact(BuildContext context) {
+    final name = profileDisplayName(profile);
+    return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CircleAvatar(
-          radius: radius,
-          backgroundColor: _typeColor.withValues(alpha: 0.15),
-          child: Text(
-            name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
-            style: TextStyle(
-              color: _typeColor,
-              fontSize: compact ? 11 : 13,
-              fontWeight: FontWeight.w600,
-            ),
+        _avatar(14.0),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 4),
+              _verificationIcon(13),
+            ],
           ),
         ),
+      ],
+    );
+  }
+
+  /// Standard badge: avatar + name + verification + contact count.
+  Widget _buildStandard(BuildContext context) {
+    final name = profileDisplayName(profile);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _avatar(16.0),
         const SizedBox(width: 8),
         Flexible(
           child: Column(
@@ -190,24 +256,18 @@ class ProfileBadgeContent extends StatelessWidget {
                   Flexible(
                     child: Text(
                       name,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontWeight: FontWeight.w500,
-                        fontSize: compact ? 13 : 14,
+                        fontSize: 14,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  if (_hasVerified)
-                    Icon(Icons.verified,
-                        size: compact ? 13 : 14, color: AppColors.success)
-                  else if (profile.contacts.isNotEmpty)
-                    Icon(Icons.pending_outlined,
-                        size: compact ? 13 : 14,
-                        color: AppColors.onSurfaceMuted),
+                  _verificationIcon(14),
                 ],
               ),
-              if (!compact && profile.contacts.isNotEmpty)
+              if (profile.contacts.isNotEmpty)
                 Text(
                   '${profile.contacts.length} contact${profile.contacts.length == 1 ? '' : 's'}'
                   ' · $_verifiedCount verified',
@@ -221,17 +281,133 @@ class ProfileBadgeContent extends StatelessWidget {
         ),
       ],
     );
+  }
 
-    if (onTap != null) {
-      return InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-          child: badge,
+  /// Expanded badge: avatar + name + description + contacts list.
+  /// Shown when the badge has enough horizontal space (> 300px).
+  Widget _buildExpanded(BuildContext context) {
+    final name = profileDisplayName(profile);
+    final description = profileDescription(profile);
+    final contacts = profile.contacts.take(3).toList();
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _avatar(20.0),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Name + verification
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  _verificationIcon(14),
+                ],
+              ),
+              // Description / quote
+              if (description != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.onSurfaceMuted,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              // Contact details
+              if (contacts.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 2,
+                  children: [
+                    for (final contact in contacts)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            contact.type == ContactType.EMAIL
+                                ? Icons.email_outlined
+                                : Icons.phone_outlined,
+                            size: 12,
+                            color: AppColors.onSurfaceMuted,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            contact.detail,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.onSurfaceMuted,
+                            ),
+                          ),
+                          if (contact.verified) ...[
+                            const SizedBox(width: 2),
+                            Icon(Icons.verified,
+                                size: 11, color: AppColors.success),
+                          ],
+                        ],
+                      ),
+                    if (profile.contacts.length > 3)
+                      Text(
+                        '+${profile.contacts.length - 3} more',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.onSurfaceMuted,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
         ),
-      );
+      ],
+    );
+  }
+
+  Widget _avatar(double radius) {
+    final name = profileDisplayName(profile);
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: _typeColor.withValues(alpha: 0.15),
+      child: Text(
+        name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
+        style: TextStyle(
+          color: _typeColor,
+          fontSize: radius * 0.75,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _verificationIcon(double size) {
+    if (_hasVerified) {
+      return Icon(Icons.verified, size: size, color: AppColors.success);
     }
-    return badge;
+    if (profile.contacts.isNotEmpty) {
+      return Icon(Icons.pending_outlined,
+          size: size, color: AppColors.onSurfaceMuted);
+    }
+    return const SizedBox.shrink();
   }
 }

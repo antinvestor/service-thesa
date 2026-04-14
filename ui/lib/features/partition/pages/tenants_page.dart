@@ -28,7 +28,6 @@ class TenantsPage extends ConsumerWidget {
       dataProvider: tenantsProvider,
       title: 'Tenants',
       breadcrumbs: ['Services', service.label, 'Tenants'],
-      searchHint: 'Search tenants...',
       addLabel: 'New Tenant',
       exportRow: (tenant) => [
         tenant.name,

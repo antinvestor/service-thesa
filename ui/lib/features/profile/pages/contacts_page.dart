@@ -15,7 +15,7 @@ typedef ProfileContact = ({String profileId, ContactObject contact});
 /// Provider that extracts all contacts from loaded profiles into a flat list.
 final contactsProvider =
     FutureProvider<List<ProfileContact>>((ref) async {
-  final profiles = await ref.watch(profilesProvider.future);
+  final profiles = await ref.watch(profilesProvider('').future);
   final contacts = <ProfileContact>[];
   for (final profile in profiles) {
     for (final contact in profile.contacts) {
@@ -41,7 +41,6 @@ class ContactsPage extends ConsumerWidget {
       dataProvider: contactsProvider,
       title: 'Contacts',
       breadcrumbs: ['Services', service.label, 'Contacts'],
-      searchHint: 'Search contacts...',
       columns: const [
         DataColumn(label: Text('DETAIL')),
         DataColumn(label: Text('TYPE')),
@@ -94,7 +93,7 @@ class ContactsPage extends ConsumerWidget {
         );
       },
       detailBuilder: (entry) => _ContactDetail(entry: entry),
-      onRefresh: () => ref.invalidate(profilesProvider),
+      onRefresh: () => ref.invalidate(contactsProvider),
     );
   }
 }

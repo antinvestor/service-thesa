@@ -14,7 +14,6 @@ class AsyncEntityList<T> extends ConsumerWidget {
     required this.breadcrumbs,
     required this.columns,
     required this.rowBuilder,
-    this.searchHint = 'Search...',
     this.detailBuilder,
     this.addLabel,
     this.onAdd,
@@ -36,7 +35,6 @@ class AsyncEntityList<T> extends ConsumerWidget {
   final List<DataColumn> columns;
   final DataRow Function(T item, bool selected, VoidCallback onSelect)
       rowBuilder;
-  final String searchHint;
   final Widget Function(T item)? detailBuilder;
   final String? addLabel;
   final VoidCallback? onAdd;
@@ -87,7 +85,6 @@ class AsyncEntityList<T> extends ConsumerWidget {
         columns: columns,
         items: items,
         rowBuilder: rowBuilder,
-        searchHint: searchHint,
         detailBuilder: detailBuilder,
         addLabel: addLabel,
         onAdd: onAdd,

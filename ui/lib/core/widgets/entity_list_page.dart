@@ -39,11 +39,12 @@ class AuditEntry {
   final String time;
 }
 
-/// A reusable entity list page pattern: searchable table + detail panel + edit slide-over.
+/// A reusable entity list page pattern: table + master-detail panel + edit slide-over.
 ///
-/// Matches the Stitch design:
-/// - Search bar + filter toolbar
-/// - Data table with row selection → detail panel (desktop)
+/// Layout features:
+/// - Constrained content width (max 1200px) for comfortable reading on large screens
+/// - Master-detail: click a row to preview details in a side panel (desktop)
+/// - "Open" button in the detail panel navigates to the full detail page
 /// - Glassmorphism slide-over for editing/creating
 class EntityListPage<T> extends StatefulWidget {
   const EntityListPage({
@@ -53,10 +54,8 @@ class EntityListPage<T> extends StatefulWidget {
     required this.columns,
     required this.items,
     required this.rowBuilder,
-    this.searchHint = 'Search...',
     this.detailBuilder,
     this.actions,
-    this.onSearch,
     this.onAdd,
     this.addLabel,
     this.onRowNavigate,
@@ -75,15 +74,14 @@ class EntityListPage<T> extends StatefulWidget {
   final List<DataColumn> columns;
   final List<T> items;
   final DataRow Function(T item, bool selected, VoidCallback onSelect) rowBuilder;
-  final String searchHint;
   final Widget Function(T item)? detailBuilder;
   final List<Widget>? actions;
-  final ValueChanged<String>? onSearch;
   final VoidCallback? onAdd;
   final String? addLabel;
 
-  /// When provided, row taps navigate to a detail page instead of
-  /// showing the side panel. Called with the tapped item.
+  /// Navigate to a full detail page for the item.
+  /// Shown as an "Open" button in the detail panel on desktop.
+  /// On mobile/tablet, row taps navigate directly.
   final void Function(T item)? onRowNavigate;
 
   /// Extract a row of string values for CSV export. Column order should
@@ -119,13 +117,14 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
   int _currentPage = 0;
   late int _pageSize = widget.rowsPerPage;
   int _lastItemCount = 0;
-  final _searchController = TextEditingController();
 
   static const _pageSizeOptions = [10, 25, 50, 100];
 
+  /// Max content width to prevent stretching on ultra-wide screens.
+  static const double _maxContentWidth = 1200;
+
   @override
   void dispose() {
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -198,10 +197,12 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
     }
 
     final screenSize = screenSizeOf(context);
-    final showDetailPanel = screenSize == ScreenSize.desktop &&
-        widget.detailBuilder != null &&
-        widget.onRowNavigate == null &&
-        _selectedIndex != null;
+    final isDesktop = screenSize == ScreenSize.desktop;
+
+    // Master-detail: show side panel on desktop when a row is selected
+    // and a detailBuilder is provided (regardless of onRowNavigate).
+    final showDetailPanel =
+        isDesktop && widget.detailBuilder != null && _selectedIndex != null;
 
     final showEditOverlay =
         widget.editFields != null && (_editingIndex != null || _creating);
@@ -216,58 +217,45 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
               flex: showDetailPanel ? 3 : 1,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    PageHeader(
-                      title: widget.title,
-                      breadcrumbs: widget.breadcrumbs,
-                      actions: [
-                        if (widget.onAdd != null || widget.editFields != null)
-                          ElevatedButton.icon(
-                            onPressed: widget.editFields != null
-                                ? _openCreate
-                                : widget.onAdd,
-                            icon: const Icon(Icons.add, size: 18),
-                            label: Text(widget.addLabel ?? 'Add'),
-                          ),
-                        ...?widget.actions,
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    // Search + filters + export
-                    Row(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints:
+                        const BoxConstraints(maxWidth: _maxContentWidth),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: widget.onSearch,
-                            decoration: InputDecoration(
-                              hintText: widget.searchHint,
-                              prefixIcon:
-                                  const Icon(Icons.search, size: 20),
-                              isDense: true,
-                            ),
-                          ),
+                        PageHeader(
+                          title: widget.title,
+                          breadcrumbs: widget.breadcrumbs,
+                          actions: [
+                            if (widget.exportRow != null)
+                              OutlinedButton.icon(
+                                onPressed: _exportCsv,
+                                icon: const Icon(Icons.download, size: 18),
+                                label: const Text('Export'),
+                              ),
+                            if (widget.onAdd != null ||
+                                widget.editFields != null)
+                              ElevatedButton.icon(
+                                onPressed: widget.editFields != null
+                                    ? _openCreate
+                                    : widget.onAdd,
+                                icon: const Icon(Icons.add, size: 18),
+                                label: Text(widget.addLabel ?? 'Add'),
+                              ),
+                            ...?widget.actions,
+                          ],
                         ),
-                        if (widget.exportRow != null) ...[
-                          const SizedBox(width: 12),
-                          OutlinedButton.icon(
-                            onPressed: _exportCsv,
-                            icon: const Icon(Icons.download, size: 18),
-                            label: const Text('Export'),
-                          ),
-                        ],
+                        const SizedBox(height: 20),
+                        // Paginated data table + footer
+                        ..._buildPaginatedTable(),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    // Paginated data table + footer
-                    ..._buildPaginatedTable(),
-                  ],
+                  ),
                 ),
               ),
             ),
-            // Detail panel (desktop only)
+            // Detail panel (desktop only) — master-detail preview
             if (showDetailPanel)
               SizedBox(
                 width: 380,
@@ -284,8 +272,16 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
                       Padding(
                         padding: const EdgeInsets.all(12),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
+                            if (widget.onRowNavigate != null)
+                              IconButton(
+                                icon: const Icon(Icons.open_in_new,
+                                    size: 20),
+                                onPressed: () => widget.onRowNavigate!(
+                                    widget.items[_selectedIndex!]),
+                                tooltip: 'Open full details',
+                              ),
+                            const Spacer(),
                             if (widget.editFields != null)
                               IconButton(
                                 icon: const Icon(Icons.edit_outlined,
@@ -359,11 +355,22 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
             columns: widget.columns,
             rows: List.generate(pageItems.length, (i) {
               final globalIndex = start + i;
+              final screenSize = screenSizeOf(context);
               return widget.rowBuilder(
                 pageItems[i],
                 _selectedIndex == globalIndex,
                 () {
-                  if (widget.onRowNavigate != null) {
+                  // On desktop with a detail builder: click selects
+                  // the row to show the preview panel.
+                  // On mobile/tablet: navigate directly if available.
+                  if (screenSize == ScreenSize.desktop &&
+                      widget.detailBuilder != null) {
+                    setState(() {
+                      _selectedIndex = _selectedIndex == globalIndex
+                          ? null
+                          : globalIndex;
+                    });
+                  } else if (widget.onRowNavigate != null) {
                     widget.onRowNavigate!(pageItems[i]);
                   } else {
                     setState(() {

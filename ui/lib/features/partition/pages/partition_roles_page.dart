@@ -27,7 +27,6 @@ class PartitionRolesPage extends ConsumerWidget {
       dataProvider: partitionRolesProvider,
       title: 'Partition Roles',
       breadcrumbs: ['Services', service.label, 'Partition Roles'],
-      searchHint: 'Search roles...',
       addLabel: 'New Role',
       exportRow: (role) => [role.name, role.id, role.partitionId, role.state.name],
       columns: const [

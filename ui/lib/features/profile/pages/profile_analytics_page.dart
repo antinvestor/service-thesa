@@ -13,7 +13,7 @@ class ProfileAnalyticsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profilesAsync = ref.watch(profilesProvider);
+    final profilesAsync = ref.watch(profilesProvider(''));
 
     final profiles = profilesAsync.whenOrNull(data: (d) => d) ?? [];
     final totalCount = profiles.length;

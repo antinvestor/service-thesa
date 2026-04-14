@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/data/auth_repository.dart';
+import '../services/search_provider.dart';
 import '../services/tenant_context.dart';
 import '../theme/app_colors.dart';
 import 'tenant_picker.dart';
@@ -50,19 +51,11 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
             ),
             const SizedBox(width: 8),
           ],
-          // Search bar — flexible, collapses first
+          // Global search bar — drives server-side search for the active page
           Expanded(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: isCompact ? 'Search...' : 'Search analytics, portfolios, or users...',
-                  prefixIcon: const Icon(Icons.search,
-                      size: 20, color: AppColors.onSurfaceMuted),
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                ),
-              ),
+              child: _GlobalSearchField(compact: isCompact),
             ),
           ),
           const SizedBox(width: 12),
@@ -93,6 +86,70 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
           // User avatar section
           Flexible(child: _UserAvatar(ref: ref, compact: isCompact)),
         ],
+      ),
+    );
+  }
+}
+
+/// Search field wired to [globalSearchQueryProvider].
+/// Debounces input to avoid excessive provider updates.
+class _GlobalSearchField extends ConsumerStatefulWidget {
+  const _GlobalSearchField({this.compact = false});
+
+  final bool compact;
+
+  @override
+  ConsumerState<_GlobalSearchField> createState() => _GlobalSearchFieldState();
+}
+
+class _GlobalSearchFieldState extends ConsumerState<_GlobalSearchField> {
+  final _controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Sync initial value from provider (e.g. after route restore).
+    final initial = ref.read(globalSearchQueryProvider);
+    if (initial.isNotEmpty) _controller.text = initial;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Listen for external clears (e.g. route changes).
+    ref.listen<String>(globalSearchQueryProvider, (prev, next) {
+      if (next.isEmpty && _controller.text.isNotEmpty) {
+        _controller.clear();
+      }
+    });
+
+    return TextField(
+      controller: _controller,
+      onChanged: (value) {
+        ref.read(globalSearchQueryProvider.notifier).update(value.trim());
+      },
+      decoration: InputDecoration(
+        hintText: widget.compact
+            ? 'Search...'
+            : 'Search by name, contact, or ID...',
+        prefixIcon: const Icon(Icons.search,
+            size: 20, color: AppColors.onSurfaceMuted),
+        suffixIcon: _controller.text.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.clear, size: 18),
+                onPressed: () {
+                  _controller.clear();
+                  ref.read(globalSearchQueryProvider.notifier).clear();
+                },
+              )
+            : null,
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(vertical: 10),
       ),
     );
   }

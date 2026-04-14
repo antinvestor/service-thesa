@@ -23,7 +23,6 @@ class AccessRolesPage extends ConsumerWidget {
       dataProvider: accessRolesProvider,
       title: 'Access Roles',
       breadcrumbs: ['Services', service.label, 'Access Roles'],
-      searchHint: 'Search access roles...',
       addLabel: 'New Access Role',
       exportRow: (ar) => [
         ar.id,

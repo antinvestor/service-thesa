@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/services/search_provider.dart';
 import '../../../core/services/service_definition.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/edit_dialog.dart';
 import '../../../core/widgets/entity_list_page.dart';
-import '../../partition/widgets/async_entity_list.dart';
 import '../../partition/widgets/state_badge.dart';
 import '../data/profile_providers.dart';
 import '../data/profile_repository.dart';
+import '../widgets/profile_badge.dart';
 
 class ProfilesPage extends ConsumerWidget {
   const ProfilesPage({
@@ -24,168 +25,176 @@ class ProfilesPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AsyncEntityList<ProfileObject>(
-      dataProvider: profilesProvider,
-      title: 'Profiles',
-      breadcrumbs: ['Services', service.label, 'Profiles'],
-      searchHint: 'Search profiles...',
-      addLabel: 'New Profile',
-      onAdd: () async {
-        final values = await showEditDialog(
-          context: context,
-          title: 'New Profile',
-          saveLabel: 'Create',
-          fields: const [
-            DialogField(
-              key: 'type',
-              label: 'Profile Type',
-              type: DialogFieldType.dropdown,
-              options: ['PERSON', 'INSTITUTION', 'BOT'],
-              initialValue: 'PERSON',
-            ),
-            DialogField(
-              key: 'contact',
-              label: 'Contact (email or phone)',
-              hint: 'e.g. user@example.com or +254712345678',
-            ),
-            DialogField(key: 'name', label: 'Name (optional)'),
-          ],
-        );
-        if (values == null || !context.mounted) return;
-        try {
-          final typeStr = values['type'] ?? 'PERSON';
-          final type = ProfileType.values
-              .where((t) => t.name == typeStr)
-              .firstOrNull ?? ProfileType.PERSON;
-          final name = values['name'] ?? '';
-          Struct? properties;
-          if (name.isNotEmpty) {
-            properties = Struct(fields: {
-              'name': Value(stringValue: name),
-            });
-          }
-          final repo = await ref.read(profileRepositoryProvider.future);
-          await repo.create(
-            type: type,
-            contact: values['contact'] ?? '',
-            properties: properties,
-          );
-          ref.invalidate(profilesProvider);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile created')),
-            );
-          }
-        } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text('Error: $e')));
-          }
-        }
-      },
-      exportRow: (profile) => [
-        _profileDisplayName(profile),
-        profile.type.name,
-        '${profile.contacts.length}',
-        profile.state.name,
-      ],
-      columns: const [
-        DataColumn(label: Text('NAME')),
-        DataColumn(label: Text('TYPE')),
-        DataColumn(label: Text('CONTACTS'), numeric: true),
-        DataColumn(label: Text('STATE')),
-      ],
-      rowBuilder: (profile, selected, onSelect) {
-        final name = _profileDisplayName(profile);
-        final typeLabel = profile.type.name;
-        final typeColor = switch (profile.type) {
-          ProfileType.PERSON => AppColors.tertiary,
-          ProfileType.INSTITUTION => AppColors.success,
-          ProfileType.BOT => AppColors.warning,
-          _ => AppColors.onSurfaceMuted,
-        };
+    final query = ref.watch(globalSearchQueryProvider);
+    final asyncData = ref.watch(profilesProvider(query));
 
-        return DataRow(
-          selected: selected,
-          onSelectChanged: (_) => onSelect(),
-          color: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return AppColors.tertiary.withValues(alpha: 0.05);
-            }
-            return null;
-          }),
-          cells: [
-            DataCell(Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: typeColor.withValues(alpha: 0.15),
-                  child: Text(
-                    name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
-                    style: TextStyle(
-                      color: typeColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+    return asyncData.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            const SizedBox(height: 16),
+            Text('Failed to load profiles',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(error.toString(),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () => ref.invalidate(profilesProvider(query)),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+      data: (items) => EntityListPage<ProfileObject>(
+        title: 'Profiles',
+        breadcrumbs: ['Services', service.label, 'Profiles'],
+        items: items,
+        addLabel: 'New Profile',
+        onAdd: () => _createProfile(context, ref, query),
+        exportRow: (profile) => [
+          profileDisplayName(profile),
+          profile.type.name,
+          '${profile.contacts.length}',
+          profile.state.name,
+        ],
+        columns: const [
+          DataColumn(label: Text('NAME')),
+          DataColumn(label: Text('TYPE')),
+          DataColumn(label: Text('CONTACTS'), numeric: true),
+          DataColumn(label: Text('STATE')),
+        ],
+        rowBuilder: (profile, selected, onSelect) {
+          final name = profileDisplayName(profile);
+          final typeLabel = profile.type.name;
+          final typeColor = switch (profile.type) {
+            ProfileType.PERSON => AppColors.tertiary,
+            ProfileType.INSTITUTION => AppColors.success,
+            ProfileType.BOT => AppColors.warning,
+            _ => AppColors.onSurfaceMuted,
+          };
+
+          return DataRow(
+            selected: selected,
+            onSelectChanged: (_) => onSelect(),
+            color: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return AppColors.tertiary.withValues(alpha: 0.05);
+              }
+              return null;
+            }),
+            cells: [
+              DataCell(Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: typeColor.withValues(alpha: 0.15),
+                    child: Text(
+                      name.isNotEmpty
+                          ? name.substring(0, 1).toUpperCase()
+                          : '?',
+                      style: TextStyle(
+                        color: typeColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Text(name),
-              ],
-            )),
-            DataCell(ColorBadge(typeLabel, typeColor)),
-            DataCell(Text('${profile.contacts.length}')),
-            DataCell(StateBadge(profile.state)),
-          ],
-        );
-      },
-      detailBuilder: (profile) => _ProfileDetail(profile: profile),
-      editFields: const [
-        EditField(
-          label: 'State',
-          key: 'state',
-          type: EditFieldType.dropdown,
-          options: ['CREATED', 'ACTIVE', 'INACTIVE', 'DELETED'],
-        ),
-      ],
-      editTitle: (profile) => 'Edit ${_profileDisplayName(profile)}',
-      editValuesExtractor: (profile) => {
-        'state': profile.state.name,
-      },
-      onSave: (profile, values) {
-        debugPrint('Save profile: $values');
-      },
-      onRefresh: () => ref.invalidate(profilesProvider),
-      onRowNavigate: (profile) =>
-          context.go('/services/profile/profiles/${profile.id}'),
+                  const SizedBox(width: 10),
+                  Text(name),
+                ],
+              )),
+              DataCell(ColorBadge(typeLabel, typeColor)),
+              DataCell(Text('${profile.contacts.length}')),
+              DataCell(StateBadge(profile.state)),
+            ],
+          );
+        },
+        detailBuilder: (profile) => _ProfileDetail(profile: profile),
+        editFields: const [
+          EditField(
+            label: 'State',
+            key: 'state',
+            type: EditFieldType.dropdown,
+            options: ['CREATED', 'ACTIVE', 'INACTIVE', 'DELETED'],
+          ),
+        ],
+        editTitle: (profile) => 'Edit ${profileDisplayName(profile)}',
+        editValuesExtractor: (profile) => {
+          'state': profile.state.name,
+        },
+        onSave: (profile, values) {
+          debugPrint('Save profile: $values');
+        },
+        onRowNavigate: (profile) =>
+            context.go('/services/profile/profiles/${profile.id}'),
+      ),
     );
   }
-}
 
-/// Extract a display name from a profile.
-///
-/// Tries the 'name' field in properties, then the first contact detail,
-/// then falls back to a truncated ID.
-String _profileDisplayName(ProfileObject profile) {
-  // Try properties.fields['au_name']
-  final nameField = profile.properties.fields['au_name'];
-  if (nameField != null && nameField.hasStringValue()) {
-    final name = nameField.stringValue;
-    if (name.isNotEmpty) return name;
+  Future<void> _createProfile(
+      BuildContext context, WidgetRef ref, String query) async {
+    final values = await showEditDialog(
+      context: context,
+      title: 'New Profile',
+      saveLabel: 'Create',
+      fields: const [
+        DialogField(
+          key: 'type',
+          label: 'Profile Type',
+          type: DialogFieldType.dropdown,
+          options: ['PERSON', 'INSTITUTION', 'BOT'],
+          initialValue: 'PERSON',
+        ),
+        DialogField(
+          key: 'contact',
+          label: 'Contact (email or phone)',
+          hint: 'e.g. user@example.com or +254712345678',
+        ),
+        DialogField(key: 'name', label: 'Name (optional)'),
+      ],
+    );
+    if (values == null || !context.mounted) return;
+    try {
+      final typeStr = values['type'] ?? 'PERSON';
+      final type = ProfileType.values
+              .where((t) => t.name == typeStr)
+              .firstOrNull ??
+          ProfileType.PERSON;
+      final name = values['name'] ?? '';
+      Struct? properties;
+      if (name.isNotEmpty) {
+        properties = Struct(fields: {
+          'name': Value(stringValue: name),
+        });
+      }
+      final repo = await ref.read(profileRepositoryProvider.future);
+      await repo.create(
+        type: type,
+        contact: values['contact'] ?? '',
+        properties: properties,
+      );
+      ref.invalidate(profilesProvider(query));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile created')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
   }
-
-  // Try first contact detail
-  if (profile.contacts.isNotEmpty) {
-    final detail = profile.contacts.first.detail;
-    if (detail.isNotEmpty) return detail;
-  }
-
-  // Fallback to ID prefix
-  if (profile.id.length >= 8) {
-    return 'Profile ${profile.id.substring(0, 8)}';
-  }
-  return 'Profile ${profile.id}';
 }
 
 // ─── Detail Panel ────────────────────────────────────────────────────────────
@@ -197,7 +206,7 @@ class _ProfileDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = _profileDisplayName(profile);
+    final name = profileDisplayName(profile);
     final typeColor = switch (profile.type) {
       ProfileType.PERSON => AppColors.tertiary,
       ProfileType.INSTITUTION => AppColors.success,
@@ -270,7 +279,8 @@ class _ProfileDetail extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodySmall),
                   ),
                   if (contact.verified)
-                    const Icon(Icons.verified, size: 14, color: AppColors.success),
+                    const Icon(Icons.verified,
+                        size: 14, color: AppColors.success),
                 ],
               ),
             ),

@@ -27,7 +27,6 @@ class PagesPage extends ConsumerWidget {
       dataProvider: pagesProvider,
       title: 'Pages',
       breadcrumbs: ['Services', service.label, 'Pages'],
-      searchHint: 'Search pages...',
       addLabel: 'New Page',
       exportRow: (page) => [page.name, page.id, page.state.name],
       columns: const [

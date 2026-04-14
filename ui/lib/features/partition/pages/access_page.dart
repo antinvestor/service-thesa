@@ -28,7 +28,6 @@ class AccessPage extends ConsumerWidget {
       dataProvider: accessListProvider,
       title: 'Access',
       breadcrumbs: ['Services', service.label, 'Access'],
-      searchHint: 'Search access grants...',
       addLabel: 'New Access',
       exportRow: (access) => [
         access.id,
