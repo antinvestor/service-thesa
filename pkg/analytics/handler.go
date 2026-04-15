@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/pitabwire/util"
@@ -281,8 +280,6 @@ func extractAndAuthorize(
 	return service, caps, nil
 }
 
-// writeAuthError writes the appropriate HTTP status from an authError,
-// defaulting to 403 for untyped errors.
 func writeAuthError(w http.ResponseWriter, err error) {
 	if ae, ok := err.(*authError); ok {
 		writeError(w, ae.msg, ae.status)
@@ -329,7 +326,6 @@ func hasMetricPermission(engine *Engine, service, queryType, metric string, caps
 }
 
 // filterMetrics removes metrics the user does not have permission to see.
-// Metrics not found in the registry are excluded (fail-closed).
 func filterMetrics(metrics []Metric, sa *ServiceAnalytics, caps model.CapabilitySet) []Metric {
 	if sa == nil {
 		return nil
@@ -348,14 +344,6 @@ func filterMetrics(metrics []Metric, sa *ServiceAnalytics, caps model.Capability
 		}
 	}
 	return filtered
-}
-
-// isValidationError checks if an error is a user-input validation error
-// (group_by, granularity) vs a backend/DB error.
-func isValidationError(err error) bool {
-	msg := err.Error()
-	return strings.HasPrefix(msg, "invalid group_by") ||
-		strings.HasPrefix(msg, "invalid granularity")
 }
 
 // --- parsing & response helpers ---
@@ -398,7 +386,6 @@ func writeError(w http.ResponseWriter, msg string, code int) {
 	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
 
-// logAndWriteInternalError logs the real error and returns a generic message.
 func logAndWriteInternalError(r *http.Request, w http.ResponseWriter, msg string, err error) {
 	util.Log(r.Context()).WithError(err).Error(msg)
 	writeError(w, "internal server error", http.StatusInternalServerError)
