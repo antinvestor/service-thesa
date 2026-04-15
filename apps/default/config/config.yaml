@@ -281,11 +281,23 @@ capability:
     ttl: 5m
     max_entries: 10000
 
-# Analytics engine — connects to a TimescaleDB instance populated via FDW
-# from service databases. Set ANALYTICS_DSN env var to enable.
+# Analytics engine — queries OTel metrics from a Prometheus-compatible backend
+# (Prometheus, Mimir, Thanos, VictoriaMetrics, OpenObserve, etc.).
+# Set ANALYTICS_BACKEND_URL env var to enable.
+#
+# For OpenObserve, set backend_type to "openobserve" and provide credentials:
+#   ANALYTICS_BACKEND_TYPE=openobserve
+#   ANALYTICS_BACKEND_URL=http://openobserve:5080
+#   ANALYTICS_ORG=default
+#   ANALYTICS_USERNAME=admin@example.com
+#   ANALYTICS_PASSWORD=<password>
 analytics:
   enabled: false
-  # DSN is set exclusively via ANALYTICS_DSN env var (not stored in YAML)
+  backend_type: ""   # "prometheus" (default) or "openobserve"
+  backend_url: ""    # override via ANALYTICS_BACKEND_URL env var
+  org: ""            # OpenObserve organization (default: "default")
+  username: ""       # OpenObserve basic-auth username (use ANALYTICS_USERNAME env var)
+  password: ""       # OpenObserve basic-auth password (use ANALYTICS_PASSWORD env var)
 
 workflow:
   enabled: true

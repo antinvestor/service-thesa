@@ -4,13 +4,11 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"flag"
 	"fmt"
 	"net/http"
 	"path/filepath"
 
-	_ "github.com/lib/pq"
 	"github.com/pitabwire/frame"
 	"github.com/pitabwire/frame/security/interceptors/httptor"
 	frameversion "github.com/pitabwire/frame/version"
@@ -113,29 +111,43 @@ func main() {
 		cfg.Lookup.Cache.MaxEntries,
 	)
 
-	// Analytics engine — connects to the analytics TimescaleDB when enabled.
+	// Analytics engine — queries OTel metrics from the configured backend
+	// (Prometheus, Mimir, Thanos, VictoriaMetrics, OpenObserve, etc.) when enabled.
 	var analyticsEngine *analytics.Engine
-	if cfg.Analytics.Enabled && cfg.Analytics.DSN != "" {
-		analyticsDB, err := sql.Open("postgres", cfg.Analytics.DSN)
-		if err != nil {
-			log.WithError(err).Fatal("analytics database connection failed")
-		}
-		defer func() { _ = analyticsDB.Close() }()
+	if cfg.Analytics.Enabled && cfg.Analytics.BackendURL != "" {
+		var metricsBackend analytics.MetricsBackend
+		backendType := cfg.Analytics.BackendType
 
-		analyticsDB.SetMaxOpenConns(10)
-		analyticsDB.SetMaxIdleConns(5)
+		switch backendType {
+		case "openobserve":
+			ooClient := analytics.NewOpenObserveHTTPClient(
+				cfg.Analytics.Username,
+				cfg.Analytics.Password,
+				httpClient.Transport,
+			)
+			metricsBackend = analytics.NewOpenObserveBackend(
+				cfg.Analytics.BackendURL,
+				cfg.Analytics.Org,
+				ooClient,
+			)
+		default:
+			backendType = "prometheus"
+			metricsBackend = analytics.NewPrometheusBackend(cfg.Analytics.BackendURL, httpClient)
+		}
 
 		analyticsReg := analytics.NewRegistry()
 		if err := analytics.RegisterDefaultServices(analyticsReg); err != nil {
 			log.WithError(err).Fatal("analytics service registration failed")
 		}
-		analyticsEngine = analytics.NewEngine(analyticsDB, analyticsReg, nil)
+		analyticsEngine = analytics.NewEngine(metricsBackend, analyticsReg, nil)
 
 		if err := analyticsEngine.Healthy(ctx); err != nil {
-			log.WithError(err).Warn("analytics database not reachable at startup")
+			log.WithError(err).Warn("metrics backend not reachable at startup")
 		}
 
 		log.Info("analytics engine enabled",
+			"backend_type", backendType,
+			"backend_url", cfg.Analytics.BackendURL,
 			"services", len(analyticsReg.Services()),
 		)
 	}
