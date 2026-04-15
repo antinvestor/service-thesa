@@ -24,22 +24,20 @@ func (d DefaultPartitionResolver) ResolveAccessiblePartitions(_ context.Context,
 	return []string{rctx.PartitionID}, nil
 }
 
-// Engine queries metrics through a pluggable MetricsBackend using
-// registry-defined structured queries. All queries are automatically scoped
-// to the requesting user's tenant and accessible partitions.
+// Engine queries metrics through a pluggable MetricsBackend. All queries are
+// automatically scoped to the requesting user's tenant and accessible partitions.
 type Engine struct {
 	backend           MetricsBackend
-	registry          *Registry
 	partitionResolver PartitionResolver
 }
 
-// NewEngine creates an Engine backed by the given metrics backend, registry,
-// and partition resolver. If resolver is nil, DefaultPartitionResolver is used.
-func NewEngine(backend MetricsBackend, registry *Registry, resolver PartitionResolver) *Engine {
+// NewEngine creates an Engine backed by the given metrics backend and partition
+// resolver. If resolver is nil, DefaultPartitionResolver is used.
+func NewEngine(backend MetricsBackend, resolver PartitionResolver) *Engine {
 	if resolver == nil {
 		resolver = DefaultPartitionResolver{}
 	}
-	return &Engine{backend: backend, registry: registry, partitionResolver: resolver}
+	return &Engine{backend: backend, partitionResolver: resolver}
 }
 
 // TimeRange represents a query time window.
@@ -89,127 +87,34 @@ type TopNItem struct {
 	Metadata map[string]string `json:"metadata,omitempty"`
 }
 
-// QueryMetrics returns all KPI values for a service, with previous-period
-// trend comparison.
-func (e *Engine) QueryMetrics(ctx context.Context, serviceID string, tr TimeRange) ([]Metric, error) {
-	sa, ok := e.registry.Get(serviceID)
-	if !ok {
-		return nil, fmt.Errorf("no analytics registered for service %q", serviceID)
-	}
-
-	filter, err := e.tenantFilterFromContext(ctx, sa.TenantScoped)
+// Scalar executes a query that returns a single numeric value.
+func (e *Engine) Scalar(ctx context.Context, query MetricQuery, partitionIDs []string, tr TimeRange) (float64, error) {
+	filter, err := e.resolveFilter(ctx, partitionIDs)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-
-	duration := tr.End.Sub(tr.Start)
-	prevRange := TimeRange{
-		Start: tr.Start.Add(-duration),
-		End:   tr.Start,
-	}
-
-	metrics := make([]Metric, 0, len(sa.Metrics))
-	for _, md := range sa.Metrics {
-		m := Metric{Key: md.Key, Label: md.Label, Unit: md.Unit, Icon: md.Icon}
-
-		val, err := e.backend.QueryScalar(ctx, md.Query, filter, tr)
-		if err != nil {
-			return nil, fmt.Errorf("metric %s: %w", md.Key, err)
-		}
-		m.Value = val
-
-		prevVal, err := e.backend.QueryScalar(ctx, md.Query, filter, prevRange)
-		if err == nil {
-			m.PreviousValue = &prevVal
-			switch {
-			case val > prevVal:
-				m.Trend = "up"
-			case val < prevVal:
-				m.Trend = "down"
-			default:
-				m.Trend = "flat"
-			}
-		}
-
-		metrics = append(metrics, m)
-	}
-
-	return metrics, nil
+	return e.backend.QueryScalar(ctx, query, filter, tr)
 }
 
-// QueryTimeSeries returns time-bucketed data for a named metric.
-func (e *Engine) QueryTimeSeries(ctx context.Context, serviceID, metric string, tr TimeRange) ([]TimeSeries, error) {
-	sa, ok := e.registry.Get(serviceID)
-	if !ok {
-		return nil, fmt.Errorf("no analytics registered for service %q", serviceID)
-	}
-
-	filter, err := e.tenantFilterFromContext(ctx, sa.TenantScoped)
+// TimeSeries executes a range query that returns time-bucketed data.
+func (e *Engine) TimeSeries(ctx context.Context, query MetricQuery, partitionIDs []string, tr TimeRange, step time.Duration) ([]TimeSeriesPoint, error) {
+	filter, err := e.resolveFilter(ctx, partitionIDs)
 	if err != nil {
 		return nil, err
 	}
-
-	var def *TimeSeriesDefinition
-	for i := range sa.TimeSeries {
-		if sa.TimeSeries[i].Key == metric {
-			def = &sa.TimeSeries[i]
-			break
-		}
-	}
-	if def == nil {
-		return nil, fmt.Errorf("no time series %q for service %q", metric, serviceID)
-	}
-
-	step, err := ValidateGranularity(tr.Granularity)
-	if err != nil {
-		return nil, err
-	}
-
-	points, err := e.backend.QueryTimeSeries(ctx, def.Query, filter, tr, step)
-	if err != nil {
-		return nil, fmt.Errorf("time series %s: %w", metric, err)
-	}
-
-	return []TimeSeries{{
-		Key:    def.Key,
-		Label:  def.Label,
-		Points: points,
-		Color:  def.Color,
-	}}, nil
+	return e.backend.QueryTimeSeries(ctx, query, filter, tr, step)
 }
 
-// QueryDistribution returns grouped aggregation data.
-func (e *Engine) QueryDistribution(ctx context.Context, serviceID, metric, groupBy string, tr TimeRange) ([]DistributionSegment, error) {
-	sa, ok := e.registry.Get(serviceID)
-	if !ok {
-		return nil, fmt.Errorf("no analytics registered for service %q", serviceID)
-	}
-
-	filter, err := e.tenantFilterFromContext(ctx, sa.TenantScoped)
+// Grouped executes a query grouped by a label, returning label-value pairs.
+func (e *Engine) Grouped(ctx context.Context, query MetricQuery, partitionIDs []string, tr TimeRange, groupBy string) ([]DistributionSegment, error) {
+	filter, err := e.resolveFilter(ctx, partitionIDs)
 	if err != nil {
 		return nil, err
 	}
-
-	var def *DistributionDefinition
-	for i := range sa.Distributions {
-		if sa.Distributions[i].Key == metric {
-			def = &sa.Distributions[i]
-			break
-		}
-	}
-	if def == nil {
-		return nil, fmt.Errorf("no distribution %q for service %q", metric, serviceID)
-	}
-
-	if err := ValidateGroupBy(def.AllowedGroupBy, groupBy); err != nil {
+	items, err := e.backend.QueryGrouped(ctx, query, filter, tr, groupBy)
+	if err != nil {
 		return nil, err
 	}
-
-	items, err := e.backend.QueryGrouped(ctx, def.Query, filter, tr, groupBy)
-	if err != nil {
-		return nil, fmt.Errorf("distribution %s: %w", metric, err)
-	}
-
 	segments := make([]DistributionSegment, len(items))
 	for i, item := range items {
 		segments[i] = DistributionSegment{Label: item.Label, Value: item.Value}
@@ -217,43 +122,16 @@ func (e *Engine) QueryDistribution(ctx context.Context, serviceID, metric, group
 	return segments, nil
 }
 
-// QueryTopN returns ranked items.
-func (e *Engine) QueryTopN(ctx context.Context, serviceID, metric string, limit int, tr TimeRange) ([]TopNItem, error) {
-	sa, ok := e.registry.Get(serviceID)
-	if !ok {
-		return nil, fmt.Errorf("no analytics registered for service %q", serviceID)
-	}
-
-	filter, err := e.tenantFilterFromContext(ctx, sa.TenantScoped)
+// TopN executes a query returning the top N items by value.
+func (e *Engine) TopN(ctx context.Context, query MetricQuery, partitionIDs []string, tr TimeRange, groupBy string, limit int) ([]TopNItem, error) {
+	filter, err := e.resolveFilter(ctx, partitionIDs)
 	if err != nil {
 		return nil, err
 	}
-
-	var def *TopNDefinition
-	for i := range sa.TopN {
-		if sa.TopN[i].Key == metric {
-			def = &sa.TopN[i]
-			break
-		}
-	}
-	if def == nil {
-		return nil, fmt.Errorf("no top-N %q for service %q", metric, serviceID)
-	}
-
-	maxLimit := def.MaxLimit
-	if maxLimit <= 0 {
-		maxLimit = 100
-	}
-	if limit <= 0 || limit > maxLimit {
-		limit = min(10, maxLimit)
-	}
-
-	groupBy := def.Query.GroupBy
-	items, err := e.backend.QueryTopN(ctx, def.Query, filter, tr, groupBy, limit)
+	items, err := e.backend.QueryTopN(ctx, query, filter, tr, groupBy, limit)
 	if err != nil {
-		return nil, fmt.Errorf("top-N %s: %w", metric, err)
+		return nil, err
 	}
-
 	result := make([]TopNItem, len(items))
 	for i, item := range items {
 		result[i] = TopNItem{Label: item.Label, Value: item.Value}
@@ -268,26 +146,50 @@ func (e *Engine) Healthy(ctx context.Context) error {
 	return e.backend.Healthy(checkCtx)
 }
 
-// tenantFilterFromContext extracts tenant/partition scope from the request
-// context and resolves accessible partitions.
-func (e *Engine) tenantFilterFromContext(ctx context.Context, tenantScoped bool) (TenantFilter, error) {
-	if !tenantScoped {
-		return TenantFilter{Scoped: false}, nil
-	}
-
+// resolveFilter builds a TenantFilter from the request context and the
+// caller-supplied partition IDs.
+//   - Empty partitionIDs: use the current partition from request context.
+//   - ["*"]: resolve all accessible partitions via PartitionResolver.
+//   - Explicit list: validate each is in the accessible set.
+func (e *Engine) resolveFilter(ctx context.Context, partitionIDs []string) (TenantFilter, error) {
 	rctx := model.RequestContextFrom(ctx)
 	if rctx == nil {
 		return TenantFilter{}, fmt.Errorf("missing request context")
 	}
 
-	partitionIDs, err := e.partitionResolver.ResolveAccessiblePartitions(ctx, rctx)
+	accessible, err := e.partitionResolver.ResolveAccessiblePartitions(ctx, rctx)
 	if err != nil {
 		return TenantFilter{}, fmt.Errorf("resolve partitions: %w", err)
 	}
 
+	var resolved []string
+
+	switch {
+	case len(partitionIDs) == 0:
+		// Default: use current partition from context.
+		resolved = []string{rctx.PartitionID}
+
+	case len(partitionIDs) == 1 && partitionIDs[0] == "*":
+		// Wildcard: use all accessible partitions.
+		resolved = accessible
+
+	default:
+		// Explicit list: validate each partition is accessible.
+		accessSet := make(map[string]bool, len(accessible))
+		for _, id := range accessible {
+			accessSet[id] = true
+		}
+		for _, id := range partitionIDs {
+			if !accessSet[id] {
+				return TenantFilter{}, fmt.Errorf("partition %q is not accessible", id)
+			}
+		}
+		resolved = partitionIDs
+	}
+
 	return TenantFilter{
 		TenantID:     rctx.TenantID,
-		PartitionIDs: partitionIDs,
+		PartitionIDs: resolved,
 		Scoped:       true,
 	}, nil
 }
@@ -297,4 +199,9 @@ func isValidationError(err error) bool {
 	msg := err.Error()
 	return strings.HasPrefix(msg, "invalid group_by") ||
 		strings.HasPrefix(msg, "invalid granularity")
+}
+
+// isForbiddenError checks if an error is a partition access denial.
+func isForbiddenError(err error) bool {
+	return strings.HasSuffix(err.Error(), "is not accessible")
 }

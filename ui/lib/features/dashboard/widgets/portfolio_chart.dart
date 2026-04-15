@@ -1,33 +1,71 @@
 import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
-import 'package:antinvestor_ui_core/analytics/analytics_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/services/analytics_client.dart';
 import '../../../core/theme/app_colors.dart';
 
-class PortfolioChart extends ConsumerStatefulWidget {
-  const PortfolioChart({super.key});
+/// API Traffic / time series bar chart.
+///
+/// Can be created either with a [ThesaAnalyticsClient] (fetches
+/// `rpc_server_duration_count` time series) or with a pre-built
+/// [Future<List<TimeSeriesPoint>>] via [PortfolioChart.fromFuture].
+class PortfolioChart extends StatefulWidget {
+  /// Creates a chart that queries API traffic from the given [client].
+  const PortfolioChart({super.key, required ThesaAnalyticsClient client})
+      : _client = client,
+        _future = null,
+        _title = 'API Traffic Over Time',
+        _subtitle = 'RPC request volume';
+
+  /// Creates a chart from an already-fetched future.
+  const PortfolioChart.fromFuture({
+    super.key,
+    required String title,
+    String subtitle = '',
+    required Future<List<TimeSeriesPoint>> future,
+  })  : _client = null,
+        _future = future,
+        _title = title,
+        _subtitle = subtitle;
+
+  final ThesaAnalyticsClient? _client;
+  final Future<List<TimeSeriesPoint>>? _future;
+  final String _title;
+  final String _subtitle;
 
   @override
-  ConsumerState<PortfolioChart> createState() => _PortfolioChartState();
+  State<PortfolioChart> createState() => _PortfolioChartState();
 }
 
-class _PortfolioChartState extends ConsumerState<PortfolioChart> {
+class _PortfolioChartState extends State<PortfolioChart> {
   String _range = '1Y';
+  late Future<List<TimeSeriesPoint>> _pointsFuture;
 
   AnalyticsTimeRange get _timeRange => _range == '1Y'
       ? AnalyticsTimeRange.lastYear()
       : AnalyticsTimeRange.last90Days();
 
   @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  void _loadData() {
+    if (widget._future != null) {
+      _pointsFuture = widget._future!;
+    } else {
+      _pointsFuture = widget._client!.queryTimeSeries(
+        metric: 'rpc_server_duration_count',
+        timeRange: _timeRange,
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final seriesAsync = ref.watch(
-      serviceTimeSeriesProvider(
-        ServiceTimeSeriesParams('payment', 'payment_volume',
-            timeRange: _timeRange),
-      ),
-    );
+    final showRangeChips = widget._client != null;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -45,40 +83,60 @@ class _PortfolioChartState extends ConsumerState<PortfolioChart> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Payment Volume',
+                    Text(widget._title,
                         style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Transaction volume over time',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    if (widget._subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        widget._subtitle,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ],
                 ),
               ),
-              _RangeChip(
-                label: '90 DAYS',
-                selected: _range == '90D',
-                onTap: () => setState(() => _range = '90D'),
-              ),
-              const SizedBox(width: 6),
-              _RangeChip(
-                label: '1 YEAR',
-                selected: _range == '1Y',
-                onTap: () => setState(() => _range = '1Y'),
-              ),
+              if (showRangeChips) ...[
+                _RangeChip(
+                  label: '90 DAYS',
+                  selected: _range == '90D',
+                  onTap: () {
+                    setState(() {
+                      _range = '90D';
+                      _loadData();
+                    });
+                  },
+                ),
+                const SizedBox(width: 6),
+                _RangeChip(
+                  label: '1 YEAR',
+                  selected: _range == '1Y',
+                  onTap: () {
+                    setState(() {
+                      _range = '1Y';
+                      _loadData();
+                    });
+                  },
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 24),
           SizedBox(
             height: 200,
-            child: seriesAsync.when(
-              data: (series) => _buildChart(context, series),
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Text('Unable to load chart',
-                    style: Theme.of(context).textTheme.bodySmall),
-              ),
+            child: FutureBuilder<List<TimeSeriesPoint>>(
+              future: _pointsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Unable to load chart',
+                        style: Theme.of(context).textTheme.bodySmall),
+                  );
+                }
+                return _buildChart(context, snapshot.data ?? []);
+              },
             ),
           ),
         ],
@@ -86,9 +144,7 @@ class _PortfolioChartState extends ConsumerState<PortfolioChart> {
     );
   }
 
-  Widget _buildChart(BuildContext context, List<TimeSeries> series) {
-    final points =
-        series.isNotEmpty ? series.first.points : <TimeSeriesPoint>[];
+  Widget _buildChart(BuildContext context, List<TimeSeriesPoint> points) {
     if (points.isEmpty) {
       return Center(
         child: Text('No data available',
@@ -143,13 +199,11 @@ class _PortfolioChartState extends ConsumerState<PortfolioChart> {
                 if (idx < 0 || idx >= points.length) {
                   return const SizedBox.shrink();
                 }
-                // Show month abbreviation for each point
                 final month = points[idx].timestamp;
-                final months = [
+                const months = [
                   'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
                   'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
                 ];
-                // Skip labels if too many points
                 if (points.length > 12 && idx % 2 != 0) {
                   return const SizedBox.shrink();
                 }
