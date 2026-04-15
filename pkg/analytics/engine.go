@@ -97,7 +97,7 @@ func (e *Engine) Scalar(ctx context.Context, query MetricQuery, partitionIDs []s
 }
 
 // TimeSeries executes a range query that returns time-bucketed data.
-func (e *Engine) TimeSeriesQuery(ctx context.Context, query MetricQuery, partitionIDs []string, tr TimeRange, step time.Duration) ([]TimeSeriesPoint, error) {
+func (e *Engine) TimeSeries(ctx context.Context, query MetricQuery, partitionIDs []string, tr TimeRange, step time.Duration) ([]TimeSeriesPoint, error) {
 	filter, err := e.resolveFilter(ctx, partitionIDs)
 	if err != nil {
 		return nil, err
@@ -199,4 +199,9 @@ func isValidationError(err error) bool {
 	msg := err.Error()
 	return strings.HasPrefix(msg, "invalid group_by") ||
 		strings.HasPrefix(msg, "invalid granularity")
+}
+
+// isForbiddenError checks if an error is a partition access denial.
+func isForbiddenError(err error) bool {
+	return strings.HasSuffix(err.Error(), "is not accessible")
 }

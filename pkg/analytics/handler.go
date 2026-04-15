@@ -39,7 +39,9 @@ func handleScalar(engine *Engine) http.HandlerFunc {
 		query := req.ToMetricQuery()
 		val, err := engine.Scalar(r.Context(), query, req.PartitionIDs, tr)
 		if err != nil {
-			if isValidationError(err) {
+			if isForbiddenError(err) {
+				writeError(w, err.Error(), http.StatusForbidden)
+			} else if isValidationError(err) {
 				writeError(w, err.Error(), http.StatusBadRequest)
 			} else {
 				logAndWriteInternalError(r, w, "scalar query failed", err)
@@ -77,9 +79,11 @@ func handleTimeSeries(engine *Engine) http.HandlerFunc {
 		}
 
 		query := req.ToMetricQuery()
-		points, err := engine.TimeSeriesQuery(r.Context(), query, req.PartitionIDs, tr, step)
+		points, err := engine.TimeSeries(r.Context(), query, req.PartitionIDs, tr, step)
 		if err != nil {
-			if isValidationError(err) {
+			if isForbiddenError(err) {
+				writeError(w, err.Error(), http.StatusForbidden)
+			} else if isValidationError(err) {
 				writeError(w, err.Error(), http.StatusBadRequest)
 			} else {
 				logAndWriteInternalError(r, w, "timeseries query failed", err)
@@ -113,7 +117,9 @@ func handleGrouped(engine *Engine) http.HandlerFunc {
 		query := req.ToMetricQuery()
 		segments, err := engine.Grouped(r.Context(), query, req.PartitionIDs, tr, req.GroupBy)
 		if err != nil {
-			if isValidationError(err) {
+			if isForbiddenError(err) {
+				writeError(w, err.Error(), http.StatusForbidden)
+			} else if isValidationError(err) {
 				writeError(w, err.Error(), http.StatusBadRequest)
 			} else {
 				logAndWriteInternalError(r, w, "grouped query failed", err)
@@ -152,7 +158,9 @@ func handleTopN(engine *Engine) http.HandlerFunc {
 		query := req.ToMetricQuery()
 		items, err := engine.TopN(r.Context(), query, req.PartitionIDs, tr, req.GroupBy, limit)
 		if err != nil {
-			if isValidationError(err) {
+			if isForbiddenError(err) {
+				writeError(w, err.Error(), http.StatusForbidden)
+			} else if isValidationError(err) {
 				writeError(w, err.Error(), http.StatusBadRequest)
 			} else {
 				logAndWriteInternalError(r, w, "top-N query failed", err)
