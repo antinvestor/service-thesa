@@ -28,12 +28,15 @@ type Config struct {
 	Observability ObservabilityConfig      `yaml:"observability"`
 }
 
-// AnalyticsConfig describes analytics database settings.
-// The DSN must be provided via the ANALYTICS_DSN environment variable —
-// it is not stored in YAML to avoid committing credentials.
+// AnalyticsConfig describes analytics settings. The metrics backend receives
+// OTel metrics from all services and exposes a query API.
 type AnalyticsConfig struct {
-	Enabled bool   `yaml:"enabled"`
-	DSN     string `yaml:"-"` // populated exclusively from ANALYTICS_DSN env var
+	Enabled     bool   `yaml:"enabled"`
+	BackendType string `yaml:"backend_type"` // "prometheus" (default) or "openobserve"
+	BackendURL  string `yaml:"backend_url"`  // metrics query endpoint, e.g. "http://mimir:9090"
+	Org         string `yaml:"org"`           // OpenObserve organization (default: "default")
+	Username    string `yaml:"username"`      // OpenObserve basic-auth username
+	Password    string `yaml:"password"`      // OpenObserve basic-auth password
 }
 
 // ServerConfig describes HTTP server settings.
@@ -249,8 +252,20 @@ func applyEnvOverrides(cfg *Config) {
 	if v := os.Getenv("THESA_OBSERVABILITY_LOG_LEVEL"); v != "" {
 		cfg.Observability.LogLevel = v
 	}
-	if v := os.Getenv("ANALYTICS_DSN"); v != "" {
-		cfg.Analytics.DSN = v
+	if v := os.Getenv("ANALYTICS_BACKEND_TYPE"); v != "" {
+		cfg.Analytics.BackendType = v
+	}
+	if v := os.Getenv("ANALYTICS_BACKEND_URL"); v != "" {
+		cfg.Analytics.BackendURL = v
 		cfg.Analytics.Enabled = true
+	}
+	if v := os.Getenv("ANALYTICS_ORG"); v != "" {
+		cfg.Analytics.Org = v
+	}
+	if v := os.Getenv("ANALYTICS_USERNAME"); v != "" {
+		cfg.Analytics.Username = v
+	}
+	if v := os.Getenv("ANALYTICS_PASSWORD"); v != "" {
+		cfg.Analytics.Password = v
 	}
 }

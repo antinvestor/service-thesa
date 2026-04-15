@@ -3,88 +3,127 @@ package analytics
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
-// allowedGranularities maps user-facing granularity names to PostgreSQL interval
-// strings. Only values in this map are substituted into SQL — anything else is
-// rejected, preventing injection via the granularity parameter.
-var allowedGranularities = map[string]string{
-	"minute":  "minute",
-	"hour":    "hour",
-	"day":     "day",
-	"week":    "week",
-	"month":   "month",
-	"quarter": "quarter",
-	"year":    "year",
+// allowedGranularities maps user-facing granularity names to step durations.
+var allowedGranularities = map[string]time.Duration{
+	"minute":  time.Minute,
+	"hour":    time.Hour,
+	"day":     24 * time.Hour,
+	"week":    7 * 24 * time.Hour,
+	"month":   30 * 24 * time.Hour,
+	"quarter": 90 * 24 * time.Hour,
+	"year":    365 * 24 * time.Hour,
 }
 
-// ValidateGranularity returns the safe SQL interval string for a granularity
-// name, or an error if the value is not in the allowlist.
-func ValidateGranularity(g string) (string, error) {
+// ValidateGranularity returns the step duration for a granularity name,
+// or an error if the value is not in the allowlist.
+func ValidateGranularity(g string) (time.Duration, error) {
 	if g == "" {
-		return "day", nil
+		return 24 * time.Hour, nil
 	}
-	safe, ok := allowedGranularities[g]
+	d, ok := allowedGranularities[g]
 	if !ok {
-		return "", fmt.Errorf("invalid granularity %q", g)
+		return 0, fmt.Errorf("invalid granularity %q", g)
 	}
-	return safe, nil
+	return d, nil
+}
+
+// Aggregation describes how a metric should be aggregated.
+type Aggregation string
+
+const (
+	AggSum          Aggregation = "sum"           // sum all matching series
+	AggAvg          Aggregation = "avg"           // average across matching series
+	AggCount        Aggregation = "count"         // count of matching series
+	AggCountDistinct Aggregation = "count_distinct" // count unique values of a label
+	AggGauge        Aggregation = "gauge"         // current gauge value (no rate/increase)
+)
+
+// MetricQuery describes a metric query in backend-agnostic terms using
+// OTel metric names and attribute names.
+type MetricQuery struct {
+	// Metric is the OTel metric name (e.g. "payment_transactions_total").
+	Metric string
+
+	// Aggregation is how to aggregate the metric values.
+	Aggregation Aggregation
+
+	// Filters are additional label/attribute matchers applied alongside the
+	// tenant and partition filters (e.g. {"status": "success"}).
+	Filters map[string]string
+
+	// GroupBy is the attribute to group results by (for distributions).
+	// Left empty for scalar queries.
+	GroupBy string
+
+	// Numerator and Denominator support ratio metrics (e.g., success rate).
+	// When set, the result is Numerator / Denominator * 100.
+	Numerator   *MetricQuery
+	Denominator *MetricQuery
+
+	// DurationMetric + DurationCountMetric support average-duration metrics.
+	// Result is DurationMetric / DurationCountMetric (histogram sum/count pattern).
+	DurationMetric      string
+	DurationCountMetric string
+
+	// Multiplier scales the result (e.g., 1000 to convert seconds to ms).
+	Multiplier float64
+}
+
+// IsRatio returns true if this query computes a ratio (Numerator/Denominator).
+func (q MetricQuery) IsRatio() bool {
+	return q.Numerator != nil && q.Denominator != nil
+}
+
+// IsDuration returns true if this query computes an average duration.
+func (q MetricQuery) IsDuration() bool {
+	return q.DurationMetric != "" && q.DurationCountMetric != ""
 }
 
 // MetricDefinition describes a single scalar KPI query.
-//
-// SQL convention: $1 = start time, $2 = end time, $3 = tenant_id, $4 = partition_ids (text array, used with ANY).
 type MetricDefinition struct {
-	Key        string // unique key referenced by the frontend
-	Label      string // human-readable label
-	Unit       string // count, currency, percent, bytes, duration
-	Icon       string // Material icon name hint
-	Permission string // optional capability override; empty = use service ViewPermission
-	SQL        string // parameterized query returning a single numeric value
+	Key        string      // unique key referenced by the frontend
+	Label      string      // human-readable label
+	Unit       string      // count, currency, percent, bytes, duration
+	Icon       string      // Material icon name hint
+	Permission string      // optional capability override; empty = use service ViewPermission
+	Query      MetricQuery // structured query definition
 }
 
-// TimeSeriesDefinition describes a time-bucketed query.
-//
-// SQL convention: $1 = start, $2 = end, $3 = tenant_id, $4 = partition_ids (text array, used with ANY).
-// Use {{granularity}} for the date_trunc interval — substituted from allowlist.
+// TimeSeriesDefinition describes a range query that produces time-bucketed data.
 type TimeSeriesDefinition struct {
 	Key        string
 	Label      string
 	Color      string // hex color hint, e.g. "#4CAF50"
 	Permission string
-	SQL        string
+	Query      MetricQuery
 }
 
 // DistributionDefinition describes a grouped aggregation query.
-//
-// SQL convention: $1 = start, $2 = end, $3 = tenant_id, $4 = partition_ids (text array, used with ANY).
-// Use {{group_by}} for the grouping column — substituted from AllowedGroupBy only.
 type DistributionDefinition struct {
 	Key            string
 	Label          string
 	Permission     string
 	AllowedGroupBy []string // strict allowlist for group_by substitution
-	SQL            string
+	Query          MetricQuery
 }
 
 // TopNDefinition describes a ranked aggregation query.
-//
-// SQL convention: $1 = start, $2 = end, $3 = tenant_id, $4 = partition_ids (text array, used with ANY), $5 = limit.
 type TopNDefinition struct {
 	Key        string
 	Label      string
 	Permission string
 	MaxLimit   int // cap for the limit parameter; 0 defaults to 100
-	SQL        string
+	Query      MetricQuery
 }
 
 // ServiceAnalytics is the declarative analytics registration for a service.
-// Services register one of these at startup to expose their analytics through
-// the generic API.
 type ServiceAnalytics struct {
 	ServiceID      string // must match the service query parameter
-	ViewPermission string // capability required to access any analytics for this service
-	TenantScoped   bool   // when true (default), all queries receive tenant_id as $3 and partition_ids[] as $4
+	ViewPermission string // capability required to access any analytics
+	TenantScoped   bool   // when true, queries include tenant_id/partition_id filters
 
 	Metrics       []MetricDefinition
 	TimeSeries    []TimeSeriesDefinition
@@ -93,8 +132,6 @@ type ServiceAnalytics struct {
 }
 
 // effectivePermission returns the permission to check for a specific query.
-// If the query has its own Permission set, that is used; otherwise the
-// service-level ViewPermission applies.
 func (sa *ServiceAnalytics) effectivePermission(queryPermission string) string {
 	if queryPermission != "" {
 		return queryPermission
@@ -102,8 +139,7 @@ func (sa *ServiceAnalytics) effectivePermission(queryPermission string) string {
 	return sa.ViewPermission
 }
 
-// Registry holds all registered service analytics definitions. It is safe for
-// concurrent use after initial registration is complete.
+// Registry holds all registered service analytics definitions.
 type Registry struct {
 	mu       sync.RWMutex
 	services map[string]*ServiceAnalytics
@@ -114,8 +150,7 @@ func NewRegistry() *Registry {
 	return &Registry{services: make(map[string]*ServiceAnalytics)}
 }
 
-// Register adds a service analytics definition. Returns an error if the
-// service ID is already registered or required fields are missing.
+// Register adds a service analytics definition.
 func (r *Registry) Register(sa ServiceAnalytics) error {
 	if sa.ServiceID == "" {
 		return fmt.Errorf("analytics: service ID is required")
@@ -136,7 +171,7 @@ func (r *Registry) Register(sa ServiceAnalytics) error {
 	return nil
 }
 
-// Get returns the analytics definition for a service, or false if not found.
+// Get returns the analytics definition for a service.
 func (r *Registry) Get(serviceID string) (*ServiceAnalytics, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -155,9 +190,7 @@ func (r *Registry) Services() []string {
 	return ids
 }
 
-// AllPermissions returns every unique permission string needed across all
-// registered services. This is used at startup to ensure these capabilities
-// are included in the Keto batch check.
+// AllPermissions returns every unique permission string across all services.
 func (r *Registry) AllPermissions() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
