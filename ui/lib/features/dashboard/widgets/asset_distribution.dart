@@ -1,13 +1,25 @@
 import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
-import 'package:antinvestor_ui_core/analytics/analytics_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/services/analytics_client.dart';
 import '../../../core/theme/app_colors.dart';
 
-class AssetDistribution extends ConsumerWidget {
-  const AssetDistribution({super.key});
+/// Traffic by Service pie chart.
+///
+/// Queries `rpc_server_duration_count` grouped by `rpc_service` to show
+/// the distribution of API traffic across cluster services.
+class AssetDistribution extends StatefulWidget {
+  const AssetDistribution({super.key, required this.client});
+
+  final ThesaAnalyticsClient client;
+
+  @override
+  State<AssetDistribution> createState() => _AssetDistributionState();
+}
+
+class _AssetDistributionState extends State<AssetDistribution> {
+  late Future<List<DistributionSegment>> _future;
 
   static const _segmentColors = [
     AppColors.primary,
@@ -15,22 +27,22 @@ class AssetDistribution extends ConsumerWidget {
     AppColors.secondary,
     AppColors.success,
     AppColors.warning,
+    AppColors.error,
+    AppColors.info,
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final timeRange = AnalyticsTimeRange.last30Days();
-    final distAsync = ref.watch(
-      serviceDistributionProvider(
-        ServiceDistributionParams(
-          'payment',
-          'payment_routes',
-          'route',
-          timeRange: timeRange,
-        ),
-      ),
+  void initState() {
+    super.initState();
+    _future = widget.client.queryGrouped(
+      metric: 'rpc_server_duration_count',
+      groupBy: 'rpc_service',
+      timeRange: AnalyticsTimeRange.last30Days(),
     );
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -41,22 +53,29 @@ class AssetDistribution extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Payment Routes',
+          Text('Traffic by Service',
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 20),
-          distAsync.when(
-            data: (segments) => _buildChart(context, segments),
-            loading: () => const SizedBox(
-              height: 120,
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (_, _) => SizedBox(
-              height: 120,
-              child: Center(
-                child: Text('Unable to load data',
-                    style: Theme.of(context).textTheme.bodySmall),
-              ),
-            ),
+          FutureBuilder<List<DistributionSegment>>(
+            future: _future,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SizedBox(
+                  height: 120,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (snapshot.hasError) {
+                return SizedBox(
+                  height: 120,
+                  child: Center(
+                    child: Text('Unable to load data',
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ),
+                );
+              }
+              return _buildChart(context, snapshot.data ?? []);
+            },
           ),
         ],
       ),
@@ -107,7 +126,8 @@ class AssetDistribution extends ConsumerWidget {
                   ? '${(s.value / total * 100).toStringAsFixed(0)}%'
                   : '0%';
               return Padding(
-                padding: EdgeInsets.only(bottom: i < segments.length - 1 ? 8 : 0),
+                padding:
+                    EdgeInsets.only(bottom: i < segments.length - 1 ? 8 : 0),
                 child: _LegendItem(
                   color: s.color ?? _segmentColors[i % _segmentColors.length],
                   label: s.label,

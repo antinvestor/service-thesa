@@ -1,8 +1,10 @@
 import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
-import 'package:antinvestor_ui_core/analytics/analytics_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 
+import '../../core/services/analytics_client.dart';
+import '../../core/services/api_config.dart';
 import '../../core/widgets/page_header.dart';
 import '../../core/widgets/responsive_layout.dart';
 import 'widgets/activity_feed.dart';
@@ -11,25 +13,87 @@ import 'widgets/kpi_card.dart';
 import 'widgets/portfolio_chart.dart';
 import 'widgets/regional_performance.dart';
 
-class DashboardPage extends ConsumerWidget {
+/// Riverpod provider for the analytics client used by the dashboard.
+final analyticsClientProvider = Provider<ThesaAnalyticsClient>((ref) {
+  return ThesaAnalyticsClient(http.Client(), ApiConfig.thesaBaseUrl);
+});
+
+class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends ConsumerState<DashboardPage> {
+  late final ThesaAnalyticsClient _client;
+  late final AnalyticsTimeRange _timeRange;
+
+  // KPI futures
+  late Future<double> _totalApiRequests;
+  late Future<double> _errorRate;
+  late Future<double> _activeTenants;
+  late Future<double> _notificationsSent;
+
+  @override
+  void initState() {
+    super.initState();
+    _timeRange = AnalyticsTimeRange.last30Days();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _client = ref.read(analyticsClientProvider);
+    _loadMetrics();
+  }
+
+  void _loadMetrics() {
+    _totalApiRequests = _client.queryScalar(
+      metric: 'rpc_server_duration_count',
+      aggregation: 'sum',
+      timeRange: _timeRange,
+    );
+
+    _errorRate = _computeErrorRate();
+
+    _activeTenants = _client.queryScalar(
+      metric: 'tenancy_tenants_created_total',
+      aggregation: 'sum',
+      timeRange: _timeRange,
+    );
+
+    _notificationsSent = _client.queryScalar(
+      metric: 'notification_sent_total',
+      aggregation: 'sum',
+      timeRange: _timeRange,
+    );
+  }
+
+  Future<double> _computeErrorRate() async {
+    final results = await Future.wait([
+      _client.queryScalar(
+        metric: 'rpc_server_duration_count',
+        aggregation: 'sum',
+        filters: {'rpc_grpc_status_code': 'OK'},
+        timeRange: _timeRange,
+      ),
+      _client.queryScalar(
+        metric: 'rpc_server_duration_count',
+        aggregation: 'sum',
+        timeRange: _timeRange,
+      ),
+    ]);
+    final ok = results[0];
+    final total = results[1];
+    if (total == 0) return 0;
+    return ((total - ok) / total) * 100;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final screenSize = screenSizeOf(context);
     final showSideFeed = screenSize == ScreenSize.desktop;
-
-    final timeRange = AnalyticsTimeRange.last30Days();
-    final paymentMetrics = ref.watch(
-      serviceMetricsProvider(
-        ServiceMetricsParams('payment', timeRange: timeRange),
-      ),
-    );
-    final tenancyMetrics = ref.watch(
-      serviceMetricsProvider(
-        ServiceMetricsParams('tenancy', timeRange: timeRange),
-      ),
-    );
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,17 +110,17 @@ class DashboardPage extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const PageHeader(
-                      title: 'Overview',
-                      breadcrumbs: ['Dashboard', 'Analytics Dashboard'],
+                      title: 'Cluster Overview',
+                      breadcrumbs: ['Dashboard', 'Cluster Overview'],
                     ),
                     const SizedBox(height: 24),
-                    // KPI Row
-                    _buildKpiRow(context, screenSize, paymentMetrics, tenancyMetrics),
+                    // Row 1: Platform KPI cards
+                    _buildKpiRow(context, screenSize),
                     const SizedBox(height: 24),
-                    // Chart
-                    const PortfolioChart(),
+                    // Row 2: Traffic charts
+                    _buildTrafficCharts(context, screenSize),
                     const SizedBox(height: 24),
-                    // Distribution + Regional
+                    // Row 3 + Row 4: Distribution + Resources
                     _buildBottomRow(context, screenSize),
                     // Activity feed inline on mobile/tablet
                     if (!showSideFeed) ...[
@@ -74,7 +138,8 @@ class DashboardPage extends ConsumerWidget {
           SizedBox(
             width: 340,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(top: 24, right: 24, bottom: 24),
+              padding:
+                  const EdgeInsets.only(top: 24, right: 24, bottom: 24),
               child: const ActivityFeed(),
             ),
           ),
@@ -82,30 +147,28 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildKpiRow(
-    BuildContext context,
-    ScreenSize screenSize,
-    AsyncValue<List<MetricValue>> paymentMetrics,
-    AsyncValue<List<MetricValue>> tenancyMetrics,
-  ) {
+  Widget _buildKpiRow(BuildContext context, ScreenSize screenSize) {
     final cards = <Widget>[
-      _metricKpiCard(
-        tenancyMetrics,
-        'active_users',
-        fallbackLabel: 'Active Users',
-        fallbackIcon: Icons.group_outlined,
+      _scalarKpiCard(
+        future: _totalApiRequests,
+        label: 'API Requests',
+        icon: Icons.api_outlined,
       ),
-      _metricKpiCard(
-        paymentMetrics,
-        'total_volume',
-        fallbackLabel: 'Total Volume',
-        fallbackIcon: Icons.payments_outlined,
+      _scalarKpiCard(
+        future: _errorRate,
+        label: 'Error Rate',
+        icon: Icons.error_outline,
+        unit: 'percent',
       ),
-      _metricKpiCard(
-        paymentMetrics,
-        'success_rate',
-        fallbackLabel: 'Success Rate',
-        fallbackIcon: Icons.trending_up,
+      _scalarKpiCard(
+        future: _activeTenants,
+        label: 'Active Tenants',
+        icon: Icons.domain_outlined,
+      ),
+      _scalarKpiCard(
+        future: _notificationsSent,
+        label: 'Notifications Sent',
+        icon: Icons.send_outlined,
       ),
     ];
 
@@ -131,61 +194,95 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _metricKpiCard(
-    AsyncValue<List<MetricValue>> metricsAsync,
-    String key, {
-    required String fallbackLabel,
-    required IconData fallbackIcon,
+  Widget _scalarKpiCard({
+    required Future<double> future,
+    required String label,
+    required IconData icon,
+    String? unit,
   }) {
-    return metricsAsync.when(
-      data: (metrics) {
-        final m = metrics.where((m) => m.key == key).firstOrNull;
-        if (m == null) {
-          return KpiCard(label: fallbackLabel, value: '--', icon: fallbackIcon);
+    return FutureBuilder<double>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return KpiCard(label: label, value: '...', icon: icon);
         }
-        final change = m.changePercent;
-        String? changeStr;
-        bool positive = true;
-        if (change != null) {
-          positive = change >= 0;
-          changeStr = '${positive ? '+' : ''}${change.toStringAsFixed(1)}%';
+        if (snapshot.hasError) {
+          return KpiCard(label: label, value: '--', icon: icon);
         }
+        final value = snapshot.data ?? 0;
         return KpiCard(
-          label: m.label,
-          value: _formatValue(m.value, m.unit),
-          icon: m.icon ?? fallbackIcon,
-          change: changeStr,
-          changePositive: positive,
+          label: label,
+          value: _formatValue(value, unit),
+          icon: icon,
         );
       },
-      loading: () => KpiCard(
-        label: fallbackLabel,
-        value: '...',
-        icon: fallbackIcon,
-      ),
-      error: (_, _) => KpiCard(
-        label: fallbackLabel,
-        value: '--',
-        icon: fallbackIcon,
-      ),
+    );
+  }
+
+  Widget _buildTrafficCharts(BuildContext context, ScreenSize screenSize) {
+    if (screenSize == ScreenSize.mobile) {
+      return Column(
+        children: [
+          PortfolioChart(client: _client),
+          const SizedBox(height: 24),
+          _PaymentVolumeChart(client: _client),
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: PortfolioChart(client: _client),
+          ),
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 6),
+            child: _PaymentVolumeChart(client: _client),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomRow(BuildContext context, ScreenSize screenSize) {
+    if (screenSize == ScreenSize.mobile) {
+      return Column(
+        children: [
+          AssetDistribution(client: _client),
+          const SizedBox(height: 24),
+          RegionalPerformance(client: _client),
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+            child: Padding(
+          padding: const EdgeInsets.only(right: 6),
+          child: AssetDistribution(client: _client),
+        )),
+        Expanded(
+            child: Padding(
+          padding: const EdgeInsets.only(left: 6),
+          child: RegionalPerformance(client: _client),
+        )),
+      ],
     );
   }
 
   static String _formatValue(double value, String? unit) {
     return switch (unit) {
-      'currency' => _formatCurrency(value),
       'percent' => '${value.toStringAsFixed(1)}%',
-      'duration' => '${value.toStringAsFixed(0)}ms',
       'bytes' => _formatBytes(value),
       _ => _formatCount(value),
     };
-  }
-
-  static String _formatCurrency(double value) {
-    if (value >= 1e9) return '\$${(value / 1e9).toStringAsFixed(1)}B';
-    if (value >= 1e6) return '\$${(value / 1e6).toStringAsFixed(1)}M';
-    if (value >= 1e3) return '\$${(value / 1e3).toStringAsFixed(1)}K';
-    return '\$${value.toStringAsFixed(2)}';
   }
 
   static String _formatCount(double value) {
@@ -202,32 +299,36 @@ class DashboardPage extends ConsumerWidget {
     if (value >= 1e3) return '${(value / 1e3).toStringAsFixed(1)} KB';
     return '${value.toStringAsFixed(0)} B';
   }
+}
 
-  Widget _buildBottomRow(BuildContext context, ScreenSize screenSize) {
-    if (screenSize == ScreenSize.mobile) {
-      return const Column(
-        children: [
-          AssetDistribution(),
-          SizedBox(height: 24),
-          RegionalPerformance(),
-        ],
-      );
-    }
+/// Payment Volume time series chart (Row 2, right panel).
+class _PaymentVolumeChart extends StatefulWidget {
+  const _PaymentVolumeChart({required this.client});
 
-    return const Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-            child: Padding(
-          padding: EdgeInsets.only(right: 6),
-          child: AssetDistribution(),
-        )),
-        Expanded(
-            child: Padding(
-          padding: EdgeInsets.only(left: 6),
-          child: RegionalPerformance(),
-        )),
-      ],
+  final ThesaAnalyticsClient client;
+
+  @override
+  State<_PaymentVolumeChart> createState() => _PaymentVolumeChartState();
+}
+
+class _PaymentVolumeChartState extends State<_PaymentVolumeChart> {
+  late Future<List<TimeSeriesPoint>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = widget.client.queryTimeSeries(
+      metric: 'payment_transactions_total',
+      timeRange: AnalyticsTimeRange.lastYear(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PortfolioChart.fromFuture(
+      title: 'Payment Volume',
+      subtitle: 'Transactions over time',
+      future: _future,
     );
   }
 }

@@ -1,143 +1,118 @@
 import 'dart:convert';
 
 import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
-import 'package:antinvestor_ui_core/analytics/analytics_provider.dart';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-/// Implements [AnalyticsDataSource] by calling Thesa's analytics REST API.
-class ThesaAnalyticsDataSource implements AnalyticsDataSource {
-  ThesaAnalyticsDataSource(this._httpClient, this._baseUrl);
+/// POST-based analytics query client for the Thesa BFF.
+///
+/// Calls the generic proxy endpoints:
+///   POST /api/analytics/query/scalar
+///   POST /api/analytics/query/timeseries
+///   POST /api/analytics/query/grouped
+///   POST /api/analytics/query/topn
+class ThesaAnalyticsClient {
+  ThesaAnalyticsClient(this._httpClient, this._baseUrl);
 
   final http.Client _httpClient;
   final String _baseUrl;
 
-  @override
-  Future<List<MetricValue>> getMetrics(
-    String service, {
+  /// Query a single scalar value (e.g. sum, avg, count).
+  Future<double> queryScalar({
+    required String metric,
+    required String aggregation,
+    Map<String, String>? filters,
     AnalyticsTimeRange? timeRange,
   }) async {
-    final params = {
-      'service': service,
-      ...?(timeRange?.toQueryParams()),
-    };
-    final uri =
-        Uri.parse('$_baseUrl/api/analytics/metrics').replace(queryParameters: params);
-
-    final response = await _httpClient.get(uri);
-    _checkResponse(response);
-
-    final body = json.decode(response.body) as Map<String, dynamic>;
-    final metrics = body['metrics'] as List<dynamic>? ?? [];
-
-    return metrics.map((m) {
-      final map = m as Map<String, dynamic>;
-      final prev = map['previous_value'] as num?;
-      return MetricValue(
-        key: map['key'] as String,
-        label: map['label'] as String,
-        value: (map['value'] as num).toDouble(),
-        previousValue: prev?.toDouble(),
-        unit: map['unit'] as String?,
-        icon: _iconFromName(map['icon'] as String?),
-        trend: _parseTrend(map['trend'] as String?),
-      );
-    }).toList();
-  }
-
-  @override
-  Future<List<TimeSeries>> getTimeSeries(
-    String service,
-    String metric, {
-    AnalyticsTimeRange? timeRange,
-  }) async {
-    final params = {
-      'service': service,
+    final body = <String, dynamic>{
       'metric': metric,
-      ...?(timeRange?.toQueryParams()),
+      'aggregation': aggregation,
+      if (filters != null) 'filters': filters,
+      ..._timeRangeFields(timeRange),
     };
-    final uri =
-        Uri.parse('$_baseUrl/api/analytics/timeseries').replace(queryParameters: params);
 
-    final response = await _httpClient.get(uri);
-    _checkResponse(response);
+    final response = await _post('/api/analytics/query/scalar', body);
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    return (data['value'] as num?)?.toDouble() ?? 0.0;
+  }
 
-    final body = json.decode(response.body) as Map<String, dynamic>;
-    final seriesList = body['series'] as List<dynamic>? ?? [];
+  /// Query time series data points.
+  Future<List<TimeSeriesPoint>> queryTimeSeries({
+    required String metric,
+    String aggregation = 'sum',
+    Map<String, String>? filters,
+    AnalyticsTimeRange? timeRange,
+  }) async {
+    final body = <String, dynamic>{
+      'metric': metric,
+      'aggregation': aggregation,
+      if (filters != null) 'filters': filters,
+      ..._timeRangeFields(timeRange),
+    };
 
-    return seriesList.map((s) {
-      final map = s as Map<String, dynamic>;
-      final points = (map['points'] as List<dynamic>? ?? []).map((p) {
-        final pm = p as Map<String, dynamic>;
-        return TimeSeriesPoint(
-          timestamp: DateTime.parse(pm['timestamp'] as String),
-          value: (pm['value'] as num).toDouble(),
-          label: pm['label'] as String?,
-        );
-      }).toList();
+    final response = await _post('/api/analytics/query/timeseries', body);
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    final points = data['points'] as List<dynamic>? ?? [];
 
-      return TimeSeries(
-        key: map['key'] as String,
-        label: map['label'] as String,
-        points: points,
-        color: _colorFromHex(map['color'] as String?),
+    return points.map((p) {
+      final map = p as Map<String, dynamic>;
+      return TimeSeriesPoint(
+        timestamp: DateTime.parse(map['timestamp'] as String),
+        value: (map['value'] as num).toDouble(),
+        label: map['label'] as String?,
       );
     }).toList();
   }
 
-  @override
-  Future<List<DistributionSegment>> getDistribution(
-    String service,
-    String metric,
-    String groupBy, {
+  /// Query grouped/distribution data (e.g. for pie charts).
+  Future<List<DistributionSegment>> queryGrouped({
+    required String metric,
+    required String groupBy,
+    String aggregation = 'sum',
+    Map<String, String>? filters,
     AnalyticsTimeRange? timeRange,
   }) async {
-    final params = {
-      'service': service,
+    final body = <String, dynamic>{
       'metric': metric,
       'group_by': groupBy,
-      ...?(timeRange?.toQueryParams()),
+      'aggregation': aggregation,
+      if (filters != null) 'filters': filters,
+      ..._timeRangeFields(timeRange),
     };
-    final uri =
-        Uri.parse('$_baseUrl/api/analytics/distribution').replace(queryParameters: params);
 
-    final response = await _httpClient.get(uri);
-    _checkResponse(response);
-
-    final body = json.decode(response.body) as Map<String, dynamic>;
-    final segments = body['segments'] as List<dynamic>? ?? [];
+    final response = await _post('/api/analytics/query/grouped', body);
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    final segments = data['segments'] as List<dynamic>? ?? [];
 
     return segments.map((s) {
       final map = s as Map<String, dynamic>;
       return DistributionSegment(
         label: map['label'] as String,
         value: (map['value'] as num).toDouble(),
-        color: _colorFromHex(map['color'] as String?),
       );
     }).toList();
   }
 
-  @override
-  Future<List<TopNItem>> getTopN(
-    String service,
-    String metric, {
+  /// Query top-N ranked items.
+  Future<List<TopNItem>> queryTopN({
+    required String metric,
+    String aggregation = 'sum',
+    String? groupBy,
     int limit = 10,
+    Map<String, String>? filters,
     AnalyticsTimeRange? timeRange,
   }) async {
-    final params = {
-      'service': service,
+    final body = <String, dynamic>{
       'metric': metric,
-      'limit': '$limit',
-      ...?(timeRange?.toQueryParams()),
+      'aggregation': aggregation,
+      'limit': limit,
+      if (groupBy != null) 'group_by': groupBy,
+      if (filters != null) 'filters': filters,
+      ..._timeRangeFields(timeRange),
     };
-    final uri =
-        Uri.parse('$_baseUrl/api/analytics/top').replace(queryParameters: params);
 
-    final response = await _httpClient.get(uri);
-    _checkResponse(response);
-
-    final body = json.decode(response.body) as Map<String, dynamic>;
-    final items = body['items'] as List<dynamic>? ?? [];
+    final response = await _post('/api/analytics/query/topn', body);
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    final items = data['items'] as List<dynamic>? ?? [];
 
     return items.map((item) {
       final map = item as Map<String, dynamic>;
@@ -151,70 +126,37 @@ class ThesaAnalyticsDataSource implements AnalyticsDataSource {
     }).toList();
   }
 
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  Map<String, dynamic> _timeRangeFields(AnalyticsTimeRange? tr) {
+    if (tr == null) return {};
+    return {
+      'start': tr.start.toUtc().toIso8601String(),
+      'end': tr.end.toUtc().toIso8601String(),
+      if (tr.granularity != null) 'granularity': tr.granularity!.name,
+    };
+  }
+
+  Future<http.Response> _post(
+      String path, Map<String, dynamic> body) async {
+    final uri = Uri.parse('$_baseUrl$path');
+    final response = await _httpClient.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(body),
+    );
+    _checkResponse(response);
+    return response;
+  }
+
   void _checkResponse(http.Response response) {
     if (response.statusCode != 200) {
-      final body = json.decode(response.body) as Map<String, dynamic>?;
+      final body =
+          json.decode(response.body) as Map<String, dynamic>?;
       final msg = body?['error'] ?? 'HTTP ${response.statusCode}';
       throw Exception('Analytics API error: $msg');
     }
-  }
-
-  static MetricTrend? _parseTrend(String? trend) {
-    return switch (trend) {
-      'up' => MetricTrend.up,
-      'down' => MetricTrend.down,
-      'flat' => MetricTrend.flat,
-      _ => null,
-    };
-  }
-
-  static IconData? _iconFromName(String? name) {
-    if (name == null) return null;
-    // Map common icon names to Material icons
-    const iconMap = <String, IconData>{
-      'payment': Icons.payment,
-      'attach_money': Icons.attach_money,
-      'check_circle': Icons.check_circle_outlined,
-      'timer': Icons.timer_outlined,
-      'people': Icons.people_outlined,
-      'person': Icons.person_outlined,
-      'person_add': Icons.person_add_outlined,
-      'verified': Icons.verified_outlined,
-      'send': Icons.send_outlined,
-      'mark_email_read': Icons.mark_email_read_outlined,
-      'visibility': Icons.visibility_outlined,
-      'error': Icons.error_outlined,
-      'autorenew': Icons.autorenew,
-      'trending_up': Icons.trending_up,
-      'trending_down': Icons.trending_down,
-      'receipt_long': Icons.receipt_long_outlined,
-      'folder': Icons.folder_outlined,
-      'storage': Icons.storage_outlined,
-      'upload': Icons.upload_outlined,
-      'description': Icons.description_outlined,
-      'map': Icons.map_outlined,
-      'route': Icons.route_outlined,
-      'place': Icons.place_outlined,
-      'gps_fixed': Icons.gps_fixed_outlined,
-      'settings': Icons.settings_outlined,
-      'edit': Icons.edit_outlined,
-      'widgets': Icons.widgets_outlined,
-      'domain': Icons.domain_outlined,
-      'account_tree': Icons.account_tree_outlined,
-      'group': Icons.group_outlined,
-      'add_business': Icons.add_business_outlined,
-      'history': Icons.history_outlined,
-      'warning': Icons.warning_outlined,
-    };
-    return iconMap[name];
-  }
-
-  static Color? _colorFromHex(String? hex) {
-    if (hex == null || hex.isEmpty) return null;
-    final cleaned = hex.replaceFirst('#', '');
-    if (cleaned.length == 6) {
-      return Color(int.parse('FF$cleaned', radix: 16));
-    }
-    return null;
   }
 }
