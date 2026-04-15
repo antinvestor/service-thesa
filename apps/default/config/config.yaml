@@ -281,23 +281,16 @@ capability:
     ttl: 5m
     max_entries: 10000
 
-# Analytics engine — queries OTel metrics from a Prometheus-compatible backend
-# (Prometheus, Mimir, Thanos, VictoriaMetrics, OpenObserve, etc.).
-# Set ANALYTICS_BACKEND_URL env var to enable.
-#
-# For OpenObserve, set backend_type to "openobserve" and provide credentials:
-#   ANALYTICS_BACKEND_TYPE=openobserve
-#   ANALYTICS_BACKEND_URL=http://openobserve:5080
-#   ANALYTICS_ORG=default
-#   ANALYTICS_USERNAME=admin@example.com
-#   ANALYTICS_PASSWORD=<password>
+# Analytics engine — queries OTel metrics from OpenObserve via its
+# Prometheus-compatible API. Credentials are injected via env vars
+# (ANALYTICS_USERNAME, ANALYTICS_PASSWORD) from ESO in the cluster.
 analytics:
-  enabled: false
-  backend_type: ""   # "prometheus" (default) or "openobserve"
-  backend_url: ""    # override via ANALYTICS_BACKEND_URL env var
-  org: ""            # OpenObserve organization (default: "default")
-  username: ""       # OpenObserve basic-auth username (use ANALYTICS_USERNAME env var)
-  password: ""       # OpenObserve basic-auth password (use ANALYTICS_PASSWORD env var)
+  enabled: true
+  backend_type: "openobserve"
+  backend_url: "https://observe.stawi.org"
+  org: "default"
+  username: ""       # injected via ANALYTICS_USERNAME env var
+  password: ""       # injected via ANALYTICS_PASSWORD env var
 
 workflow:
   enabled: true
