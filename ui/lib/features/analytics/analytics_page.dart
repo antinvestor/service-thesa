@@ -1,10 +1,16 @@
-import 'package:antinvestor_ui_core/analytics/analytics_dashboard.dart';
+import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Analytics page that renders a full, data-driven analytics dashboard for a
-/// selected service. Uses the [AnalyticsDashboard] widget from ui_core which
-/// handles all data fetching, loading states, and chart rendering.
+import '../../core/theme/app_colors.dart';
+import '../../core/widgets/page_header.dart';
+import '../dashboard/dashboard_page.dart';
+
+/// Analytics query explorer page.
+///
+/// Allows the user to enter a metric name and view scalar, time series,
+/// and grouped results from the cluster analytics backend.
 class AnalyticsPage extends ConsumerStatefulWidget {
   const AnalyticsPage({super.key});
 
@@ -13,153 +19,401 @@ class AnalyticsPage extends ConsumerStatefulWidget {
 }
 
 class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
-  String _selectedService = 'payment';
+  final _metricController = TextEditingController(
+    text: 'rpc_server_duration_count',
+  );
+  final _groupByController = TextEditingController(text: 'rpc_service');
+
+  String _selectedRange = '30d';
+
+  Future<double>? _scalarFuture;
+  Future<List<TimeSeriesPoint>>? _timeSeriesFuture;
+  Future<List<DistributionSegment>>? _groupedFuture;
+
+  AnalyticsTimeRange get _timeRange => switch (_selectedRange) {
+        '24h' => AnalyticsTimeRange.last24Hours(),
+        '7d' => AnalyticsTimeRange.last7Days(),
+        '90d' => AnalyticsTimeRange.last90Days(),
+        '1y' => AnalyticsTimeRange.lastYear(),
+        _ => AnalyticsTimeRange.last30Days(),
+      };
+
+  void _runQuery() {
+    final client = ref.read(analyticsClientProvider);
+    final metric = _metricController.text.trim();
+    if (metric.isEmpty) return;
+
+    setState(() {
+      _scalarFuture = client.queryScalar(
+        metric: metric,
+        aggregation: 'sum',
+        timeRange: _timeRange,
+      );
+      _timeSeriesFuture = client.queryTimeSeries(
+        metric: metric,
+        timeRange: _timeRange,
+      );
+
+      final groupBy = _groupByController.text.trim();
+      if (groupBy.isNotEmpty) {
+        _groupedFuture = client.queryGrouped(
+          metric: metric,
+          groupBy: groupBy,
+          timeRange: _timeRange,
+        );
+      } else {
+        _groupedFuture = null;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _metricController.dispose();
+    _groupByController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final config = _serviceConfigs[_selectedService]!;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const PageHeader(
+                title: 'Analytics Explorer',
+                breadcrumbs: ['Dashboard', 'Analytics'],
+              ),
+              const SizedBox(height: 24),
+              _buildQueryBar(context),
+              if (_scalarFuture != null) ...[
+                const SizedBox(height: 24),
+                _buildScalarCard(context),
+              ],
+              if (_timeSeriesFuture != null) ...[
+                const SizedBox(height: 24),
+                _buildTimeSeriesCard(context),
+              ],
+              if (_groupedFuture != null) ...[
+                const SizedBox(height: 24),
+                _buildGroupedCard(context),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-    return AnalyticsDashboard(
-      key: ValueKey(_selectedService),
-      service: _selectedService,
-      title: config.title,
-      breadcrumbs: ['Dashboard', 'Analytics', config.title],
-      metrics: config.metrics,
-      charts: config.charts,
-      tables: config.tables,
-      refreshInterval: const Duration(minutes: 5),
-      actions: [
-        DropdownButton<String>(
-          value: _selectedService,
-          underline: const SizedBox.shrink(),
-          items: _serviceConfigs.entries
-              .map((e) => DropdownMenuItem(
-                    value: e.key,
-                    child: Text(e.value.title),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            if (value != null) setState(() => _selectedService = value);
-          },
+  Widget _buildQueryBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Query', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextField(
+                  controller: _metricController,
+                  decoration: const InputDecoration(
+                    labelText: 'Metric name',
+                    hintText: 'e.g. rpc_server_duration_count',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: TextField(
+                  controller: _groupByController,
+                  decoration: const InputDecoration(
+                    labelText: 'Group by (optional)',
+                    hintText: 'e.g. rpc_service',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              DropdownButton<String>(
+                value: _selectedRange,
+                underline: const SizedBox.shrink(),
+                items: const [
+                  DropdownMenuItem(value: '24h', child: Text('24 hours')),
+                  DropdownMenuItem(value: '7d', child: Text('7 days')),
+                  DropdownMenuItem(value: '30d', child: Text('30 days')),
+                  DropdownMenuItem(value: '90d', child: Text('90 days')),
+                  DropdownMenuItem(value: '1y', child: Text('1 year')),
+                ],
+                onChanged: (v) {
+                  if (v != null) setState(() => _selectedRange = v);
+                },
+              ),
+              const SizedBox(width: 12),
+              FilledButton.icon(
+                onPressed: _runQuery,
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Run'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScalarCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Scalar Result',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 12),
+          FutureBuilder<double>(
+            future: _scalarFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const CircularProgressIndicator();
+              }
+              if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}',
+                    style: TextStyle(color: AppColors.error));
+              }
+              final value = snapshot.data ?? 0;
+              return Text(
+                _formatNumber(value),
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeSeriesCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Time Series',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: FutureBuilder<List<TimeSeriesPoint>>(
+              future: _timeSeriesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                      child: Text('Error: ${snapshot.error}',
+                          style: TextStyle(color: AppColors.error)));
+                }
+                final points = snapshot.data ?? [];
+                if (points.isEmpty) {
+                  return Center(
+                      child: Text('No data',
+                          style: Theme.of(context).textTheme.bodySmall));
+                }
+                return _buildLineChart(context, points);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLineChart(
+      BuildContext context, List<TimeSeriesPoint> points) {
+    final maxY = points.fold(0.0, (m, p) => p.value > m ? p.value : m);
+    final ceilY = maxY > 0 ? maxY * 1.2 : 10.0;
+
+    return LineChart(
+      LineChartData(
+        maxY: ceilY,
+        minY: 0,
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 50,
+              getTitlesWidget: (value, meta) {
+                return Text(_formatNumber(value),
+                    style: Theme.of(context).textTheme.labelSmall);
+              },
+            ),
+          ),
+          bottomTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) =>
+              FlLine(color: AppColors.border, strokeWidth: 1),
+        ),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: List.generate(points.length, (i) {
+              return FlSpot(i.toDouble(), points[i].value);
+            }),
+            isCurved: true,
+            color: AppColors.tertiary,
+            barWidth: 2,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              color: AppColors.tertiary.withValues(alpha: 0.1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupedCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Grouped by "${_groupByController.text}"',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 16),
+          FutureBuilder<List<DistributionSegment>>(
+            future: _groupedFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SizedBox(
+                    height: 100,
+                    child: Center(child: CircularProgressIndicator()));
+              }
+              if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}',
+                    style: TextStyle(color: AppColors.error));
+              }
+              final segments = snapshot.data ?? [];
+              if (segments.isEmpty) {
+                return Text('No data',
+                    style: Theme.of(context).textTheme.bodySmall);
+              }
+              final maxVal =
+                  segments.fold(0.0, (m, s) => s.value > m ? s.value : m);
+              return Column(
+                children: segments.map((s) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _GroupedBar(
+                      label: s.label,
+                      value: maxVal > 0 ? s.value / maxVal : 0,
+                      display: _formatNumber(s.value),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _formatNumber(double value) {
+    if (value >= 1e9) return '${(value / 1e9).toStringAsFixed(1)}B';
+    if (value >= 1e6) return '${(value / 1e6).toStringAsFixed(1)}M';
+    if (value >= 1e3) return '${(value / 1e3).toStringAsFixed(1)}K';
+    if (value == value.truncateToDouble()) return value.toStringAsFixed(0);
+    return value.toStringAsFixed(2);
+  }
+}
+
+class _GroupedBar extends StatelessWidget {
+  const _GroupedBar({
+    required this.label,
+    required this.value,
+    required this.display,
+  });
+
+  final String label;
+  final double value;
+  final String display;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(label,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  overflow: TextOverflow.ellipsis),
+            ),
+            Text(display,
+                style: Theme.of(context)
+                    .textTheme
+                    .labelMedium
+                    ?.copyWith(fontWeight: FontWeight.w600)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: value.clamp(0.0, 1.0),
+            minHeight: 6,
+            backgroundColor: AppColors.surfaceVariant,
+            valueColor:
+                const AlwaysStoppedAnimation(AppColors.tertiary),
+          ),
         ),
       ],
     );
   }
 }
-
-class _ServiceDashboardConfig {
-  const _ServiceDashboardConfig({
-    required this.title,
-    required this.metrics,
-    required this.charts,
-    this.tables = const [],
-  });
-
-  final String title;
-  final List<String> metrics;
-  final List<ChartConfig> charts;
-  final List<TableConfig> tables;
-}
-
-const _serviceConfigs = <String, _ServiceDashboardConfig>{
-  'payment': _ServiceDashboardConfig(
-    title: 'Payments',
-    metrics: ['total_payments', 'total_volume', 'success_rate', 'avg_processing_time'],
-    charts: [
-      ChartConfig.timeSeries('payment_volume', label: 'Payment Volume'),
-      ChartConfig.distribution('payment_routes', label: 'By Route', groupBy: 'route'),
-      ChartConfig.timeSeries('payment_amount', label: 'Payment Amount'),
-      ChartConfig.distribution('payment_status', label: 'By Status', groupBy: 'status'),
-    ],
-    tables: [
-      TableConfig.topN('top_recipients', label: 'Top Recipients', limit: 10),
-    ],
-  ),
-  'profile': _ServiceDashboardConfig(
-    title: 'Profiles',
-    metrics: ['total_profiles', 'active_profiles', 'new_registrations', 'verification_rate'],
-    charts: [
-      ChartConfig.timeSeries('registrations', label: 'Registrations'),
-      ChartConfig.distribution('profile_types', label: 'By Type', groupBy: 'profile_type'),
-    ],
-    tables: [
-      TableConfig.topN('top_active_profiles', label: 'Most Active Profiles', limit: 10),
-    ],
-  ),
-  'notification': _ServiceDashboardConfig(
-    title: 'Notifications',
-    metrics: ['total_sent', 'delivery_rate', 'open_rate', 'failed_count'],
-    charts: [
-      ChartConfig.timeSeries('notifications_sent', label: 'Notifications Sent'),
-      ChartConfig.distribution('notification_channels', label: 'By Channel', groupBy: 'channel'),
-      ChartConfig.distribution('notification_status', label: 'By Status', groupBy: 'status'),
-    ],
-    tables: [
-      TableConfig.topN('top_templates', label: 'Top Templates', limit: 10),
-    ],
-  ),
-  'billing': _ServiceDashboardConfig(
-    title: 'Billing',
-    metrics: ['active_subscriptions', 'mrr', 'outstanding_invoices', 'churn_rate'],
-    charts: [
-      ChartConfig.timeSeries('revenue', label: 'Revenue'),
-      ChartConfig.distribution('subscription_plans', label: 'By Plan', groupBy: 'plan_name'),
-    ],
-    tables: [
-      TableConfig.topN('top_customers', label: 'Top Customers', limit: 10),
-    ],
-  ),
-  'tenancy': _ServiceDashboardConfig(
-    title: 'Tenancy',
-    metrics: ['total_tenants', 'total_partitions', 'active_users', 'new_tenants'],
-    charts: [
-      ChartConfig.timeSeries('tenant_growth', label: 'Tenant Growth'),
-      ChartConfig.distribution('tenants_by_plan', label: 'By Plan', groupBy: 'plan'),
-    ],
-    tables: [
-      TableConfig.topN('top_tenants', label: 'Largest Tenants', limit: 10),
-    ],
-  ),
-  'audit': _ServiceDashboardConfig(
-    title: 'Audit',
-    metrics: ['total_entries', 'unique_actors', 'integrity_checks', 'anomalies'],
-    charts: [
-      ChartConfig.timeSeries('audit_volume', label: 'Audit Volume'),
-      ChartConfig.distribution('audit_actions', label: 'By Action', groupBy: 'action'),
-      ChartConfig.distribution('audit_services', label: 'By Service', groupBy: 'service'),
-    ],
-    tables: [
-      TableConfig.topN('top_actors', label: 'Most Active Actors', limit: 10),
-    ],
-  ),
-  'files': _ServiceDashboardConfig(
-    title: 'Files',
-    metrics: ['total_files', 'total_storage', 'uploads_today', 'avg_file_size'],
-    charts: [
-      ChartConfig.timeSeries('upload_volume', label: 'Uploads'),
-      ChartConfig.distribution('file_types', label: 'By Type', groupBy: 'content_type'),
-    ],
-    tables: [
-      TableConfig.topN('top_uploaders', label: 'Top Uploaders', limit: 10),
-    ],
-  ),
-  'geolocation': _ServiceDashboardConfig(
-    title: 'Geolocation',
-    metrics: ['total_areas', 'total_routes', 'geo_events', 'active_trackers'],
-    charts: [
-      ChartConfig.timeSeries('geo_event_volume', label: 'Geo Events'),
-      ChartConfig.distribution('event_types', label: 'By Event Type', groupBy: 'event_type'),
-    ],
-    tables: [
-      TableConfig.topN('top_areas', label: 'Most Active Areas', limit: 10),
-    ],
-  ),
-  'settings': _ServiceDashboardConfig(
-    title: 'Settings',
-    metrics: ['total_settings', 'recent_changes', 'modules_count'],
-    charts: [
-      ChartConfig.timeSeries('setting_changes', label: 'Configuration Changes'),
-      ChartConfig.distribution('settings_by_module', label: 'By Module', groupBy: 'module'),
-    ],
-  ),
-};

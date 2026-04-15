@@ -2,7 +2,6 @@ import 'package:antinvestor_ui_audit/antinvestor_ui_audit.dart'
     show auditTransportProvider;
 import 'package:antinvestor_ui_billing/antinvestor_ui_billing.dart'
     show billingTransportProvider;
-import 'package:antinvestor_ui_core/analytics/analytics_provider.dart';
 import 'package:antinvestor_ui_core/api/api_base.dart';
 import 'package:antinvestor_ui_core/auth/role_provider.dart';
 import 'package:antinvestor_ui_core/permissions/permission_manifest.dart';
@@ -34,7 +33,6 @@ import 'package:http/http.dart' as http;
 
 import 'app.dart';
 import 'core/config/url_strategy.dart';
-import 'core/services/analytics_client.dart';
 import 'core/services/api_config.dart';
 import 'core/services/auth_bridge.dart';
 import 'core/services/permission_checker.dart';
@@ -89,13 +87,6 @@ void main() {
         currentUserRolesProvider.overrideWith((ref) async {
           final ctx = await ref.watch(jwtTenantContextProvider.future);
           return ctx.roles.toSet();
-        }),
-        // Analytics data source backed by Thesa's analytics REST API.
-        analyticsDataSourceProvider.overrideWith((ref) {
-          return ThesaAnalyticsDataSource(
-            http.Client(),
-            ApiConfig.thesaBaseUrl,
-          );
         }),
         // Batch permission check at startup.
         // Resolves all proto-defined permissions for the current user
