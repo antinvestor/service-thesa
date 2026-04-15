@@ -135,11 +135,7 @@ func main() {
 			metricsBackend = analytics.NewPrometheusBackend(cfg.Analytics.BackendURL, httpClient)
 		}
 
-		analyticsReg := analytics.NewRegistry()
-		if err := analytics.RegisterDefaultServices(analyticsReg); err != nil {
-			log.WithError(err).Fatal("analytics service registration failed")
-		}
-		analyticsEngine = analytics.NewEngine(metricsBackend, analyticsReg, nil)
+		analyticsEngine = analytics.NewEngine(metricsBackend, nil)
 
 		if err := analyticsEngine.Healthy(ctx); err != nil {
 			log.WithError(err).Warn("metrics backend not reachable at startup")
@@ -148,7 +144,6 @@ func main() {
 		log.Info("analytics engine enabled",
 			"backend_type", backendType,
 			"backend_url", cfg.Analytics.BackendURL,
-			"services", len(analyticsReg.Services()),
 		)
 	}
 

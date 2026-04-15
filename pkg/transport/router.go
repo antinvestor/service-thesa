@@ -94,15 +94,9 @@ func NewRouter(deps Dependencies) http.Handler {
 	mux.Handle("POST /ui/upload", authChain(handleUpload(filesSvc)))
 	mux.Handle("GET /ui/download/{fileId}", authChain(handleDownload(filesSvc)))
 
-	// Analytics — permission-gated, tenant-scoped queries
+	// Analytics — tenant-scoped metric queries
 	if deps.AnalyticsEngine != nil {
-		capsFn := func(r *http.Request) model.CapabilitySet {
-			return CapabilitiesFrom(r.Context())
-		}
-		rctxFn := func(r *http.Request) *model.RequestContext {
-			return model.RequestContextFrom(r.Context())
-		}
-		analytics.RegisterRoutes(mux, deps.AnalyticsEngine, authChain, capsFn, rctxFn)
+		analytics.RegisterRoutes(mux, deps.AnalyticsEngine, authChain)
 	}
 
 	// Global middleware: applied to all routes.
