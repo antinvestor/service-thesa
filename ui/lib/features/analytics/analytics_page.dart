@@ -1,217 +1,165 @@
-import 'package:fl_chart/fl_chart.dart';
+import 'package:antinvestor_ui_core/analytics/analytics_dashboard.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/theme/app_colors.dart';
-import '../../core/widgets/page_header.dart';
-import '../../core/widgets/responsive_layout.dart';
-
-class AnalyticsPage extends StatelessWidget {
+/// Analytics page that renders a full, data-driven analytics dashboard for a
+/// selected service. Uses the [AnalyticsDashboard] widget from ui_core which
+/// handles all data fetching, loading states, and chart rendering.
+class AnalyticsPage extends ConsumerStatefulWidget {
   const AnalyticsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final screenSize = screenSizeOf(context);
-    final crossCount = screenSize == ScreenSize.mobile ? 1 : 2;
+  ConsumerState<AnalyticsPage> createState() => _AnalyticsPageState();
+}
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const PageHeader(
-            title: 'Analytics',
-            breadcrumbs: ['Dashboard', 'Analytics'],
-          ),
-          const SizedBox(height: 24),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: crossCount,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.6,
-            children: const [
-              _UserGrowthChart(),
-              _RevenueChart(),
-              _ConversionChart(),
-              _TrafficSourceChart(),
-            ],
-          ),
-        ],
-      ),
+class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
+  String _selectedService = 'payment';
+
+  @override
+  Widget build(BuildContext context) {
+    final config = _serviceConfigs[_selectedService]!;
+
+    return AnalyticsDashboard(
+      key: ValueKey(_selectedService),
+      service: _selectedService,
+      title: config.title,
+      breadcrumbs: ['Dashboard', 'Analytics', config.title],
+      metrics: config.metrics,
+      charts: config.charts,
+      tables: config.tables,
+      refreshInterval: const Duration(minutes: 5),
+      actions: [
+        DropdownButton<String>(
+          value: _selectedService,
+          underline: const SizedBox.shrink(),
+          items: _serviceConfigs.entries
+              .map((e) => DropdownMenuItem(
+                    value: e.key,
+                    child: Text(e.value.title),
+                  ))
+              .toList(),
+          onChanged: (value) {
+            if (value != null) setState(() => _selectedService = value);
+          },
+        ),
+      ],
     );
   }
 }
 
-class _ChartCard extends StatelessWidget {
-  const _ChartCard({required this.title, required this.subtitle, required this.child});
+class _ServiceDashboardConfig {
+  const _ServiceDashboardConfig({
+    required this.title,
+    required this.metrics,
+    required this.charts,
+    this.tables = const [],
+  });
+
   final String title;
-  final String subtitle;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 2),
-          Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 16),
-          Expanded(child: child),
-        ],
-      ),
-    );
-  }
+  final List<String> metrics;
+  final List<ChartConfig> charts;
+  final List<TableConfig> tables;
 }
 
-class _UserGrowthChart extends StatelessWidget {
-  const _UserGrowthChart();
-
-  @override
-  Widget build(BuildContext context) {
-    return _ChartCard(
-      title: 'User Growth',
-      subtitle: 'Monthly active users trend',
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            getDrawingHorizontalLine: (v) => FlLine(color: AppColors.border, strokeWidth: 1),
-          ),
-          titlesData: const FlTitlesData(
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: const [
-                FlSpot(0, 12), FlSpot(1, 14), FlSpot(2, 13), FlSpot(3, 17),
-                FlSpot(4, 19), FlSpot(5, 21), FlSpot(6, 20), FlSpot(7, 24),
-                FlSpot(8, 22), FlSpot(9, 26), FlSpot(10, 28), FlSpot(11, 30),
-              ],
-              isCurved: true,
-              color: AppColors.tertiary,
-              barWidth: 2.5,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(
-                show: true,
-                color: AppColors.tertiary.withValues(alpha: 0.1),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RevenueChart extends StatelessWidget {
-  const _RevenueChart();
-
-  @override
-  Widget build(BuildContext context) {
-    return _ChartCard(
-      title: 'Revenue',
-      subtitle: 'Monthly revenue breakdown',
-      child: BarChart(
-        BarChartData(
-          gridData: FlGridData(show: false),
-          titlesData: const FlTitlesData(
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          borderData: FlBorderData(show: false),
-          barGroups: List.generate(8, (i) {
-            final values = [3.2, 2.8, 4.1, 3.6, 5.0, 4.5, 5.8, 6.2];
-            return BarChartGroupData(x: i, barRods: [
-              BarChartRodData(
-                toY: values[i],
-                color: AppColors.primary,
-                width: 20,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-              ),
-            ]);
-          }),
-        ),
-      ),
-    );
-  }
-}
-
-class _ConversionChart extends StatelessWidget {
-  const _ConversionChart();
-
-  @override
-  Widget build(BuildContext context) {
-    return _ChartCard(
-      title: 'Conversion Rate',
-      subtitle: 'Lead to customer conversion',
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(show: false),
-          titlesData: const FlTitlesData(
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: const [
-                FlSpot(0, 4.2), FlSpot(1, 4.5), FlSpot(2, 4.1), FlSpot(3, 5.0),
-                FlSpot(4, 5.3), FlSpot(5, 5.8), FlSpot(6, 5.5), FlSpot(7, 6.1),
-              ],
-              isCurved: true,
-              color: AppColors.success,
-              barWidth: 2.5,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(
-                show: true,
-                color: AppColors.success.withValues(alpha: 0.1),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TrafficSourceChart extends StatelessWidget {
-  const _TrafficSourceChart();
-
-  @override
-  Widget build(BuildContext context) {
-    return _ChartCard(
-      title: 'Traffic Sources',
-      subtitle: 'Where users come from',
-      child: PieChart(
-        PieChartData(
-          sectionsSpace: 2,
-          centerSpaceRadius: 30,
-          sections: [
-            PieChartSectionData(value: 40, color: AppColors.primary, radius: 30, showTitle: false),
-            PieChartSectionData(value: 25, color: AppColors.tertiary, radius: 30, showTitle: false),
-            PieChartSectionData(value: 20, color: AppColors.secondary, radius: 30, showTitle: false),
-            PieChartSectionData(value: 15, color: AppColors.success, radius: 30, showTitle: false),
-          ],
-        ),
-      ),
-    );
-  }
-}
+const _serviceConfigs = <String, _ServiceDashboardConfig>{
+  'payment': _ServiceDashboardConfig(
+    title: 'Payments',
+    metrics: ['total_payments', 'total_volume', 'success_rate', 'avg_processing_time'],
+    charts: [
+      ChartConfig.timeSeries('payment_volume', label: 'Payment Volume'),
+      ChartConfig.distribution('payment_routes', label: 'By Route', groupBy: 'route'),
+      ChartConfig.timeSeries('payment_amount', label: 'Payment Amount'),
+      ChartConfig.distribution('payment_status', label: 'By Status', groupBy: 'status'),
+    ],
+    tables: [
+      TableConfig.topN('top_recipients', label: 'Top Recipients', limit: 10),
+    ],
+  ),
+  'profile': _ServiceDashboardConfig(
+    title: 'Profiles',
+    metrics: ['total_profiles', 'active_profiles', 'new_registrations', 'verification_rate'],
+    charts: [
+      ChartConfig.timeSeries('registrations', label: 'Registrations'),
+      ChartConfig.distribution('profile_types', label: 'By Type', groupBy: 'profile_type'),
+    ],
+    tables: [
+      TableConfig.topN('top_active_profiles', label: 'Most Active Profiles', limit: 10),
+    ],
+  ),
+  'notification': _ServiceDashboardConfig(
+    title: 'Notifications',
+    metrics: ['total_sent', 'delivery_rate', 'open_rate', 'failed_count'],
+    charts: [
+      ChartConfig.timeSeries('notifications_sent', label: 'Notifications Sent'),
+      ChartConfig.distribution('notification_channels', label: 'By Channel', groupBy: 'channel'),
+      ChartConfig.distribution('notification_status', label: 'By Status', groupBy: 'status'),
+    ],
+    tables: [
+      TableConfig.topN('top_templates', label: 'Top Templates', limit: 10),
+    ],
+  ),
+  'billing': _ServiceDashboardConfig(
+    title: 'Billing',
+    metrics: ['active_subscriptions', 'mrr', 'outstanding_invoices', 'churn_rate'],
+    charts: [
+      ChartConfig.timeSeries('revenue', label: 'Revenue'),
+      ChartConfig.distribution('subscription_plans', label: 'By Plan', groupBy: 'plan_name'),
+    ],
+    tables: [
+      TableConfig.topN('top_customers', label: 'Top Customers', limit: 10),
+    ],
+  ),
+  'tenancy': _ServiceDashboardConfig(
+    title: 'Tenancy',
+    metrics: ['total_tenants', 'total_partitions', 'active_users', 'new_tenants'],
+    charts: [
+      ChartConfig.timeSeries('tenant_growth', label: 'Tenant Growth'),
+      ChartConfig.distribution('tenants_by_plan', label: 'By Plan', groupBy: 'plan'),
+    ],
+    tables: [
+      TableConfig.topN('top_tenants', label: 'Largest Tenants', limit: 10),
+    ],
+  ),
+  'audit': _ServiceDashboardConfig(
+    title: 'Audit',
+    metrics: ['total_entries', 'unique_actors', 'integrity_checks', 'anomalies'],
+    charts: [
+      ChartConfig.timeSeries('audit_volume', label: 'Audit Volume'),
+      ChartConfig.distribution('audit_actions', label: 'By Action', groupBy: 'action'),
+      ChartConfig.distribution('audit_services', label: 'By Service', groupBy: 'service'),
+    ],
+    tables: [
+      TableConfig.topN('top_actors', label: 'Most Active Actors', limit: 10),
+    ],
+  ),
+  'files': _ServiceDashboardConfig(
+    title: 'Files',
+    metrics: ['total_files', 'total_storage', 'uploads_today', 'avg_file_size'],
+    charts: [
+      ChartConfig.timeSeries('upload_volume', label: 'Uploads'),
+      ChartConfig.distribution('file_types', label: 'By Type', groupBy: 'content_type'),
+    ],
+    tables: [
+      TableConfig.topN('top_uploaders', label: 'Top Uploaders', limit: 10),
+    ],
+  ),
+  'geolocation': _ServiceDashboardConfig(
+    title: 'Geolocation',
+    metrics: ['total_areas', 'total_routes', 'geo_events', 'active_trackers'],
+    charts: [
+      ChartConfig.timeSeries('geo_event_volume', label: 'Geo Events'),
+      ChartConfig.distribution('event_types', label: 'By Event Type', groupBy: 'event_type'),
+    ],
+    tables: [
+      TableConfig.topN('top_areas', label: 'Most Active Areas', limit: 10),
+    ],
+  ),
+  'settings': _ServiceDashboardConfig(
+    title: 'Settings',
+    metrics: ['total_settings', 'recent_changes', 'modules_count'],
+    charts: [
+      ChartConfig.timeSeries('setting_changes', label: 'Configuration Changes'),
+      ChartConfig.distribution('settings_by_module', label: 'By Module', groupBy: 'module'),
+    ],
+  ),
+};

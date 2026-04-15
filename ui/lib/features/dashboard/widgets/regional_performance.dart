@@ -1,12 +1,23 @@
+import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
+import 'package:antinvestor_ui_core/analytics/analytics_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-class RegionalPerformance extends StatelessWidget {
+class RegionalPerformance extends ConsumerWidget {
   const RegionalPerformance({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final timeRange = AnalyticsTimeRange.last30Days();
+    final topNAsync = ref.watch(
+      serviceTopNProvider(
+        ServiceTopNParams('payment', 'top_recipients',
+            limit: 5, timeRange: timeRange),
+      ),
+    );
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -17,21 +28,65 @@ class RegionalPerformance extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Regional Performance', style: Theme.of(context).textTheme.titleMedium),
+          Text('Top Recipients',
+              style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Text(
-            'Top performing markets globally',
+            'Highest volume payment recipients',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 20),
-          _ProgressBar(label: 'North America', value: 0.62, display: '62%'),
-          const SizedBox(height: 16),
-          _ProgressBar(label: 'European Union', value: 0.48, display: '48%'),
-          const SizedBox(height: 16),
-          _ProgressBar(label: 'Asia Pacific', value: 0.34, display: '34%'),
+          topNAsync.when(
+            data: (items) => _buildBars(context, items),
+            loading: () => const SizedBox(
+              height: 120,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (_, _) => SizedBox(
+              height: 120,
+              child: Center(
+                child: Text('Unable to load data',
+                    style: Theme.of(context).textTheme.bodySmall),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Widget _buildBars(BuildContext context, List<TopNItem> items) {
+    if (items.isEmpty) {
+      return SizedBox(
+        height: 80,
+        child: Center(
+          child: Text('No data available',
+              style: Theme.of(context).textTheme.bodySmall),
+        ),
+      );
+    }
+
+    final maxValue = items.fold(0.0, (m, i) => i.value > m ? i.value : m);
+
+    return Column(
+      children: items.map((item) {
+        final fraction = maxValue > 0 ? item.value / maxValue : 0.0;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: _ProgressBar(
+            label: item.label,
+            value: fraction,
+            display: _formatValue(item.value),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  static String _formatValue(double value) {
+    if (value >= 1e6) return '\$${(value / 1e6).toStringAsFixed(1)}M';
+    if (value >= 1e3) return '\$${(value / 1e3).toStringAsFixed(1)}K';
+    return '\$${value.toStringAsFixed(0)}';
   }
 }
 
@@ -54,7 +109,11 @@ class _ProgressBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: Theme.of(context).textTheme.bodySmall),
+            Expanded(
+              child: Text(label,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  overflow: TextOverflow.ellipsis),
+            ),
             Text(
               display,
               style: Theme.of(context)
