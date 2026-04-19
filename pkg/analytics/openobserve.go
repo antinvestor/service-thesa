@@ -53,10 +53,25 @@ func (b *OpenObserveBackend) QueryTopN(ctx context.Context, query MetricQuery, f
 	return b.prom.QueryTopN(ctx, query, filter, tr, groupBy, limit)
 }
 
-// Healthy checks OpenObserve reachability via the Prometheus-compatible
-// buildinfo endpoint.
+// Healthy checks OpenObserve reachability via its Prometheus-compatible
+// labels endpoint. The `/api/v1/status/buildinfo` route used by
+// PrometheusBackend.Healthy is not implemented by OpenObserve and returns
+// 401 regardless of credentials.
 func (b *OpenObserveBackend) Healthy(ctx context.Context) error {
-	return b.prom.Healthy(ctx)
+	reqURL := fmt.Sprintf("%s/api/v1/labels", b.prom.baseURL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := b.prom.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("metrics backend health check: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("metrics backend returned status %d", resp.StatusCode)
+	}
+	return nil
 }
 
 // OpenObserveAuthTransport is an http.RoundTripper that injects basic-auth

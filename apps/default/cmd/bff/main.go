@@ -38,6 +38,13 @@ func main() {
 		log.WithError(err).Fatal("configuration error")
 	}
 
+	// Service name defaults to "service-thesa" but can be overridden via
+	// SERVICE_NAME env var (standard for all antinvestor services). Frame's
+	// WithConfig option reads Name() from the config and applies it.
+	if cfg.ServiceName == "" {
+		cfg.ServiceName = "service-thesa"
+	}
+
 	// Load OpenAPI specs.
 	oaIndex := openapi.NewIndex()
 	specSources := buildSpecSources(cfg.Specs)
@@ -64,16 +71,9 @@ func main() {
 
 	// Create Frame service (provides HTTP client, telemetry, lifecycle,
 	// and SecurityManager with authorization service access).
-	// Service name defaults to "service-thesa" but can be overridden
-	// via SERVICE_NAME env var (standard for all antinvestor services).
-	serviceName := cfg.ServiceName
-	if serviceName == "" {
-		serviceName = "service-thesa"
-	}
-	ctx, svc := frame.NewServiceWithContext(ctx,
-		frame.WithName(serviceName),
-		frame.WithConfig(cfg),
-	)
+	ctx, svc := frame.NewServiceWithContext(ctx, frame.WithConfig(cfg))
+	defer svc.Stop(ctx)
+	log = svc.Log(ctx)
 
 	httpClient := svc.HTTPClientManager().Client(ctx)
 	authenticator := svc.SecurityManager().GetAuthenticator(ctx)
@@ -179,11 +179,10 @@ func main() {
 		return nil
 	}))
 
-	if analyticsEngine != nil {
-		svc.AddHealthCheck(frame.CheckerFunc(func() error {
-			return analyticsEngine.Healthy(ctx)
-		}))
-	}
+	// Analytics reachability is reported at startup (log.Warn above) but not
+	// gated on readiness. The BFF must keep serving every other route when the
+	// metrics backend is unreachable or mis-authenticated — only /analytics/*
+	// degrades.
 
 	svc.AddHealthCheck(frame.CheckerFunc(func() error {
 		for _, svcID := range buildSpecServiceIDs(specSources) {
@@ -197,7 +196,6 @@ func main() {
 		return fmt.Errorf("no OpenAPI specs loaded")
 	}))
 
-	log = util.Log(ctx)
 	log.Info("server starting",
 		"version", frameversion.Version,
 		"commit", frameversion.Commit,
