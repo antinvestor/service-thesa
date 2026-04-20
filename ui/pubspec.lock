@@ -951,14 +951,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.3.0"
-  openid_client:
-    dependency: "direct main"
-    description:
-      name: openid_client
-      sha256: "5cf6fee07fc6ac855172738d450b6f1b68b34d08faf312c0e741e2199411aa71"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.10"
   package_config:
     dependency: transitive
     description:
