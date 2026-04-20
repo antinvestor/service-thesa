@@ -32,6 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'core/auth/migration.dart';
 import 'core/auth/runtime_provider.dart';
 import 'core/config/url_strategy.dart';
 import 'core/networking/runtime_transport.dart';
@@ -49,9 +50,15 @@ import 'features/profile/profile_service.dart';
 import 'features/settings/settings_service.dart';
 import 'features/trustage/trustage_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   configureUrlStrategy();
+
+  // One-time migration: wipe legacy openid_client tokens from secure
+  // storage so the runtime prompts for a fresh sign-in the first time a
+  // pre-migration install launches the new build. Subsequent launches
+  // see the flag set in SharedPreferences and no-op.
+  await migrateLegacyAuthIfNeeded();
 
   // Construct the auth runtime once at app start so every ProviderScope
   // consumer shares the same instance.
