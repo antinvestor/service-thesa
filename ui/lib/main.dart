@@ -54,8 +54,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   configureUrlStrategy();
 
-  // One-time migration: wipe legacy openid_client tokens from secure
-  // storage so the runtime prompts for a fresh sign-in the first time a
+  // One-time migration: wipe legacy auth-stack tokens from secure storage
+  // so the runtime prompts for a fresh sign-in the first time a
   // pre-migration install launches the new build. Subsequent launches
   // see the flag set in SharedPreferences and no-op.
   await migrateLegacyAuthIfNeeded();

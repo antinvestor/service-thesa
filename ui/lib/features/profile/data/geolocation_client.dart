@@ -7,7 +7,6 @@ import 'package:fixnum/fixnum.dart';
 
 import '../../../core/networking/runtime_transport.dart';
 import '../../../core/services/api_config.dart';
-import '../../../core/services/connect_client.dart';
 
 // ─── Client Provider ──────────────────────────────────────────────────────────
 
@@ -15,19 +14,13 @@ import '../../../core/services/connect_client.dart';
 /// `AuthRuntime.fetch` via [RuntimeTransport].
 final geolocationClientProvider =
     FutureProvider<ConnectClientBase<GeolocationServiceClient>>((ref) async {
-  final tokenManager = ref.watch(tokenManagerProvider);
-  final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
   final runtime = ref.watch(authRuntimeProvider);
-
-  await tokenManager.initialize();
 
   return newClient<GeolocationServiceClient>(
     defaultEndpoint: 'https://geolocation.antinvestor.com',
     createServiceClient: GeolocationServiceClient.new,
     createTransport: createRuntimeTransportFactory(runtime),
     endpoint: ApiConfig.geolocationBaseUrl,
-    tokenManager: tokenManager,
-    onTokenRefresh: onTokenRefresh,
   );
 });
 

@@ -4,11 +4,11 @@ import '../services/api_config.dart';
 
 /// Auth-runtime configuration for the thesa admin console.
 ///
-/// Values mirror the legacy [ApiConfig] OAuth2 settings and the existing
-/// desktop loopback used by the retired openid_client flow
-/// (`http://localhost:5173/auth/callback`). The redirect path is kept
-/// identical so an already-registered Hydra client continues to accept
-/// the new runtime's authorize requests unchanged.
+/// Values mirror the [ApiConfig] OAuth2 settings and the desktop loopback
+/// redirect path (`http://localhost:5173/auth/callback`) kept identical
+/// to the pre-migration registration so an already-registered Hydra
+/// client continues to accept the runtime's authorize requests
+/// unchanged.
 ///
 /// `apiBaseUrl` holds the shared API origin; per-service endpoints
 /// (tenancy, profile, device, payment, …) remain in [ApiConfig] and are
