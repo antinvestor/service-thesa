@@ -54,9 +54,7 @@ void main() {
   configureUrlStrategy();
 
   // Construct the auth runtime once at app start so every ProviderScope
-  // consumer shares the same instance. The legacy AuthService +
-  // AuthRepository are still present for now; subsequent dispatches rewire
-  // callers onto the runtime directly.
+  // consumer shares the same instance.
   final AuthRuntime authRuntime = buildThesaRuntime();
 
   // Register admin services before app starts.
