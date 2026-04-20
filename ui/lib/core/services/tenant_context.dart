@@ -1,7 +1,5 @@
-import 'package:antinvestor_api_common/antinvestor_api_common.dart';
+import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../features/auth/data/auth_repository.dart';
 
 /// Represents the active tenant/partition context for the admin console.
 class TenantContext {
@@ -50,17 +48,20 @@ class TenantContext {
       );
 }
 
-/// Extracts tenant context from the JWT access token claims.
+/// Extracts tenant context from the runtime's decoded token claims.
+///
+/// The runtime owns the access/ID tokens; it surfaces the decoded claims
+/// via `getClaims()` / `getUserClaims()` without letting the raw token
+/// cross back into application code.
 final jwtTenantContextProvider =
     FutureProvider<TenantContext>((ref) async {
-  final authRepo = ref.watch(authRepositoryProvider);
-  final accessToken = await authRepo.readToken('access_token');
-  if (accessToken == null) {
+  final runtime = ref.watch(authRuntimeProvider);
+  if (!runtime.isAuthenticated) {
     return const TenantContext(tenantId: '', partitionId: '');
   }
 
   try {
-    final claims = JwtUtils.parseJwt(accessToken);
+    final claims = await runtime.getClaims();
     final tenantId = claims['tenant_id'] as String? ?? '';
     final partitionId = claims['partition_id'] as String? ?? '';
     final accessId = claims['access_id'] as String? ?? '';
@@ -69,6 +70,15 @@ final jwtTenantContextProvider =
     final roles = <String>[];
     if (rolesRaw is List) {
       roles.addAll(rolesRaw.map((e) => e.toString()));
+    } else {
+      // Fall back to realm_access.roles (Hydra / Keycloak shape).
+      final realm = claims['realm_access'];
+      if (realm is Map) {
+        final realmRoles = realm['roles'];
+        if (realmRoles is List) {
+          roles.addAll(realmRoles.map((e) => e.toString()));
+        }
+      }
     }
 
     return TenantContext(

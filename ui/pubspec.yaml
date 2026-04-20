@@ -55,11 +55,19 @@ dependencies:
   antinvestor_api_ledger: ^1.53.0
   antinvestor_api_settings: ^1.53.0
   http: ^1.3.0
-  openid_client: ^0.4.10
-  flutter_secure_storage: ^10.0.0
+  # Used directly only by lib/core/auth/migration.dart to wipe stale
+  # legacy tokens on first launch after the auth-runtime migration.
+  # antinvestor_auth_runtime also depends on it transitively; version
+  # pinned by the dependency_overrides block below.
+  flutter_secure_storage: ^9.2.2
   url_launcher: ^6.3.2
   web: ^1.1.1
   csv: ^8.0.0
+  shared_preferences: ^2.3.2
+
+  # Auth runtime (path-linked during migration; published once stable).
+  antinvestor_auth_runtime:
+    path: ../../service-authentication/ui/runtime
 
   # ── Antinvestor UI Libraries (published on pub.dev) ───────────────────────
   antinvestor_ui_core: ^0.2.0
@@ -88,7 +96,13 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 dependency_overrides:
-  jose: ^0.3.5+2
+  # antinvestor_ui_core ^0.2.0 declares flutter_secure_storage ^10.0.0 but
+  # antinvestor_auth_runtime (the actual consumer) caps at ^9.2.2. Pin to
+  # 9.2.4 so the runtime keeps working until ui_core publishes a version
+  # relaxed for 10.x. flutter_secure_storage is only used transitively by
+  # the runtime plus one direct call in lib/core/auth/migration.dart for
+  # the one-time legacy token wipe.
+  flutter_secure_storage: ^9.2.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

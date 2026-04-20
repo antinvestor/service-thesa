@@ -1,134 +1,97 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart'
+    as runtime;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:thesa/features/auth/data/auth_repository.dart';
-import 'package:thesa/features/auth/data/auth_service.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:thesa/features/auth/data/auth_state_provider.dart';
 
-class _StubAuthService extends AuthService {
-  _StubAuthService()
-      : super(
-          const FlutterSecureStorage(),
-          issuerUrl: 'https://example.com',
-          clientId: 'test-client',
-        );
-}
+import 'support/mock_auth_runtime.dart';
 
-class _FakeAuthRepository extends AuthRepository {
-  _FakeAuthRepository({
-    required this.initiallyLoggedIn,
-    required this.loginCompletesLocally,
-  }) : super(_StubAuthService(), const FlutterSecureStorage());
-
-  final bool initiallyLoggedIn;
-  final bool loginCompletesLocally;
-
-  bool _loggedIn = false;
-  bool _loggedOut = false;
-
-  @override
-  Future<bool> isLoggedIn() async {
-    return _loggedOut ? false : (_loggedIn || initiallyLoggedIn);
-  }
-
-  @override
-  Future<bool> login() async {
-    _loggedIn = loginCompletesLocally;
-    return loginCompletesLocally;
-  }
-
-  @override
-  Future<void> logout() async {
-    _loggedIn = false;
-    _loggedOut = true;
-  }
-
-  @override
-  Future<({String? token, bool needsRelogin})> ensureValidAccessTokenWithStatus({
-    int maxRetries = 3,
-    Duration retryDelay = const Duration(seconds: 2),
-  }) async {
-    if (_loggedOut) return (token: null, needsRelogin: true);
-    if (_loggedIn || initiallyLoggedIn) {
-      return (token: 'token', needsRelogin: false);
-    }
-    return (token: null, needsRelogin: true);
-  }
-
-  @override
-  Future<Duration?> getTimeUntilRefreshNeeded() async {
-    return const Duration(hours: 1);
-  }
-}
-
+/// Exercises the thesa-level [authStateProvider] adapter, which mirrors
+/// the runtime's `AuthState` stream into the tri-state enum (authenticated /
+/// unauthenticated / loading) that the router + UI consume.
 void main() {
-  ProviderContainer makeContainer(_FakeAuthRepository authRepository) {
+  ProviderContainer containerWith(MockAuthRuntime rt) {
     final container = ProviderContainer(
-      overrides: [
-        authRepositoryProvider.overrideWithValue(authRepository),
-      ],
+      overrides: [runtime.authRuntimeProvider.overrideWithValue(rt)],
     );
     addTearDown(container.dispose);
     return container;
   }
 
-  test('initial auth state is unauthenticated when there is no session', () async {
-    final container = makeContainer(
-      _FakeAuthRepository(
-        initiallyLoggedIn: false,
-        loginCompletesLocally: false,
-      ),
-    );
+  test('initial auth state is unauthenticated when runtime has no session',
+      () async {
+    final rt = MockAuthRuntime();
+    final container = containerWith(rt);
 
     final state = await container.read(authStateProvider.future);
 
     expect(state, AuthState.unauthenticated);
   });
 
-  test('web login redirect does not mark the user authenticated early', () async {
-    final container = makeContainer(
-      _FakeAuthRepository(
-        initiallyLoggedIn: false,
-        loginCompletesLocally: false,
-      ),
+  test('existing authenticated runtime surfaces as authenticated', () async {
+    final rt = MockAuthRuntime.authenticated(
+      claimsMap: const {'sub': 'user-1', 'tenant_id': 'tenant-42'},
     );
+    final container = containerWith(rt);
 
-    await container.read(authStateProvider.future);
-    await container.read(authStateProvider.notifier).login();
+    final state = await container.read(authStateProvider.future);
 
-    expect(
-      container.read(authStateProvider).requireValue,
-      AuthState.unauthenticated,
-    );
+    expect(state, AuthState.authenticated);
   });
 
-  test('completed login marks the user authenticated', () async {
-    final container = makeContainer(
-      _FakeAuthRepository(
-        initiallyLoggedIn: false,
-        loginCompletesLocally: true,
-      ),
-    );
+  test('login delegates to runtime.ensureAuthenticated and flips state',
+      () async {
+    final rt = MockAuthRuntime();
+    final container = containerWith(rt);
 
     await container.read(authStateProvider.future);
+    expect(rt.ensureAuthenticatedCalls, 0);
+
     await container.read(authStateProvider.notifier).login();
 
+    expect(rt.ensureAuthenticatedCalls, 1);
     expect(
       container.read(authStateProvider).requireValue,
       AuthState.authenticated,
     );
   });
 
-  test('existing valid session resolves as authenticated', () async {
-    final container = makeContainer(
-      _FakeAuthRepository(
-        initiallyLoggedIn: true,
-        loginCompletesLocally: false,
-      ),
+  test('logout delegates to runtime.logout and flips state to unauthenticated',
+      () async {
+    final rt = MockAuthRuntime.authenticated();
+    final container = containerWith(rt);
+
+    await container.read(authStateProvider.future);
+    expect(
+      container.read(authStateProvider).requireValue,
+      AuthState.authenticated,
     );
 
-    final state = await container.read(authStateProvider.future);
+    await container.read(authStateProvider.notifier).logout();
 
-    expect(state, AuthState.authenticated);
+    expect(rt.logoutCalls, 1);
+    expect(
+      container.read(authStateProvider).requireValue,
+      AuthState.unauthenticated,
+    );
+  });
+
+  test('runtime refreshing state collapses to thesa-level loading', () async {
+    final rt = MockAuthRuntime.authenticated();
+    final container = containerWith(rt);
+
+    await container.read(authStateProvider.future);
+
+    // Drive the runtime into a transient refreshing state; thesa's
+    // adapter must map this to `AuthState.loading`, not unauthenticated,
+    // so the router doesn't bounce the user to /login mid-refresh.
+    rt.setAuthState(runtime.AuthState.refreshing);
+    // Allow the subscription to settle.
+    await Future<void>.delayed(Duration.zero);
+
+    expect(
+      container.read(authStateProvider),
+      const AsyncValue<AuthState>.data(AuthState.loading),
+    );
   });
 }

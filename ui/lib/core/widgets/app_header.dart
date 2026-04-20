@@ -1,19 +1,24 @@
+import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart';
 import 'package:antinvestor_ui_notification/antinvestor_ui_notification.dart'
     show NotificationBadge;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/auth/data/auth_repository.dart';
 import '../services/search_provider.dart';
 import '../services/tenant_context.dart';
 import '../theme/app_colors.dart';
 import 'tenant_picker.dart';
 
-/// Provider that loads the current user info from the JWT token.
+/// Provider that loads the current user info from the ID token claims
+/// exposed by the auth runtime. Returns `null` when the user is not
+/// authenticated or no claims are available yet.
 final userInfoProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
-  final authRepo = ref.watch(authRepositoryProvider);
-  return authRepo.getUserInfo();
+  final runtime = ref.watch(authRuntimeProvider);
+  if (!runtime.isAuthenticated) return null;
+  final claims = await runtime.getClaims();
+  if (claims.isEmpty) return null;
+  return claims;
 });
 
 class AppHeader extends ConsumerWidget implements PreferredSizeWidget {

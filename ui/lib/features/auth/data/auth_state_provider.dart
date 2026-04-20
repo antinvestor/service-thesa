@@ -1,104 +1,86 @@
 import 'dart:async';
 
+import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart'
+    as runtime;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'auth_repository.dart';
-import 'auth_service.dart';
-
-/// Authentication state.
+/// Authentication state exposed to the thesa admin console.
+///
+/// Mirrors the legacy tri-state enum so existing consumers (router,
+/// login page, splash, drawer) continue to compile unchanged. The
+/// underlying source of truth is [runtime.AuthRuntime.authStateStream]
+/// — the runtime owns all OAuth + refresh logic.
 enum AuthState { authenticated, unauthenticated, loading }
 
-/// Notifier that manages auth state transitions.
+AuthState _map(runtime.AuthState s) {
+  switch (s) {
+    case runtime.AuthState.authenticated:
+      return AuthState.authenticated;
+    case runtime.AuthState.unauthenticated:
+      return AuthState.unauthenticated;
+    case runtime.AuthState.initializing:
+    case runtime.AuthState.refreshing:
+      return AuthState.loading;
+    case runtime.AuthState.error:
+      return AuthState.unauthenticated;
+  }
+}
+
+/// Thesa-level auth state notifier. Delegates to the runtime but keeps
+/// the `login()` / `logout()` surface expected by existing UI call
+/// sites (login page, router redirect).
 class AuthStateNotifier extends AsyncNotifier<AuthState> {
-  Timer? _refreshTimer;
+  StreamSubscription<runtime.AuthState>? _sub;
 
   @override
   Future<AuthState> build() async {
-    ref.onDispose(() => _refreshTimer?.cancel());
+    final rt = ref.watch(runtime.authRuntimeProvider);
 
-    final authRepo = ref.watch(authRepositoryProvider);
-    final isLoggedIn = await authRepo.isLoggedIn();
+    _sub?.cancel();
+    _sub = rt.authStateStream.listen((rs) {
+      if (!ref.mounted) return;
+      state = AsyncValue.data(_map(rs));
+    });
+    ref.onDispose(() {
+      _sub?.cancel();
+      _sub = null;
+    });
 
-    if (isLoggedIn) {
-      final result = await authRepo.ensureValidAccessTokenWithStatus();
-      if (result.token != null) {
-        _scheduleTokenRefresh();
-        return AuthState.authenticated;
-      }
-      if (result.needsRelogin) return AuthState.unauthenticated;
-      // Transient error — keep session alive
-      _scheduleTokenRefresh();
-      return AuthState.authenticated;
-    }
-    return AuthState.unauthenticated;
+    return _map(rt.state);
   }
 
-  /// Trigger OAuth login flow.
+  /// Trigger login via the runtime.
   Future<void> login() async {
     state = const AsyncValue.loading();
     try {
-      final authRepo = ref.read(authRepositoryProvider);
-      final isAuthenticated = await authRepo.login();
+      final rt = ref.read(runtime.authRuntimeProvider);
+      await rt.ensureAuthenticated();
       if (!ref.mounted) return;
-      if (isAuthenticated) {
-        _scheduleTokenRefresh();
-        state = const AsyncValue.data(AuthState.authenticated);
-        return;
-      }
-      state = const AsyncValue.data(AuthState.unauthenticated);
+      state = AsyncValue.data(_map(rt.state));
     } catch (e, stack) {
-      if (ref.mounted) state = AsyncValue.error(e, stack);
+      debugPrint('[Auth] Login failed: $e');
+      if (ref.mounted) {
+        state = AsyncValue.error(e, stack);
+      }
       rethrow;
     }
   }
 
-  /// Clear tokens and redirect to login.
+  /// Trigger logout via the runtime.
   Future<void> logout() async {
     state = const AsyncValue.loading();
     try {
-      _refreshTimer?.cancel();
-      final authRepo = ref.read(authRepositoryProvider);
-      await authRepo.logout();
+      final rt = ref.read(runtime.authRuntimeProvider);
+      await rt.logout();
       if (!ref.mounted) return;
       state = const AsyncValue.data(AuthState.unauthenticated);
     } catch (e, stack) {
-      if (ref.mounted) state = AsyncValue.error(e, stack);
-    }
-  }
-
-  /// Proactive background token refresh.
-  /// Refreshes 5 minutes before expiry, retries with backoff on transient errors.
-  void _scheduleTokenRefresh() {
-    _refreshTimer?.cancel();
-
-    // Check every 30 seconds whether we need to refresh
-    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
-      try {
-        final authRepo = ref.read(authRepositoryProvider);
-        final timeUntil = await authRepo.getTimeUntilRefreshNeeded();
-
-        if (timeUntil != null && timeUntil <= Duration.zero) {
-          debugPrint('[Auth] Token expiring soon, refreshing...');
-          final result = await authRepo.refreshTokenWithResult();
-
-          switch (result.result) {
-            case TokenRefreshResult.success:
-              debugPrint('[Auth] Background token refresh succeeded');
-              break;
-            case TokenRefreshResult.permanentError:
-              debugPrint('[Auth] Permanent refresh error, logging out');
-              await logout();
-              break;
-            case TokenRefreshResult.transientError:
-              debugPrint('[Auth] Transient refresh error, will retry');
-              break;
-          }
-        }
-      } catch (e) {
-        debugPrint('[Auth] Background refresh check error: $e');
+      debugPrint('[Auth] Logout failed: $e');
+      if (ref.mounted) {
+        state = AsyncValue.error(e, stack);
       }
-    });
+    }
   }
 }
 
