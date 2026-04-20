@@ -1,8 +1,9 @@
+import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart'
+    show authRuntimeProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../data/auth_state_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -22,7 +23,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     });
 
     try {
-      await ref.read(authStateProvider.notifier).login();
+      // Drive sign-in through the runtime directly; the router's redirect
+      // picks up the resulting `authenticated` state via the `authStateProvider`
+      // stream and navigates to `/`.
+      final runtime = ref.read(authRuntimeProvider);
+      await runtime.ensureAuthenticated();
     } catch (e) {
       if (mounted) {
         setState(() => _error = e.toString());
