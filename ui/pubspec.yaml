@@ -60,6 +60,11 @@ dependencies:
   url_launcher: ^6.3.2
   web: ^1.1.1
   csv: ^8.0.0
+  shared_preferences: ^2.3.2
+
+  # Auth runtime (path-linked during migration; published once stable).
+  antinvestor_auth_runtime:
+    path: ../../service-authentication/ui/runtime
 
   # ── Antinvestor UI Libraries (published on pub.dev) ───────────────────────
   antinvestor_ui_core: ^0.2.0
@@ -89,6 +94,10 @@ dev_dependencies:
 
 dependency_overrides:
   jose: ^0.3.5+2
+  # antinvestor_auth_runtime caps at ^9.2.2; antinvestor_ui_core wants
+  # ^10.0.0. Pin both to 9.2.4 so the runtime keeps working until ui_core
+  # publishes a version relaxed for 10.x.
+  flutter_secure_storage: ^9.2.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -1,3 +1,5 @@
+import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart'
+    show AuthRuntime, authRuntimeProvider;
 import 'package:antinvestor_ui_audit/antinvestor_ui_audit.dart'
     show auditTransportProvider;
 import 'package:antinvestor_ui_billing/antinvestor_ui_billing.dart'
@@ -32,6 +34,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
 import 'app.dart';
+import 'core/auth/runtime_provider.dart';
 import 'core/config/url_strategy.dart';
 import 'core/services/api_config.dart';
 import 'core/services/auth_bridge.dart';
@@ -52,6 +55,12 @@ import 'features/trustage/trustage_service.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   configureUrlStrategy();
+
+  // Construct the auth runtime once at app start so every ProviderScope
+  // consumer shares the same instance. The legacy AuthService +
+  // AuthRepository are still present for now; subsequent dispatches rewire
+  // callers onto the runtime directly.
+  final AuthRuntime authRuntime = buildThesaRuntime();
 
   // Register admin services before app starts.
   // Existing services (thesa's own pages)
@@ -76,6 +85,10 @@ void main() {
   runApp(
     ProviderScope(
       overrides: [
+        // Share the single runtime instance with every consumer of
+        // `authRuntimeProvider` — including the transport layer wired in
+        // THESA-2.
+        authRuntimeProvider.overrideWithValue(authRuntime),
         // Bridge thesa auth → ui_core AuthTokenProvider
         // Allows all service UI library providers to authenticate API calls.
         authTokenProviderProvider.overrideWith((ref) {

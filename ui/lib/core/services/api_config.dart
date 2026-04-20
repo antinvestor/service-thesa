@@ -27,10 +27,17 @@ class ApiConfig {
 
   /// When set, provides the default base for all service endpoints.
   /// Individual `*_URL` vars take precedence over this.
+  ///
+  /// Also exposed publicly as [apiBaseUrl] for callers (e.g. the auth
+  /// runtime config) that need the shared origin directly.
   static const String _apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'https://api.stawi.org',
   );
+
+  /// Shared base URL for all Antinvestor services. Equivalent to the
+  /// `API_BASE_URL` dart-define; falls back to `https://api.stawi.org`.
+  static const String apiBaseUrl = _apiBaseUrl;
 
   // ── Per-service endpoint overrides ──────────────────────────────────────
   //
