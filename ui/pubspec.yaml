@@ -65,9 +65,7 @@ dependencies:
   csv: ^8.0.0
   shared_preferences: ^2.3.2
 
-  # Auth runtime (path-linked during migration; published once stable).
-  antinvestor_auth_runtime:
-    path: ../../service-authentication/ui/runtime
+  antinvestor_auth_runtime: ^0.3.1
 
   # ── Antinvestor UI Libraries (published on pub.dev) ───────────────────────
   antinvestor_ui_core: ^0.2.0
