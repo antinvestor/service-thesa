@@ -4,7 +4,6 @@ import 'package:antinvestor_ui_audit/antinvestor_ui_audit.dart'
     show auditTransportProvider;
 import 'package:antinvestor_ui_billing/antinvestor_ui_billing.dart'
     show billingTransportProvider;
-import 'package:antinvestor_ui_core/api/api_base.dart';
 import 'package:antinvestor_ui_core/auth/role_provider.dart';
 import 'package:antinvestor_ui_core/permissions/permission_manifest.dart';
 import 'package:antinvestor_ui_core/permissions/permission_provider.dart';
@@ -31,17 +30,15 @@ import 'package:antinvestor_ui_trustage/antinvestor_ui_trustage.dart'
     show trustageTransportProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
 
 import 'app.dart';
 import 'core/auth/runtime_provider.dart';
 import 'core/config/url_strategy.dart';
+import 'core/networking/runtime_transport.dart';
 import 'core/services/api_config.dart';
-import 'core/services/auth_bridge.dart';
 import 'core/services/permission_checker.dart';
 import 'core/services/tenant_context.dart';
 import 'features/audit/audit_service.dart';
-import 'features/auth/data/auth_repository.dart';
 import 'features/billing/billing_service.dart';
 import 'features/files/files_service.dart';
 import 'features/geolocation/geolocation_service.dart';
@@ -86,88 +83,116 @@ void main() {
     ProviderScope(
       overrides: [
         // Share the single runtime instance with every consumer of
-        // `authRuntimeProvider` — including the transport layer wired in
-        // THESA-2.
+        // `authRuntimeProvider` — including every per-service transport
+        // provider below.
         authRuntimeProvider.overrideWithValue(authRuntime),
-        // Bridge thesa auth → ui_core AuthTokenProvider
-        // Allows all service UI library providers to authenticate API calls.
-        authTokenProviderProvider.overrideWith((ref) {
-          final authRepo = ref.watch(authRepositoryProvider);
-          return ThesaAuthTokenBridge(authRepo);
-        }),
         // Bridge thesa JWT roles → ui_core string-based roles
         // Allows RoleGuard and role-based nav filtering to work.
         currentUserRolesProvider.overrideWith((ref) async {
           final ctx = await ref.watch(jwtTenantContextProvider.future);
           return ctx.roles.toSet();
         }),
-        // Batch permission check at startup.
-        // Resolves all proto-defined permissions for the current user
-        // via a single request to the thesa BFF.
+        // Batch permission check at startup — routed through the
+        // runtime's fetch so the access token stays inside the runtime.
         userPermissionsProvider.overrideWith((ref) async {
-          final authRepo = ref.watch(authRepositoryProvider);
-          final token = await authRepo.readToken('access_token');
-          if (token == null || token.isEmpty) return const <String>{};
-
-          final checker = PermissionBatchChecker(
-            http.Client(),
+          final runtime = ref.watch(authRuntimeProvider);
+          if (!runtime.isAuthenticated) return const <String>{};
+          final checker = RuntimePermissionBatchChecker(
+            runtime,
             ApiConfig.thesaBaseUrl,
           );
-          return checker.checkAll(token);
+          return checker.checkAll();
         }),
 
         // ── Library endpoint overrides ──────────────────────────────
         // Each UI library defines a default transport with a compile-time
-        // endpoint. Override them here so all libraries use ApiConfig,
-        // which supports both a shared API_BASE_URL and per-service
-        // explicit overrides (see ApiConfig docs for resolution order).
+        // endpoint. Replace them with RuntimeTransport instances pinned
+        // to the per-service base URL resolved by ApiConfig. Every RPC
+        // is then routed through `AuthRuntime.fetch`, which owns auth +
+        // refresh + token handling end-to-end.
         profileTransportProvider.overrideWith((ref) {
-          final auth = ref.watch(authTokenProviderProvider);
-          return createTransport(auth, baseUrl: ApiConfig.profileBaseUrl);
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.profileBaseUrl),
+          );
         }),
         deviceTransportProvider.overrideWith((ref) {
-          final auth = ref.watch(authTokenProviderProvider);
-          return createTransport(auth, baseUrl: ApiConfig.deviceBaseUrl);
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.deviceBaseUrl),
+          );
         }),
         settingsTransportProvider.overrideWith((ref) {
-          final auth = ref.watch(authTokenProviderProvider);
-          return createTransport(auth, baseUrl: ApiConfig.settingsBaseUrl);
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.settingsBaseUrl),
+          );
         }),
         geolocationTransportProvider.overrideWith((ref) {
-          final auth = ref.watch(authTokenProviderProvider);
-          return createTransport(auth, baseUrl: ApiConfig.geolocationBaseUrl);
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.geolocationBaseUrl),
+          );
         }),
         tenancyTransportProvider.overrideWith((ref) {
-          final auth = ref.watch(authTokenProviderProvider);
-          return createTransport(auth, baseUrl: ApiConfig.tenancyBaseUrl);
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.tenancyBaseUrl),
+          );
         }),
         notificationTransportProvider.overrideWith((ref) {
-          final auth = ref.watch(authTokenProviderProvider);
-          return createTransport(auth, baseUrl: ApiConfig.notificationBaseUrl);
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.notificationBaseUrl),
+          );
         }),
         paymentTransportProvider.overrideWith((ref) {
-          final auth = ref.watch(authTokenProviderProvider);
-          return createTransport(auth, baseUrl: ApiConfig.paymentBaseUrl);
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.paymentBaseUrl),
+          );
         }),
         ledgerTransportProvider.overrideWith((ref) {
-          final auth = ref.watch(authTokenProviderProvider);
-          return createTransport(auth, baseUrl: ApiConfig.ledgerBaseUrl);
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.ledgerBaseUrl),
+          );
         }),
         billingTransportProvider.overrideWith((ref) {
-          final auth = ref.watch(authTokenProviderProvider);
-          return createTransport(auth, baseUrl: ApiConfig.billingBaseUrl);
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.billingBaseUrl),
+          );
         }),
         filesTransportProvider.overrideWith((ref) {
-          final auth = ref.watch(authTokenProviderProvider);
-          return createTransport(auth, baseUrl: ApiConfig.filesBaseUrl);
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.filesBaseUrl),
+          );
         }),
         auditTransportProvider.overrideWith((ref) {
-          final auth = ref.watch(authTokenProviderProvider);
-          return createTransport(auth, baseUrl: ApiConfig.auditBaseUrl);
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.auditBaseUrl),
+          );
         }),
         trustageTransportProvider.overrideWith((ref) {
-          final auth = ref.watch(authTokenProviderProvider);
-          return createTransport(auth, baseUrl: ApiConfig.trustageBaseUrl);
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.trustageBaseUrl),
+          );
         }),
       ],
       child: const ThesaApp(),

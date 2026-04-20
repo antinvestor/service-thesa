@@ -1,6 +1,7 @@
 import 'package:antinvestor_api_audit/antinvestor_api_audit.dart';
 import 'package:antinvestor_api_billing/antinvestor_api_billing.dart';
 import 'package:antinvestor_api_common/antinvestor_api_common.dart';
+import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart';
 import 'package:connectrpc/connect.dart' as connect;
 import 'package:antinvestor_api_device/antinvestor_api_device.dart';
 import 'package:antinvestor_api_files/antinvestor_api_files.dart';
@@ -14,85 +15,57 @@ import 'package:antinvestor_api_profile/antinvestor_api_profile.dart'
     hide DeviceClient, newDeviceClient, Struct, STATE, STATUS;
 import 'package:antinvestor_api_settings/antinvestor_api_settings.dart';
 import 'package:antinvestor_api_tenancy/antinvestor_api_tenancy.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../../features/auth/data/auth_repository.dart';
-import '../../features/auth/data/auth_service.dart' as auth;
+import '../networking/runtime_transport.dart';
 import 'api_config.dart';
 import 'tenant_context.dart';
 import 'tenant_interceptor.dart';
-import 'transport/transport.dart';
 
-// ─── Token Manager ───────────────────────────────────────────────────────────
+// ─── Token Manager (legacy no-op stub) ────────────────────────────────────────
+//
+// antinvestor_api_common's `newClient` family requires a [TokenManager] +
+// [TokenRefreshCallback] pair so its auth interceptors install. Since the
+// auth runtime now owns token lifetime, persistence, and refresh end-to-end
+// (and [RuntimeTransport] overrides the `Authorization` header before the
+// SDK's interceptor sees the request), the manager's hooks are no-ops.
+//
+// A future dispatch will retire these stubs entirely once the SDK grows a
+// "no token manager needed" constructor path.
 
-/// Token manager using antinvestor_api_common's TokenManager.
-///
-/// Handles:
-/// - Persistent token storage via FlutterSecureStorage
-/// - Reactive refresh on 401 via auth service
-/// - Automatic logout on permanent errors
+final secureStorageProvider = Provider<FlutterSecureStorage>(
+  (ref) => const FlutterSecureStorage(),
+);
+
 final tokenManagerProvider = Provider<TokenManager>((ref) {
-  final authRepo = ref.watch(authRepositoryProvider);
-
   final tokenManager = TokenManager(
     persistTokens: (accessToken, refreshToken) async {
-      // Access token managed here; refresh token managed by AuthService
-      if (accessToken != null) {
-        await authRepo.writeToken('access_token', accessToken);
-      } else {
-        await authRepo.deleteToken('access_token');
-      }
-      // Only clear refresh token during logout (both null)
-      if (accessToken == null && refreshToken == null) {
-        await authRepo.deleteToken('refresh_token');
-      }
+      // No-op: runtime owns token persistence via its own secure storage.
     },
-    loadTokens: () async {
-      final accessToken = await authRepo.readToken('access_token');
-      final refreshToken = await authRepo.readToken('refresh_token');
-      if (accessToken != null) {
-        return TokenPair(
-            accessToken: accessToken, refreshToken: refreshToken);
-      }
-      return null;
-    },
+    loadTokens: () async => null,
     onRefreshToken: (String? refreshToken) async {
-      debugPrint('[TokenManager] onRefreshToken called, refreshing...');
-      final result = await authRepo.refreshTokenWithResult();
-      if (result.result != auth.TokenRefreshResult.success) {
-        throw Exception(result.error ?? 'Token refresh failed');
-      }
-      final token = await authRepo.getAccessToken();
-      if (token == null) throw Exception('No access token after refresh');
-      return token;
+      // Runtime owns refresh; this path is never reached because
+      // RuntimeTransport rewrites Authorization before the SDK's auth
+      // interceptor runs.
+      throw Exception(
+        'TokenManager refresh path retired; AuthRuntime owns refresh',
+      );
     },
     onLogout: () async {
-      debugPrint('[TokenManager] Permanent error, logging out');
-      await authRepo.logout();
+      // Delegated to whichever surface triggered logout; the runtime
+      // wipes its own credentials on `rt.logout()`.
     },
   );
-
   ref.onDispose(() => tokenManager.dispose());
   return tokenManager;
 });
 
-/// Token refresh callback for API clients.
-final tokenRefreshCallbackProvider =
-    Provider<TokenRefreshCallback>((ref) {
-  final authRepo = ref.watch(authRepositoryProvider);
-
+final tokenRefreshCallbackProvider = Provider<TokenRefreshCallback>((ref) {
   return (String? refreshToken) async {
-    final result = await authRepo.refreshTokenWithResult();
-    if (result.result == auth.TokenRefreshResult.permanentError) {
-      throw Exception(result.error ?? 'Token refresh failed permanently');
-    }
-    if (result.result != auth.TokenRefreshResult.success) {
-      throw Exception(result.error ?? 'Token refresh failed');
-    }
-    final token = await authRepo.getAccessToken();
-    if (token == null) throw Exception('No token after refresh');
-    return token;
+    throw Exception(
+      'Legacy TokenRefreshCallback invoked; AuthRuntime owns refresh',
+    );
   };
 });
 
@@ -107,8 +80,6 @@ final tenantInterceptorProvider =
   final jwtCtx = jwt.whenOrNull(data: (ctx) => ctx) ??
       const TenantContext(tenantId: '', partitionId: '');
 
-  // Create the interceptor for internal users (cross-tenant) and owners
-  // (cross-partition within their tenant) who can switch context.
   if (!jwtCtx.isInternal && !jwtCtx.isOwner) return const [];
 
   return [
@@ -121,20 +92,19 @@ final tenantInterceptorProvider =
 
 // ─── Partition Client ────────────────────────────────────────────────────────
 
-/// Partition API client provider.
-///
-/// Creates an authenticated TenancyClient using [newTenancyClient]
-/// with TokenManager for automatic token management.
+/// Tenancy API client provider — routes RPCs through `AuthRuntime.fetch`
+/// via [RuntimeTransport].
 final tenancyClientProvider =
     FutureProvider<TenancyClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  final runtime = ref.watch(authRuntimeProvider);
 
   await tokenManager.initialize();
 
   return newTenancyClient(
-    createTransport: createTransportFactory(),
+    createTransport: createRuntimeTransportFactory(runtime),
     endpoint: ApiConfig.tenancyBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
@@ -142,7 +112,6 @@ final tenancyClientProvider =
   );
 });
 
-/// Expose the raw TenancyServiceClient stub for direct RPC calls.
 final tenancyServiceClientProvider =
     FutureProvider<TenancyServiceClient>((ref) async {
   final client = await ref.watch(tenancyClientProvider.future);
@@ -151,17 +120,17 @@ final tenancyServiceClientProvider =
 
 // ─── Profile Client ──────────────────────────────────────────────────────────
 
-/// Profile API client provider.
 final profileClientProvider =
     FutureProvider<ProfileClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  final runtime = ref.watch(authRuntimeProvider);
 
   await tokenManager.initialize();
 
   return newProfileClient(
-    createTransport: createTransportFactory(),
+    createTransport: createRuntimeTransportFactory(runtime),
     endpoint: ApiConfig.profileBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
@@ -169,7 +138,6 @@ final profileClientProvider =
   );
 });
 
-/// Expose the raw ProfileServiceClient stub.
 final profileServiceClientProvider =
     FutureProvider<ProfileServiceClient>((ref) async {
   final client = await ref.watch(profileClientProvider.future);
@@ -178,17 +146,17 @@ final profileServiceClientProvider =
 
 // ─── Device Client ──────────────────────────────────────────────────────────
 
-/// Device API client provider.
 final deviceClientProvider =
     FutureProvider<DeviceClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  final runtime = ref.watch(authRuntimeProvider);
 
   await tokenManager.initialize();
 
   return newDeviceClient(
-    createTransport: createTransportFactory(),
+    createTransport: createRuntimeTransportFactory(runtime),
     endpoint: ApiConfig.deviceBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
@@ -196,7 +164,6 @@ final deviceClientProvider =
   );
 });
 
-/// Expose the raw DeviceServiceClient stub.
 final deviceServiceClientProvider =
     FutureProvider<DeviceServiceClient>((ref) async {
   final client = await ref.watch(deviceClientProvider.future);
@@ -210,11 +177,12 @@ final notificationClientProvider =
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  final runtime = ref.watch(authRuntimeProvider);
   await tokenManager.initialize();
   return newClient<NotificationServiceClient>(
     defaultEndpoint: 'https://notification.antinvestor.com',
     createServiceClient: NotificationServiceClient.new,
-    createTransport: createTransportFactory(),
+    createTransport: createRuntimeTransportFactory(runtime),
     endpoint: ApiConfig.notificationBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
@@ -235,11 +203,12 @@ final paymentClientProvider =
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  final runtime = ref.watch(authRuntimeProvider);
   await tokenManager.initialize();
   return newClient<PaymentServiceClient>(
     defaultEndpoint: 'https://payment.antinvestor.com',
     createServiceClient: PaymentServiceClient.new,
-    createTransport: createTransportFactory(),
+    createTransport: createRuntimeTransportFactory(runtime),
     endpoint: ApiConfig.paymentBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
@@ -260,9 +229,10 @@ final ledgerClientProvider =
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  final runtime = ref.watch(authRuntimeProvider);
   await tokenManager.initialize();
   return newLedgerClient(
-    createTransport: createTransportFactory(),
+    createTransport: createRuntimeTransportFactory(runtime),
     endpoint: ApiConfig.ledgerBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
@@ -283,9 +253,10 @@ final settingsClientProvider =
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  final runtime = ref.watch(authRuntimeProvider);
   await tokenManager.initialize();
   return newSettingsClient(
-    createTransport: createTransportFactory(),
+    createTransport: createRuntimeTransportFactory(runtime),
     endpoint: ApiConfig.settingsBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
@@ -301,19 +272,18 @@ final settingsServiceClientProvider =
 
 // ─── Billing Client ────────────────────────────────────────────────────────
 
-/// Billing API uses a direct service client (no wrapper class).
-/// Creates an authenticated transport and returns BillingServiceClient.
 final billingServiceClientProvider =
     FutureProvider<BillingServiceClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  final runtime = ref.watch(authRuntimeProvider);
   await tokenManager.initialize();
 
   final client = await newClient<BillingServiceClient>(
     defaultEndpoint: 'https://billing.antinvestor.com',
     createServiceClient: BillingServiceClient.new,
-    createTransport: createTransportFactory(),
+    createTransport: createRuntimeTransportFactory(runtime),
     endpoint: ApiConfig.billingBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
@@ -324,18 +294,18 @@ final billingServiceClientProvider =
 
 // ─── Files Client ──────────────────────────────────────────────────────────
 
-/// Files API uses a direct service client (no wrapper class).
 final filesServiceClientProvider =
     FutureProvider<FilesServiceClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  final runtime = ref.watch(authRuntimeProvider);
   await tokenManager.initialize();
 
   final client = await newClient<FilesServiceClient>(
     defaultEndpoint: 'https://files.antinvestor.com',
     createServiceClient: FilesServiceClient.new,
-    createTransport: createTransportFactory(),
+    createTransport: createRuntimeTransportFactory(runtime),
     endpoint: ApiConfig.filesBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
@@ -346,18 +316,18 @@ final filesServiceClientProvider =
 
 // ─── Audit Client ──────────────────────────────────────────────────────────
 
-/// Audit API uses a direct service client (no wrapper class).
 final auditServiceClientProvider =
     FutureProvider<AuditServiceClient>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  final runtime = ref.watch(authRuntimeProvider);
   await tokenManager.initialize();
 
   final client = await newClient<AuditServiceClient>(
     defaultEndpoint: 'https://audit.antinvestor.com',
     createServiceClient: AuditServiceClient.new,
-    createTransport: createTransportFactory(),
+    createTransport: createRuntimeTransportFactory(runtime),
     endpoint: ApiConfig.auditBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,

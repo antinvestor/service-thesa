@@ -1,27 +1,30 @@
 import 'package:antinvestor_api_common/antinvestor_api_common.dart'
     hide Timestamp, Struct;
 import 'package:antinvestor_api_geolocation/antinvestor_api_geolocation.dart';
+import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fixnum/fixnum.dart';
 
+import '../../../core/networking/runtime_transport.dart';
 import '../../../core/services/api_config.dart';
 import '../../../core/services/connect_client.dart';
-import '../../../core/services/transport/transport.dart';
 
 // ─── Client Provider ──────────────────────────────────────────────────────────
 
-/// Geolocation API client provider.
+/// Geolocation API client provider — routes RPCs through
+/// `AuthRuntime.fetch` via [RuntimeTransport].
 final geolocationClientProvider =
     FutureProvider<ConnectClientBase<GeolocationServiceClient>>((ref) async {
   final tokenManager = ref.watch(tokenManagerProvider);
   final onTokenRefresh = ref.watch(tokenRefreshCallbackProvider);
+  final runtime = ref.watch(authRuntimeProvider);
 
   await tokenManager.initialize();
 
   return newClient<GeolocationServiceClient>(
     defaultEndpoint: 'https://geolocation.antinvestor.com',
     createServiceClient: GeolocationServiceClient.new,
-    createTransport: createTransportFactory(),
+    createTransport: createRuntimeTransportFactory(runtime),
     endpoint: ApiConfig.geolocationBaseUrl,
     tokenManager: tokenManager,
     onTokenRefresh: onTokenRefresh,
