@@ -1,5 +1,5 @@
 # Stage 1: Build Go BFF
-FROM golang:1.26 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26 AS builder
 
 WORKDIR /build
 
