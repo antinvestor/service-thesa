@@ -19,3 +19,4 @@ ui/.flutter-plugins-dependencies
 .DS_Store
 Thumbs.db
 WORK_STATE.md
+.claude/
