@@ -4,4 +4,7 @@ on:
     tags: ["v*.*.*"]
 jobs:
   docker:
+    permissions:
+      contents: read
+      packages: write
     uses: antinvestor/common/.github/workflows/docker-release.yml@main
