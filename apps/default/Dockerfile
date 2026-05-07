@@ -10,9 +10,6 @@ COPY . .
 
 ARG VERSION=dev
 ARG COMMIT=unknown
-ARG TARGETOS=linux
-ARG TARGETARCH=amd64
-
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
     -trimpath \
     -ldflags="-s -w \
