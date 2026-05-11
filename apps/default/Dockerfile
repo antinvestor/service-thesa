@@ -1,5 +1,7 @@
 # Stage 1: Build Go BFF
 FROM --platform=$BUILDPLATFORM golang:1.26 AS builder
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /build
 
