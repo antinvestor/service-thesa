@@ -5,7 +5,7 @@ go 1.26
 require (
 	github.com/getkin/kin-openapi v0.136.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/pitabwire/frame v1.97.5
+	github.com/pitabwire/frame v1.97.6
 	github.com/pitabwire/util v0.9.0
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/otel/trace v1.43.0
