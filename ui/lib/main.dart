@@ -28,6 +28,8 @@ import 'package:antinvestor_ui_tenancy/antinvestor_ui_tenancy.dart'
     show tenancyTransportProvider;
 import 'package:antinvestor_ui_trustage/antinvestor_ui_trustage.dart'
     show trustageTransportProvider;
+import 'package:antinvestor_ui_fort/antinvestor_ui_fort.dart'
+    show fortTransportProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -49,6 +51,7 @@ import 'features/payment/payment_service.dart';
 import 'features/profile/profile_service.dart';
 import 'features/settings/settings_service.dart';
 import 'features/trustage/trustage_service.dart';
+import 'features/fort/fort_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +81,7 @@ Future<void> main() async {
   registerGeolocationService();
   registerAuditService();
   registerTrustageService();
+  registerFortService();
 
   // Register permission manifests from all service UI libraries.
   // These declare the proto-defined permissions each service needs,
@@ -197,6 +201,13 @@ Future<void> main() async {
           return RuntimeTransport(
             runtime: runtime,
             baseUrl: Uri.parse(ApiConfig.trustageBaseUrl),
+          );
+        }),
+        fortTransportProvider.overrideWith((ref) {
+          final runtime = ref.watch(authRuntimeProvider);
+          return RuntimeTransport(
+            runtime: runtime,
+            baseUrl: Uri.parse(ApiConfig.fortBaseUrl),
           );
         }),
       ],
@@ -361,6 +372,20 @@ void _registerPermissionManifests() {
       PermissionEntry(key: 'trustage_operate', label: 'Retry, Resume, Send Signals', scope: PermissionScope.action),
       PermissionEntry(key: 'trustage_ingest', label: 'Trigger Events', scope: PermissionScope.action),
       PermissionEntry(key: 'trustage_manage', label: 'Create & Activate Workflows', scope: PermissionScope.action),
+    ],
+  ));
+
+  // Fort (Email Deliverability) service
+  registry.register(const PermissionManifest(
+    namespace: 'service_fort',
+    permissions: [
+      PermissionEntry(key: 'fort_domain_manage', label: 'Manage Domains', description: 'Create, verify, pause, resume, and delete sending domains', scope: PermissionScope.action),
+      PermissionEntry(key: 'fort_domain_view', label: 'View Domains', description: 'View sending domain configuration and status', scope: PermissionScope.service),
+      PermissionEntry(key: 'fort_pool_manage', label: 'Manage IP Pools', description: 'Create, modify, and manage IP address pools', scope: PermissionScope.feature),
+      PermissionEntry(key: 'fort_policy_manage', label: 'Manage Policies', description: 'Create, edit, and delete delivery policies', scope: PermissionScope.feature),
+      PermissionEntry(key: 'fort_reputation_view', label: 'View Reputation', description: 'View reputation scores and history', scope: PermissionScope.feature),
+      PermissionEntry(key: 'fort_node_view', label: 'View MTA Nodes', description: 'View MTA node status and heartbeats', scope: PermissionScope.feature),
+      PermissionEntry(key: 'fort_suppression_manage', label: 'Manage Suppression', description: 'Check and manage email suppression list', scope: PermissionScope.feature),
     ],
   ));
 }

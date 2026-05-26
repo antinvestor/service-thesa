@@ -101,6 +101,10 @@ class ApiConfig {
       ? _trustageExplicit
       : '$_apiBaseUrl/trustage';
 
+  static const String _fortExplicit = String.fromEnvironment('FORT_URL');
+  static String get fortBaseUrl =>
+      _fortExplicit.isNotEmpty ? _fortExplicit : '$_apiBaseUrl/fort';
+
   static const String _thesaExplicit = String.fromEnvironment('THESA_URL');
 
   /// Thesa BFF base URL for analytics and other aggregation APIs.
@@ -124,6 +128,7 @@ class ApiConfig {
         'files': filesBaseUrl,
         'audit': auditBaseUrl,
         'trustage': trustageBaseUrl,
+        'fort': fortBaseUrl,
         'thesa': thesaBaseUrl,
       };
 
