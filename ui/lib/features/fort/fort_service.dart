@@ -39,6 +39,7 @@ const fortServiceDef = ServiceDefinition(
       label: 'Policies',
       icon: Icons.policy_outlined,
       description: 'Create, edit, and manage delivery routing policies',
+      hasDetailPage: true,
       requiredPermissions: {'fort_policy_manage'},
     ),
     SubFeatureDefinition(
