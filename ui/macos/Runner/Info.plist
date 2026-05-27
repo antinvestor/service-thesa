@@ -29,19 +29,18 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<!-- OAuth redirect handler using custom URL scheme (RFC 8252 compliant).
-	     Must match `redirectScheme` in kThesaAuthConfig
-	     (`com.antinvestor.thesa`) and the Hydra client's registered
-	     redirect URI. -->
+	     Must match `redirectScheme` in the auth config and the Hydra
+	     client's registered redirect URIs. -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.antinvestor.thesa</string>
+			<string>org.stawi.thesa</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.antinvestor.thesa</string>
+				<string>org.stawi.thesa</string>
 			</array>
 		</dict>
 	</array>

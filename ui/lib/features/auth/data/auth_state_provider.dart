@@ -68,19 +68,20 @@ class AuthStateNotifier extends AsyncNotifier<AuthState> {
   }
 
   /// Trigger logout via the runtime.
+  ///
+  /// Forces the local state to `unauthenticated` even if the runtime's
+  /// remote session revocation hangs (e.g., Hydra end_session unreachable
+  /// or blocked by CORS). The user sees an immediate transition to the
+  /// login page; the remote revocation completes in the background and
+  /// any failure is logged but not surfaced.
   Future<void> logout() async {
-    state = const AsyncValue.loading();
-    try {
-      final rt = ref.read(runtime.authRuntimeProvider);
-      await rt.logout();
-      if (!ref.mounted) return;
-      state = const AsyncValue.data(AuthState.unauthenticated);
-    } catch (e, stack) {
-      debugPrint('[Auth] Logout failed: $e');
-      if (ref.mounted) {
-        state = AsyncValue.error(e, stack);
-      }
-    }
+    state = const AsyncValue.data(AuthState.unauthenticated);
+    final rt = ref.read(runtime.authRuntimeProvider);
+    unawaited(
+      rt.logout().timeout(const Duration(seconds: 5)).catchError((Object e) {
+        debugPrint('[Auth] Background logout failed: $e');
+      }),
+    );
   }
 }
 

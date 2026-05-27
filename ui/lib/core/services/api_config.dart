@@ -140,7 +140,15 @@ class ApiConfig {
   );
   static const String oauth2ClientId = String.fromEnvironment(
     'OAUTH2_CLIENT_ID',
-    defaultValue: 'd6qbqdkpf2t52mcunf3g',
+    defaultValue: 'c2f4j7au6s7f91uqnomg',
+  );
+
+  // ── OAuth2 redirect URI ─────────────────────────────────────────────────
+
+  /// Explicit redirect URI override. When set, takes precedence over
+  /// automatic web-origin detection and the localhost fallback.
+  static const String oauth2RedirectUri = String.fromEnvironment(
+    'OAUTH2_REDIRECT_URI',
   );
 
   // ── Connection settings ─────────────────────────────────────────────────

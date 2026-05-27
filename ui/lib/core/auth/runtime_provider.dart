@@ -1,48 +1,52 @@
 import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 
+import '../config/redirect_uri.dart';
 import '../services/api_config.dart';
 
-/// Auth-runtime configuration for the thesa admin console.
-///
-/// Values mirror the [ApiConfig] OAuth2 settings and the desktop loopback
-/// redirect path (`http://localhost:5173/auth/callback`) kept identical
-/// to the pre-migration registration so an already-registered Hydra
-/// client continues to accept the runtime's authorize requests
-/// unchanged.
-///
-/// `apiBaseUrl` holds the shared API origin; per-service endpoints
-/// (tenancy, profile, device, payment, …) remain in [ApiConfig] and are
-/// wired through `runtime.fetch` by [RuntimeTransport]. The runtime
-/// v0.3.1+ detects absolute URLs and skips its own `apiBaseUrl`
-/// concatenation, so per-service routing survives end-to-end.
-///
-/// Audiences are the 9-element list required by the backend services
-/// thesa talks to: tenancy, device, profile, notification, payment,
-/// ledger, setting, thesa, file.
-const String kThesaRedirectUri = 'http://localhost:5173/auth/callback';
+/// Localhost loopback used by flutter_appauth on desktop platforms.
+const String _kDesktopLoopbackUri = 'http://localhost:5173/auth/callback';
 
-const AuthConfig kThesaAuthConfig = AuthConfig(
-  clientId: ApiConfig.oauth2ClientId,
-  idpBaseUrl: ApiConfig.oauth2IssuerUrl,
-  apiBaseUrl: ApiConfig.apiBaseUrl,
-  redirectScheme: 'com.antinvestor.thesa',
-  redirectUri: kThesaRedirectUri,
-  scopes: ['openid', 'profile', 'offline_access'],
-  audiences: [
-    'service_tenancy',
-    'service_device',
-    'service_profile',
-    'service_notification',
-    'service_payment',
-    'service_ledger',
-    'service_setting',
-    'service_thesa',
-    'service_file',
-  ],
-);
+/// Resolves the OAuth redirect URI at runtime.
+///
+/// Priority:
+///   1. Explicit `OAUTH2_REDIRECT_URI` dart-define override.
+///   2. On web: derived from `Uri.base` (the browser's current origin).
+///   3. Fallback: localhost loopback for desktop OAuth callbacks.
+String _resolveRedirectUri() {
+  if (ApiConfig.oauth2RedirectUri.isNotEmpty) {
+    return ApiConfig.oauth2RedirectUri;
+  }
+  return resolveRedirectUri(_kDesktopLoopbackUri);
+}
+
+/// Builds the auth-runtime configuration for the thesa admin console.
+///
+/// The redirect URI is resolved dynamically so login works on any
+/// host/port — not just localhost:5173. See [_resolveRedirectUri].
+@visibleForTesting
+AuthConfig buildThesaAuthConfig() => AuthConfig(
+      clientId: ApiConfig.oauth2ClientId,
+      idpBaseUrl: ApiConfig.oauth2IssuerUrl,
+      apiBaseUrl: ApiConfig.apiBaseUrl,
+      redirectScheme: 'org.stawi.thesa',
+      redirectUri: _resolveRedirectUri(),
+      scopes: const ['openid', 'profile', 'offline_access'],
+      audiences: const [
+        'service_tenancy',
+        'service_device',
+        'service_profile',
+        'service_notification',
+        'service_payment',
+        'service_ledger',
+        'service_setting',
+        'service_file',
+        'service_trustage',
+      ],
+    );
 
 /// Constructs a fresh [AuthRuntime] for the thesa admin console.
 ///
 /// Call once at app start and override `authRuntimeProvider` with the
 /// resulting instance so every consumer shares the same runtime.
-AuthRuntime buildThesaRuntime() => createAuthRuntime(kThesaAuthConfig);
+AuthRuntime buildThesaRuntime() => createAuthRuntime(buildThesaAuthConfig());
