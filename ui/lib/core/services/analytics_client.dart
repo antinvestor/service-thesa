@@ -26,7 +26,7 @@ class ThesaAnalyticsClient {
     final body = <String, dynamic>{
       'metric': metric,
       'aggregation': aggregation,
-      if (filters != null) 'filters': filters,
+      'filters': ?filters,
       ..._timeRangeFields(timeRange),
     };
 
@@ -45,7 +45,7 @@ class ThesaAnalyticsClient {
     final body = <String, dynamic>{
       'metric': metric,
       'aggregation': aggregation,
-      if (filters != null) 'filters': filters,
+      'filters': ?filters,
       ..._timeRangeFields(timeRange),
     };
 
@@ -75,7 +75,7 @@ class ThesaAnalyticsClient {
       'metric': metric,
       'group_by': groupBy,
       'aggregation': aggregation,
-      if (filters != null) 'filters': filters,
+      'filters': ?filters,
       ..._timeRangeFields(timeRange),
     };
 
@@ -105,8 +105,8 @@ class ThesaAnalyticsClient {
       'metric': metric,
       'aggregation': aggregation,
       'limit': limit,
-      if (groupBy != null) 'group_by': groupBy,
-      if (filters != null) 'filters': filters,
+      'group_by': ?groupBy,
+      'filters': ?filters,
       ..._timeRangeFields(timeRange),
     };
 

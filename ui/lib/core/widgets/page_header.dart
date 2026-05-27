@@ -30,7 +30,7 @@ class PageHeader extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
             ),
-            if (actions != null) ...actions!,
+            ...?actions,
           ],
         ),
       ],
