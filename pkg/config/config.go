@@ -32,11 +32,12 @@ type Config struct {
 // OTel metrics from all services and exposes a query API.
 type AnalyticsConfig struct {
 	Enabled     bool   `yaml:"enabled"`
-	BackendType string `yaml:"backend_type"` // "prometheus" (default) or "openobserve"
-	BackendURL  string `yaml:"backend_url"`  // metrics query endpoint, e.g. "http://mimir:9090"
+	BackendType string `yaml:"backend_type"` // "prometheus" (default), "openobserve", or "uptrace"
+	BackendURL  string `yaml:"backend_url"`  // metrics query endpoint, e.g. "http://mimir:9090" or "https://uptrace.example.com"
 	Org         string `yaml:"org"`           // OpenObserve organization (default: "default")
 	Username    string `yaml:"username"`      // OpenObserve basic-auth username
 	Password    string `yaml:"password"`      // OpenObserve basic-auth password
+	Token       string `yaml:"token"`         // Uptrace project token (bearer auth)
 }
 
 // ServerConfig describes HTTP server settings.

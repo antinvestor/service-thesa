@@ -130,6 +130,15 @@ func main() {
 				cfg.Analytics.Org,
 				ooClient,
 			)
+		case "uptrace":
+			upClient := analytics.NewUptraceHTTPClient(
+				cfg.Analytics.Token,
+				httpClient.Transport,
+			)
+			metricsBackend = analytics.NewUptraceBackend(
+				cfg.Analytics.BackendURL,
+				upClient,
+			)
 		default:
 			backendType = "prometheus"
 			metricsBackend = analytics.NewPrometheusBackend(cfg.Analytics.BackendURL, httpClient)

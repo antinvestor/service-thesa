@@ -1,7 +1,7 @@
+import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart';
 import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
 
 import '../../core/services/analytics_client.dart';
 import '../../core/services/api_config.dart';
@@ -15,7 +15,8 @@ import 'widgets/regional_performance.dart';
 
 /// Riverpod provider for the analytics client used by the dashboard.
 final analyticsClientProvider = Provider<ThesaAnalyticsClient>((ref) {
-  return ThesaAnalyticsClient(http.Client(), ApiConfig.thesaBaseUrl);
+  final runtime = ref.watch(authRuntimeProvider);
+  return ThesaAnalyticsClient(runtime, ApiConfig.thesaBaseUrl);
 });
 
 class DashboardPage extends ConsumerStatefulWidget {

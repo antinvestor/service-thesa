@@ -56,7 +56,6 @@ dependencies:
   antinvestor_api_payment: ^1.53.0
   antinvestor_api_ledger: ^1.53.0
   antinvestor_api_settings: ^1.53.0
-  http: ^1.3.0
   # Used directly only by lib/core/auth/migration.dart to wipe stale
   # legacy tokens on first launch after the auth-runtime migration.
   # antinvestor_auth_runtime also depends on it transitively; version

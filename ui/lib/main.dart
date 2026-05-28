@@ -2,6 +2,8 @@ import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart'
     show AuthRuntime, authRuntimeProvider;
 import 'package:antinvestor_ui_audit/antinvestor_ui_audit.dart'
     show auditTransportProvider;
+import 'package:antinvestor_ui_core/analytics/analytics_provider.dart'
+    show analyticsDataSourceProvider;
 import 'package:antinvestor_ui_billing/antinvestor_ui_billing.dart'
     show billingTransportProvider;
 import 'package:antinvestor_ui_core/auth/role_provider.dart';
@@ -38,9 +40,11 @@ import 'core/auth/migration.dart';
 import 'core/auth/runtime_provider.dart';
 import 'core/config/url_strategy.dart';
 import 'core/networking/runtime_transport.dart';
+import 'core/services/analytics_client.dart';
 import 'core/services/api_config.dart';
 import 'core/services/permission_checker.dart';
 import 'core/services/tenant_context.dart';
+import 'core/services/thesa_analytics_data_source.dart';
 import 'features/audit/audit_service.dart';
 import 'features/billing/billing_service.dart';
 import 'features/files/files_service.dart';
@@ -100,6 +104,15 @@ Future<void> main() async {
         currentUserRolesProvider.overrideWith((ref) async {
           final ctx = await ref.watch(jwtTenantContextProvider.future);
           return ctx.roles.toSet();
+        }),
+        // Analytics data source for AnalyticsDashboard across all service
+        // overview pages. Routes queries through the auth runtime via
+        // ThesaAnalyticsClient so tokens are attached automatically.
+        analyticsDataSourceProvider.overrideWith((ref) {
+          final runtime = ref.watch(authRuntimeProvider);
+          return ThesaAnalyticsDataSource(
+            ThesaAnalyticsClient(runtime, ApiConfig.thesaBaseUrl),
+          );
         }),
         // Batch permission check at startup — routed through the
         // runtime's fetch so the access token stays inside the runtime.

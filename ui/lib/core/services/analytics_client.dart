@@ -1,19 +1,20 @@
 import 'dart:convert';
 
+import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart';
 import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
-import 'package:http/http.dart' as http;
 
 /// POST-based analytics query client for the Thesa BFF.
 ///
-/// Calls the generic proxy endpoints:
+/// All requests flow through [AuthRuntime.fetch] so the access token is
+/// attached automatically. Calls the generic proxy endpoints:
 ///   POST /api/analytics/query/scalar
 ///   POST /api/analytics/query/timeseries
 ///   POST /api/analytics/query/grouped
 ///   POST /api/analytics/query/topn
 class ThesaAnalyticsClient {
-  ThesaAnalyticsClient(this._httpClient, this._baseUrl);
+  ThesaAnalyticsClient(this._runtime, this._baseUrl);
 
-  final http.Client _httpClient;
+  final AuthRuntime _runtime;
   final String _baseUrl;
 
   /// Query a single scalar value (e.g. sum, avg, count).
@@ -30,8 +31,7 @@ class ThesaAnalyticsClient {
       ..._timeRangeFields(timeRange),
     };
 
-    final response = await _post('/api/analytics/query/scalar', body);
-    final data = json.decode(response.body) as Map<String, dynamic>;
+    final data = await _post('/api/analytics/query/scalar', body);
     return (data['value'] as num?)?.toDouble() ?? 0.0;
   }
 
@@ -49,8 +49,7 @@ class ThesaAnalyticsClient {
       ..._timeRangeFields(timeRange),
     };
 
-    final response = await _post('/api/analytics/query/timeseries', body);
-    final data = json.decode(response.body) as Map<String, dynamic>;
+    final data = await _post('/api/analytics/query/timeseries', body);
     final points = data['points'] as List<dynamic>? ?? [];
 
     return points.map((p) {
@@ -79,8 +78,7 @@ class ThesaAnalyticsClient {
       ..._timeRangeFields(timeRange),
     };
 
-    final response = await _post('/api/analytics/query/grouped', body);
-    final data = json.decode(response.body) as Map<String, dynamic>;
+    final data = await _post('/api/analytics/query/grouped', body);
     final segments = data['segments'] as List<dynamic>? ?? [];
 
     return segments.map((s) {
@@ -110,8 +108,7 @@ class ThesaAnalyticsClient {
       ..._timeRangeFields(timeRange),
     };
 
-    final response = await _post('/api/analytics/query/topn', body);
-    final data = json.decode(response.body) as Map<String, dynamic>;
+    final data = await _post('/api/analytics/query/topn', body);
     final items = data['items'] as List<dynamic>? ?? [];
 
     return items.map((item) {
@@ -139,24 +136,26 @@ class ThesaAnalyticsClient {
     };
   }
 
-  Future<http.Response> _post(
+  Future<Map<String, dynamic>> _post(
       String path, Map<String, dynamic> body) async {
-    final uri = Uri.parse('$_baseUrl$path');
-    final response = await _httpClient.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
+    final response = await _runtime.fetch(
+      '$_baseUrl$path',
+      method: 'POST',
+      headers: const {'Content-Type': 'application/json'},
       body: json.encode(body),
     );
-    _checkResponse(response);
-    return response;
-  }
-
-  void _checkResponse(http.Response response) {
-    if (response.statusCode != 200) {
-      final body =
-          json.decode(response.body) as Map<String, dynamic>?;
-      final msg = body?['error'] ?? 'HTTP ${response.statusCode}';
+    if (response.status != 200) {
+      Map<String, dynamic>? parsed;
+      try {
+        parsed = json.decode(utf8.decode(response.body))
+            as Map<String, dynamic>?;
+      } catch (_) {
+        parsed = null;
+      }
+      final msg = parsed?['error'] ?? 'HTTP ${response.status}';
       throw Exception('Analytics API error: $msg');
     }
+    return json.decode(utf8.decode(response.body))
+        as Map<String, dynamic>;
   }
 }

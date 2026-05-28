@@ -1,4 +1,5 @@
 import 'package:antinvestor_ui_core/analytics/analytics_dashboard.dart';
+import 'package:antinvestor_ui_device/antinvestor_ui_device.dart' as device_lib;
 import 'package:antinvestor_ui_profile/antinvestor_ui_profile.dart'
     as profile_lib;
 import 'package:flutter/material.dart';
@@ -111,13 +112,13 @@ void registerProfileService() {
             const profile_lib.ProfileMergeScreen(),
         // Screens from antinvestor_ui_device library
         'devices': (context, service, feature) =>
-            const profile_lib.ProfileSearchScreen(),
+            const device_lib.DeviceListScreen(),
       },
       detailBuilders: {
         'profiles': (context, service, feature, entityId) =>
             profile_lib.ProfileDetailScreen(profileId: entityId),
         'devices': (context, service, feature, entityId) =>
-            profile_lib.ProfileDetailScreen(profileId: entityId),
+            device_lib.DeviceDetailScreen(deviceId: entityId),
       },
     ),
   );
