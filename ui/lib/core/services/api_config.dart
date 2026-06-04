@@ -138,9 +138,13 @@ class ApiConfig {
     'OAUTH2_ISSUER_URL',
     defaultValue: 'https://oauth2.stawi.org',
   );
+  // Defaults to the STAGING "Thesa Studio Development" client so dev and
+  // staging builds (e.g. the thesa0.web.app Firebase deploy) hit the staging
+  // tenancy. Production builds override this via --dart-define=OAUTH2_CLIENT_ID
+  // (see ui-build-prod in the Makefile).
   static const String oauth2ClientId = String.fromEnvironment(
     'OAUTH2_CLIENT_ID',
-    defaultValue: 'c2f4j7au6s7f91uqnomg',
+    defaultValue: 'd8gueekpf2tfslum7lpg',
   );
 
   // ── OAuth2 redirect URI ─────────────────────────────────────────────────
