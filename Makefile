@@ -4,9 +4,11 @@ APP_DIRS     := apps/default
 HAS_UI       := true
 UI_DIR       := ui
 
-# Production OAuth2 values passed to Flutter web builds via --dart-define.
-# Dev builds use the UI defaults, matching service-fintech's behavior.
-OAUTH2_CLIENT_ID_PROD ?= d6qbqdkpf2t52mcunf30
+# Production OAuth2 values injected into the prod Flutter web build via
+# --dart-define (see ui-build-prod). Default/dev/staging builds use the UI
+# defaults in ui/lib/core/services/api_config.dart (the staging Thesa Studio
+# client), so only the production build overrides them.
+OAUTH2_CLIENT_ID_PROD ?= c2f4j7au6s7f91uqnomg
 OAUTH2_ISSUER_URL_PROD ?= https://oauth2.stawi.org
 
 # Bootstrap: download shared Makefile.common if missing or stale.
