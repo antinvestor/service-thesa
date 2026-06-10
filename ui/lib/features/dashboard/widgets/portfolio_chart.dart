@@ -2,21 +2,25 @@ import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/services/analytics_client.dart';
+import '../../../core/services/thesa_analytics_data_source.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/analytics_error_view.dart';
 
 /// API Traffic / time series bar chart.
 ///
-/// Can be created either with a [ThesaAnalyticsClient] (fetches
-/// `rpc_server_duration_count` time series) or with a pre-built
-/// [Future<List<TimeSeriesPoint>>] via [PortfolioChart.fromFuture].
+/// Can be created either with an [AdminAnalyticsDataSource] (fetches
+/// the allowlisted `rpc.server.duration` call count as a time series)
+/// or with a pre-built [Future<List<TimeSeriesPoint>>] via
+/// [PortfolioChart.fromFuture].
 class PortfolioChart extends StatefulWidget {
-  /// Creates a chart that queries API traffic from the given [client].
-  const PortfolioChart({super.key, required ThesaAnalyticsClient client})
-      : _client = client,
-        _future = null,
-        _title = 'API Traffic Over Time',
-        _subtitle = 'RPC request volume';
+  /// Creates a chart that queries API traffic from [dataSource].
+  const PortfolioChart({
+    super.key,
+    required AdminAnalyticsDataSource dataSource,
+  }) : _dataSource = dataSource,
+       _future = null,
+       _title = 'API Traffic Over Time',
+       _subtitle = 'RPC request volume';
 
   /// Creates a chart from an already-fetched future.
   const PortfolioChart.fromFuture({
@@ -24,12 +28,12 @@ class PortfolioChart extends StatefulWidget {
     required String title,
     String subtitle = '',
     required Future<List<TimeSeriesPoint>> future,
-  })  : _client = null,
-        _future = future,
-        _title = title,
-        _subtitle = subtitle;
+  }) : _dataSource = null,
+       _future = future,
+       _title = title,
+       _subtitle = subtitle;
 
-  final ThesaAnalyticsClient? _client;
+  final AdminAnalyticsDataSource? _dataSource;
   final Future<List<TimeSeriesPoint>>? _future;
   final String _title;
   final String _subtitle;
@@ -56,8 +60,9 @@ class _PortfolioChartState extends State<PortfolioChart> {
     if (widget._future != null) {
       _pointsFuture = widget._future!;
     } else {
-      _pointsFuture = widget._client!.queryTimeSeries(
-        metric: 'rpc_server_duration_count',
+      _pointsFuture = widget._dataSource!.queryTimeSeries(
+        metric: 'rpc.server.duration',
+        aggregation: AnalyticsAggregation.count,
         timeRange: _timeRange,
       );
     }
@@ -65,7 +70,7 @@ class _PortfolioChartState extends State<PortfolioChart> {
 
   @override
   Widget build(BuildContext context) {
-    final showRangeChips = widget._client != null;
+    final showRangeChips = widget._dataSource != null;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -83,8 +88,10 @@ class _PortfolioChartState extends State<PortfolioChart> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget._title,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      widget._title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     if (widget._subtitle.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
@@ -130,9 +137,11 @@ class _PortfolioChartState extends State<PortfolioChart> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return Center(
-                    child: Text('Unable to load chart',
-                        style: Theme.of(context).textTheme.bodySmall),
+                  return AnalyticsErrorView(
+                    error: snapshot.error!,
+                    onRetry: widget._dataSource == null
+                        ? null
+                        : () => setState(_loadData),
                   );
                 }
                 return _buildChart(context, snapshot.data ?? []);
@@ -147,8 +156,10 @@ class _PortfolioChartState extends State<PortfolioChart> {
   Widget _buildChart(BuildContext context, List<TimeSeriesPoint> points) {
     if (points.isEmpty) {
       return Center(
-        child: Text('No data available',
-            style: Theme.of(context).textTheme.bodySmall),
+        child: Text(
+          'No data available',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       );
     }
 
@@ -168,10 +179,9 @@ class _PortfolioChartState extends State<PortfolioChart> {
                   : value.toStringAsFixed(0);
               return BarTooltipItem(
                 label,
-                Theme.of(context)
-                    .textTheme
-                    .labelSmall!
-                    .copyWith(color: Colors.white),
+                Theme.of(
+                  context,
+                ).textTheme.labelSmall!.copyWith(color: Colors.white),
               );
             },
           ),
@@ -186,8 +196,10 @@ class _PortfolioChartState extends State<PortfolioChart> {
                 final label = value >= 1000
                     ? '${(value / 1000).toStringAsFixed(0)}K'
                     : value.toStringAsFixed(0);
-                return Text(label,
-                    style: Theme.of(context).textTheme.labelSmall);
+                return Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelSmall,
+                );
               },
             ),
           ),
@@ -201,8 +213,18 @@ class _PortfolioChartState extends State<PortfolioChart> {
                 }
                 final month = points[idx].timestamp;
                 const months = [
-                  'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-                  'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+                  'JAN',
+                  'FEB',
+                  'MAR',
+                  'APR',
+                  'MAY',
+                  'JUN',
+                  'JUL',
+                  'AUG',
+                  'SEP',
+                  'OCT',
+                  'NOV',
+                  'DEC',
                 ];
                 if (points.length > 12 && idx % 2 != 0) {
                   return const SizedBox.shrink();
@@ -217,18 +239,18 @@ class _PortfolioChartState extends State<PortfolioChart> {
               },
             ),
           ),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          getDrawingHorizontalLine: (value) => FlLine(
-            color: AppColors.border,
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (value) =>
+              FlLine(color: AppColors.border, strokeWidth: 1),
         ),
         borderData: FlBorderData(show: false),
         barGroups: List.generate(points.length, (i) {
@@ -239,8 +261,9 @@ class _PortfolioChartState extends State<PortfolioChart> {
                 toY: points[i].value,
                 color: AppColors.tertiary,
                 width: points.length > 12 ? 12 : 20,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(4)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(4),
+                ),
               ),
             ],
           );
@@ -274,9 +297,9 @@ class _RangeChip extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: selected ? Colors.white : AppColors.onSurfaceMuted,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: selected ? Colors.white : AppColors.onSurfaceMuted,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ),

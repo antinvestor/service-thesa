@@ -56,6 +56,7 @@ class ServiceAnalyticsPage extends StatelessWidget {
     this.chartTitle,
     this.chartSubtitle,
     this.events = const [],
+    this.sidePanel,
     this.bottomSection,
     this.actions,
   });
@@ -67,6 +68,11 @@ class ServiceAnalyticsPage extends StatelessWidget {
   final String? chartTitle;
   final String? chartSubtitle;
   final List<ServiceEvent> events;
+
+  /// When provided, replaces the "Recent Events" card next to the chart
+  /// (e.g. with live analytics-backed activity).
+  final Widget? sidePanel;
+
   final Widget? bottomSection;
   final List<Widget>? actions;
 
@@ -97,14 +103,17 @@ class ServiceAnalyticsPage extends StatelessWidget {
                 children: [
                   Expanded(flex: 3, child: _buildChartCard(context)),
                   const SizedBox(width: 20),
-                  Expanded(flex: 2, child: _buildEventsCard(context)),
+                  Expanded(
+                    flex: 2,
+                    child: sidePanel ?? _buildEventsCard(context),
+                  ),
                 ],
               ),
             )
           else ...[
             _buildChartCard(context),
             const SizedBox(height: 20),
-            _buildEventsCard(context),
+            sidePanel ?? _buildEventsCard(context),
           ],
           // Bottom section
           if (bottomSection != null) ...[
@@ -127,10 +136,12 @@ class ServiceAnalyticsPage extends StatelessWidget {
     }
     return Column(
       children: kpis
-          .map((kpi) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _KpiCard(kpi: kpi),
-              ))
+          .map(
+            (kpi) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _KpiCard(kpi: kpi),
+            ),
+          )
           .toList(),
     );
   }
@@ -147,18 +158,20 @@ class ServiceAnalyticsPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (chartTitle != null)
-            Text(chartTitle!,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              chartTitle!,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
           if (chartSubtitle != null) ...[
             const SizedBox(height: 4),
-            Text(chartSubtitle!,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              chartSubtitle!,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ],
           if (chartTitle != null || chartSubtitle != null)
             const SizedBox(height: 16),
@@ -168,8 +181,10 @@ class ServiceAnalyticsPage extends StatelessWidget {
             const SizedBox(
               height: 240,
               child: Center(
-                child: Text('Chart placeholder',
-                    style: TextStyle(color: AppColors.onSurfaceMuted)),
+                child: Text(
+                  'Chart placeholder',
+                  style: TextStyle(color: AppColors.onSurfaceMuted),
+                ),
               ),
             ),
         ],
@@ -188,18 +203,21 @@ class ServiceAnalyticsPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Recent Events',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            'Recent Events',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 16),
           if (events.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Center(
-                child: Text('No recent events',
-                    style: TextStyle(color: AppColors.onSurfaceMuted)),
+                child: Text(
+                  'No recent events',
+                  style: TextStyle(color: AppColors.onSurfaceMuted),
+                ),
               ),
             )
           else
@@ -224,8 +242,9 @@ class _KpiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final changeColor =
-        kpi.changePositive ? AppColors.success : AppColors.error;
+    final changeColor = kpi.changePositive
+        ? AppColors.success
+        : AppColors.error;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -252,8 +271,10 @@ class _KpiCard extends StatelessWidget {
               if (kpi.change != null)
                 Flexible(
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: changeColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
@@ -262,9 +283,9 @@ class _KpiCard extends StatelessWidget {
                       kpi.change!,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: changeColor,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: changeColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -275,10 +296,9 @@ class _KpiCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             kpi.value,
-            style: Theme.of(context)
-                .textTheme
-                .headlineMedium
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -319,14 +339,18 @@ class _EventTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(event.title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(fontWeight: FontWeight.w500)),
-                Text(event.timeAgo,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.onSurfaceMuted)),
+                Text(
+                  event.title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+                ),
+                Text(
+                  event.timeAgo,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.onSurfaceMuted,
+                  ),
+                ),
               ],
             ),
           ),

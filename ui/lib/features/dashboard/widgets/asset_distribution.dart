@@ -2,17 +2,19 @@ import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/services/analytics_client.dart';
+import '../../../core/services/thesa_analytics_data_source.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/analytics_error_view.dart';
 
 /// Traffic by Service pie chart.
 ///
-/// Queries `rpc_server_duration_count` grouped by `rpc_service` to show
-/// the distribution of API traffic across cluster services.
+/// Queries the allowlisted `rpc.server.duration` call count grouped by
+/// `rpc_service` to show the distribution of API traffic across cluster
+/// services.
 class AssetDistribution extends StatefulWidget {
-  const AssetDistribution({super.key, required this.client});
+  const AssetDistribution({super.key, required this.dataSource});
 
-  final ThesaAnalyticsClient client;
+  final AdminAnalyticsDataSource dataSource;
 
   @override
   State<AssetDistribution> createState() => _AssetDistributionState();
@@ -34,8 +36,13 @@ class _AssetDistributionState extends State<AssetDistribution> {
   @override
   void initState() {
     super.initState();
-    _future = widget.client.queryGrouped(
-      metric: 'rpc_server_duration_count',
+    _load();
+  }
+
+  void _load() {
+    _future = widget.dataSource.queryGrouped(
+      metric: 'rpc.server.duration',
+      aggregation: AnalyticsAggregation.count,
       groupBy: 'rpc_service',
       timeRange: AnalyticsTimeRange.last30Days(),
     );
@@ -53,8 +60,10 @@ class _AssetDistributionState extends State<AssetDistribution> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Traffic by Service',
-              style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Traffic by Service',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 20),
           FutureBuilder<List<DistributionSegment>>(
             future: _future,
@@ -67,10 +76,10 @@ class _AssetDistributionState extends State<AssetDistribution> {
               }
               if (snapshot.hasError) {
                 return SizedBox(
-                  height: 120,
-                  child: Center(
-                    child: Text('Unable to load data',
-                        style: Theme.of(context).textTheme.bodySmall),
+                  height: 160,
+                  child: AnalyticsErrorView(
+                    error: snapshot.error!,
+                    onRetry: () => setState(_load),
                   ),
                 );
               }
@@ -82,14 +91,15 @@ class _AssetDistributionState extends State<AssetDistribution> {
     );
   }
 
-  Widget _buildChart(
-      BuildContext context, List<DistributionSegment> segments) {
+  Widget _buildChart(BuildContext context, List<DistributionSegment> segments) {
     if (segments.isEmpty) {
       return SizedBox(
         height: 120,
         child: Center(
-          child: Text('No data available',
-              style: Theme.of(context).textTheme.bodySmall),
+          child: Text(
+            'No data available',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ),
       );
     }
@@ -108,7 +118,8 @@ class _AssetDistributionState extends State<AssetDistribution> {
               sections: List.generate(segments.length, (i) {
                 return PieChartSectionData(
                   value: segments[i].value,
-                  color: segments[i].color ??
+                  color:
+                      segments[i].color ??
                       _segmentColors[i % _segmentColors.length],
                   radius: 25,
                   showTitle: false,
@@ -126,8 +137,9 @@ class _AssetDistributionState extends State<AssetDistribution> {
                   ? '${(s.value / total * 100).toStringAsFixed(0)}%'
                   : '0%';
               return Padding(
-                padding:
-                    EdgeInsets.only(bottom: i < segments.length - 1 ? 8 : 0),
+                padding: EdgeInsets.only(
+                  bottom: i < segments.length - 1 ? 8 : 0,
+                ),
                 child: _LegendItem(
                   color: s.color ?? _segmentColors[i % _segmentColors.length],
                   label: s.label,
@@ -143,8 +155,11 @@ class _AssetDistributionState extends State<AssetDistribution> {
 }
 
 class _LegendItem extends StatelessWidget {
-  const _LegendItem(
-      {required this.color, required this.label, required this.value});
+  const _LegendItem({
+    required this.color,
+    required this.label,
+    required this.value,
+  });
 
   final Color color;
   final String label;
@@ -158,7 +173,9 @@ class _LegendItem extends StatelessWidget {
           width: 10,
           height: 10,
           decoration: BoxDecoration(
-              color: color, borderRadius: BorderRadius.circular(3)),
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -166,10 +183,9 @@ class _LegendItem extends StatelessWidget {
         ),
         Text(
           value,
-          style: Theme.of(context)
-              .textTheme
-              .labelMedium
-              ?.copyWith(fontWeight: FontWeight.w600),
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
       ],
     );

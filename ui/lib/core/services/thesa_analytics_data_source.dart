@@ -1,71 +1,142 @@
+import 'dart:convert';
+
+import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart';
 import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
-import 'package:antinvestor_ui_core/analytics/analytics_provider.dart';
+import 'package:antinvestor_ui_core/analytics/thesa_analytics_data_source.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 
-import 'analytics_client.dart';
+import 'api_config.dart';
 
-/// Implementation of [AnalyticsDataSource] backed by the Thesa BFF.
-///
-/// Delegates to [ThesaAnalyticsClient] which routes every request through
-/// the auth runtime so the access token is attached automatically.
-class ThesaAnalyticsDataSource implements AnalyticsDataSource {
-  ThesaAnalyticsDataSource(this._client);
-
-  final ThesaAnalyticsClient _client;
-
-  @override
-  Future<List<MetricValue>> getMetrics(
-    String service, {
-    AnalyticsTimeRange? timeRange,
-  }) async {
-    // The BFF doesn't expose a bulk metrics endpoint yet; service-specific
-    // dashboards build their own KPI tiles. Return an empty list so the
-    // generic dashboard renders without throwing.
-    return const <MetricValue>[];
-  }
-
-  @override
-  Future<List<TimeSeries>> getTimeSeries(
-    String service,
-    String metric, {
-    AnalyticsTimeRange? timeRange,
-  }) async {
-    final points = await _client.queryTimeSeries(
-      metric: metric,
-      filters: {'service': service},
-      timeRange: timeRange,
+/// Adapts [AuthRuntime.fetch] onto ui_core's [AnalyticsTransport] so the
+/// standard [ThesaAnalyticsDataSource] can POST to the Thesa BFF with the
+/// access token attached by the runtime.
+AnalyticsTransport runtimeAnalyticsTransport(
+  AuthRuntime runtime,
+  String baseUrl,
+) {
+  return (String path, {Object? body}) async {
+    final response = await runtime.fetch(
+      '$baseUrl$path',
+      method: 'POST',
+      headers: const {'Content-Type': 'application/json'},
+      body: body,
     );
+    return http.Response.bytes(response.body, response.status);
+  };
+}
+
+/// Thesa admin console analytics data source.
+///
+/// Extends the standard ui_core [ThesaAnalyticsDataSource] (exact gate
+/// contract: nested `time_range`, `step` granularity, server-side tenant
+/// scoping, client-side reserved-filter stripping) with admin-only
+/// queries that span every partition the caller can access
+/// (`partition_ids: ["*"]`).
+class AdminAnalyticsDataSource extends ThesaAnalyticsDataSource {
+  // Not convertible to a super parameter: the transport is also kept on
+  // this class for the partition-wide extension queries below.
+  // ignore: use_super_parameters
+  AdminAnalyticsDataSource(AnalyticsTransport transport)
+    : _transport = transport,
+      super(transport);
+
+  final AnalyticsTransport _transport;
+
+  /// Time-series query across all accessible partitions.
+  Future<List<TimeSeriesPoint>> queryTimeSeriesAllPartitions({
+    required String metric,
+    AnalyticsAggregation aggregation = AnalyticsAggregation.sum,
+    AnalyticsTimeRange? timeRange,
+    TimeGranularity? granularity,
+  }) async {
+    final data = await _postWildcard('/api/analytics/query/timeseries', {
+      'metric': metric,
+      'aggregation': aggregation.wireName,
+      if (granularity != null || timeRange?.granularity != null)
+        'step': (granularity ?? timeRange!.granularity!).name,
+    }, timeRange);
+    final points = data['points'] as List<dynamic>? ?? const [];
     return [
-      TimeSeries(key: metric, label: metric, points: points),
+      for (final p in points.cast<Map<String, dynamic>>())
+        TimeSeriesPoint(
+          timestamp: DateTime.parse(p['timestamp'] as String),
+          value: (p['value'] as num).toDouble(),
+          label: p['label'] as String?,
+        ),
     ];
   }
 
-  @override
-  Future<List<DistributionSegment>> getDistribution(
-    String service,
-    String metric,
-    String groupBy, {
-    AnalyticsTimeRange? timeRange,
-  }) {
-    return _client.queryGrouped(
-      metric: metric,
-      groupBy: groupBy,
-      filters: {'service': service},
-      timeRange: timeRange,
-    );
-  }
-
-  @override
-  Future<List<TopNItem>> getTopN(
-    String service,
-    String metric, {
+  /// Top-N query across all accessible partitions.
+  Future<List<TopNItem>> queryTopNAllPartitions({
+    required String metric,
+    required String groupBy,
+    AnalyticsAggregation aggregation = AnalyticsAggregation.sum,
     int limit = 10,
     AnalyticsTimeRange? timeRange,
-  }) {
-    return _client.queryTopN(
-      metric: metric,
-      limit: limit,
-      filters: {'service': service},
-      timeRange: timeRange,
-    );
+  }) async {
+    final data = await _postWildcard('/api/analytics/query/topn', {
+      'metric': metric,
+      'aggregation': aggregation.wireName,
+      'group_by': groupBy,
+      'limit': limit,
+    }, timeRange);
+    final items = data['items'] as List<dynamic>? ?? const [];
+    return [
+      for (final item in items.cast<Map<String, dynamic>>())
+        TopNItem(
+          label: item['label'] as String,
+          value: (item['value'] as num).toDouble(),
+          metadata: (item['metadata'] as Map<String, dynamic>?)?.map(
+            (k, v) => MapEntry(k, v.toString()),
+          ),
+        ),
+    ];
+  }
+
+  Future<Map<String, dynamic>> _postWildcard(
+    String path,
+    Map<String, dynamic> fields,
+    AnalyticsTimeRange? timeRange,
+  ) async {
+    final body = <String, dynamic>{
+      ...fields,
+      'partition_ids': const ['*'],
+      if (timeRange != null)
+        'time_range': {
+          'start': timeRange.start.toUtc().toIso8601String(),
+          'end': timeRange.end.toUtc().toIso8601String(),
+        },
+    };
+    final response = await _transport(path, body: json.encode(body));
+    if (response.statusCode != 200) {
+      throw AnalyticsQueryException(
+        statusCode: response.statusCode,
+        message: _serverError(response),
+        path: path,
+      );
+    }
+    return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+  }
+
+  static String _serverError(http.Response response) {
+    try {
+      final parsed = json.decode(utf8.decode(response.bodyBytes));
+      final msg = (parsed as Map<String, dynamic>)['error'];
+      if (msg is String && msg.isNotEmpty) return msg;
+    } catch (_) {
+      // Fall through to the generic message.
+    }
+    return 'HTTP ${response.statusCode}';
   }
 }
+
+/// Single analytics data source for the whole admin console. Also used
+/// to override ui_core's `analyticsDataSourceProvider` in main.dart so
+/// the generic [AnalyticsDashboard] pages share the same instance.
+final adminAnalyticsProvider = Provider<AdminAnalyticsDataSource>((ref) {
+  final runtime = ref.watch(authRuntimeProvider);
+  return AdminAnalyticsDataSource(
+    runtimeAnalyticsTransport(runtime, ApiConfig.thesaBaseUrl),
+  );
+});

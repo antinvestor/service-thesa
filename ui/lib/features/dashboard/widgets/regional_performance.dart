@@ -1,92 +1,102 @@
 import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/services/analytics_client.dart';
+import '../../../core/services/thesa_analytics_data_source.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/analytics_error_view.dart';
 
-/// Cluster Resources widget showing CPU, Memory, and Disk usage per pod.
+/// Service Load widget showing HTTP and database operation volume per
+/// service over the last 24 hours.
 ///
-/// Queries container-level metrics grouped by pod name and renders
-/// progress bars for each resource dimension.
+/// Queries the allowlisted OTel semconv duration metrics
+/// (`http.server.request.duration`, `db.client.operation.duration`)
+/// grouped by `service_name` and renders comparative progress bars.
 class RegionalPerformance extends StatefulWidget {
-  const RegionalPerformance({super.key, required this.client});
+  const RegionalPerformance({super.key, required this.dataSource});
 
-  final ThesaAnalyticsClient client;
+  final AdminAnalyticsDataSource dataSource;
 
   @override
   State<RegionalPerformance> createState() => _RegionalPerformanceState();
 }
 
 class _RegionalPerformanceState extends State<RegionalPerformance> {
-  late Future<List<_ResourceEntry>> _future;
+  late Future<List<_ServiceLoadEntry>> _future;
 
   @override
   void initState() {
     super.initState();
-    _future = _loadResources();
+    _future = _loadServiceLoad();
   }
 
-  Future<List<_ResourceEntry>> _loadResources() async {
+  void _reload() {
+    setState(() {
+      _future = _loadServiceLoad();
+    });
+  }
+
+  Future<List<_ServiceLoadEntry>> _loadServiceLoad() async {
     final timeRange = AnalyticsTimeRange.last24Hours();
 
     final results = await Future.wait([
-      widget.client.queryGrouped(
-        metric: 'container_cpu_usage_seconds_total',
-        groupBy: 'pod',
+      widget.dataSource.queryGrouped(
+        metric: 'http.server.request.duration',
+        aggregation: AnalyticsAggregation.count,
+        groupBy: 'service_name',
         timeRange: timeRange,
       ),
-      widget.client.queryGrouped(
-        metric: 'container_memory_working_set_bytes',
-        groupBy: 'pod',
+      widget.dataSource.queryGrouped(
+        metric: 'db.client.operation.duration',
+        aggregation: AnalyticsAggregation.count,
+        groupBy: 'service_name',
         timeRange: timeRange,
       ),
     ]);
 
-    final cpuByPod = results[0];
-    final memByPod = results[1];
+    final httpByService = results[0];
+    final dbByService = results[1];
 
-    // Collect unique pod names
-    final pods = <String>{
-      ...cpuByPod.map((s) => s.label),
-      ...memByPod.map((s) => s.label),
+    // Collect unique service names.
+    final services = <String>{
+      ...httpByService.map((s) => s.label),
+      ...dbByService.map((s) => s.label),
     };
 
-    // Normalize CPU: show as percentage of max across pods
-    final maxCpu =
-        cpuByPod.fold(0.0, (m, s) => s.value > m ? s.value : m);
-    final maxMem =
-        memByPod.fold(0.0, (m, s) => s.value > m ? s.value : m);
+    // Normalize each dimension against its max across services.
+    final maxHttp = httpByService.fold(
+      0.0,
+      (m, s) => s.value > m ? s.value : m,
+    );
+    final maxDb = dbByService.fold(0.0, (m, s) => s.value > m ? s.value : m);
 
-    final entries = <_ResourceEntry>[];
-    for (final pod in pods) {
-      final cpu = cpuByPod.where((s) => s.label == pod).firstOrNull;
-      final mem = memByPod.where((s) => s.label == pod).firstOrNull;
+    final entries = <_ServiceLoadEntry>[];
+    for (final service in services) {
+      final httpSeg = httpByService
+          .where((s) => s.label == service)
+          .firstOrNull;
+      final dbSeg = dbByService.where((s) => s.label == service).firstOrNull;
 
-      entries.add(_ResourceEntry(
-        pod: pod,
-        cpuFraction: maxCpu > 0 ? (cpu?.value ?? 0) / maxCpu : 0,
-        cpuDisplay: _formatCpu(cpu?.value ?? 0),
-        memFraction: maxMem > 0 ? (mem?.value ?? 0) / maxMem : 0,
-        memDisplay: _formatBytes(mem?.value ?? 0),
-      ));
+      entries.add(
+        _ServiceLoadEntry(
+          service: service,
+          httpFraction: maxHttp > 0 ? (httpSeg?.value ?? 0) / maxHttp : 0,
+          httpDisplay: _formatCount(httpSeg?.value ?? 0),
+          dbFraction: maxDb > 0 ? (dbSeg?.value ?? 0) / maxDb : 0,
+          dbDisplay: _formatCount(dbSeg?.value ?? 0),
+        ),
+      );
     }
 
-    // Sort by CPU descending, take top 5
-    entries.sort((a, b) => b.cpuFraction.compareTo(a.cpuFraction));
+    // Sort by HTTP volume descending, take top 5.
+    entries.sort((a, b) => b.httpFraction.compareTo(a.httpFraction));
     return entries.take(5).toList();
   }
 
-  static String _formatCpu(double seconds) {
-    if (seconds >= 3600) return '${(seconds / 3600).toStringAsFixed(1)}h';
-    if (seconds >= 60) return '${(seconds / 60).toStringAsFixed(1)}m';
-    return '${seconds.toStringAsFixed(1)}s';
-  }
-
-  static String _formatBytes(double value) {
-    if (value >= 1e9) return '${(value / 1e9).toStringAsFixed(1)} GB';
-    if (value >= 1e6) return '${(value / 1e6).toStringAsFixed(1)} MB';
-    if (value >= 1e3) return '${(value / 1e3).toStringAsFixed(1)} KB';
-    return '${value.toStringAsFixed(0)} B';
+  static String _formatCount(double value) {
+    if (value >= 1e9) return '${(value / 1e9).toStringAsFixed(1)}B';
+    if (value >= 1e6) return '${(value / 1e6).toStringAsFixed(1)}M';
+    if (value >= 1e3) return '${(value / 1e3).toStringAsFixed(1)}K';
+    return value.toStringAsFixed(0);
   }
 
   @override
@@ -101,15 +111,14 @@ class _RegionalPerformanceState extends State<RegionalPerformance> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Cluster Resources',
-              style: Theme.of(context).textTheme.titleMedium),
+          Text('Service Load', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 4),
           Text(
-            'CPU and memory usage by pod',
+            'HTTP and database operations by service (24h)',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 20),
-          FutureBuilder<List<_ResourceEntry>>(
+          FutureBuilder<List<_ServiceLoadEntry>>(
             future: _future,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -120,10 +129,10 @@ class _RegionalPerformanceState extends State<RegionalPerformance> {
               }
               if (snapshot.hasError) {
                 return SizedBox(
-                  height: 120,
-                  child: Center(
-                    child: Text('Unable to load data',
-                        style: Theme.of(context).textTheme.bodySmall),
+                  height: 160,
+                  child: AnalyticsErrorView(
+                    error: snapshot.error!,
+                    onRetry: _reload,
                   ),
                 );
               }
@@ -135,13 +144,15 @@ class _RegionalPerformanceState extends State<RegionalPerformance> {
     );
   }
 
-  Widget _buildBars(BuildContext context, List<_ResourceEntry> entries) {
+  Widget _buildBars(BuildContext context, List<_ServiceLoadEntry> entries) {
     if (entries.isEmpty) {
       return SizedBox(
         height: 80,
         child: Center(
-          child: Text('No data available',
-              style: Theme.of(context).textTheme.bodySmall),
+          child: Text(
+            'No data available',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ),
       );
     }
@@ -154,25 +165,24 @@ class _RegionalPerformanceState extends State<RegionalPerformance> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                entry.pod,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                entry.service,
+                style: Theme.of(
+                  context,
+                ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
               _ProgressBar(
-                label: 'CPU',
-                value: entry.cpuFraction,
-                display: entry.cpuDisplay,
+                label: 'HTTP',
+                value: entry.httpFraction,
+                display: entry.httpDisplay,
                 color: AppColors.tertiary,
               ),
               const SizedBox(height: 6),
               _ProgressBar(
-                label: 'Memory',
-                value: entry.memFraction,
-                display: entry.memDisplay,
+                label: 'DB',
+                value: entry.dbFraction,
+                display: entry.dbDisplay,
                 color: AppColors.success,
               ),
             ],
@@ -183,20 +193,20 @@ class _RegionalPerformanceState extends State<RegionalPerformance> {
   }
 }
 
-class _ResourceEntry {
-  const _ResourceEntry({
-    required this.pod,
-    required this.cpuFraction,
-    required this.cpuDisplay,
-    required this.memFraction,
-    required this.memDisplay,
+class _ServiceLoadEntry {
+  const _ServiceLoadEntry({
+    required this.service,
+    required this.httpFraction,
+    required this.httpDisplay,
+    required this.dbFraction,
+    required this.dbDisplay,
   });
 
-  final String pod;
-  final double cpuFraction;
-  final String cpuDisplay;
-  final double memFraction;
-  final String memDisplay;
+  final String service;
+  final double httpFraction;
+  final String httpDisplay;
+  final double dbFraction;
+  final String dbDisplay;
 }
 
 class _ProgressBar extends StatelessWidget {
@@ -237,10 +247,9 @@ class _ProgressBar extends StatelessWidget {
           child: Text(
             display,
             textAlign: TextAlign.right,
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600),
           ),
         ),
       ],

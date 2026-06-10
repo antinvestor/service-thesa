@@ -68,8 +68,12 @@ dependencies:
 
   antinvestor_auth_runtime: ^0.4.1
 
+  # Used by the analytics transport adapter to hand http.Response objects
+  # to ui_core's ThesaAnalyticsDataSource.
+  http: ^1.6.0
+
   # ── Antinvestor UI Libraries (published on pub.dev) ───────────────────────
-  antinvestor_ui_core: ^0.2.0
+  antinvestor_ui_core: ^0.5.0
   antinvestor_ui_profile: ^0.2.0
   antinvestor_ui_device: ^0.2.0
   antinvestor_ui_settings: ^0.2.0
