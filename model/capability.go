@@ -66,6 +66,22 @@ func matchWildcard(pattern, cap string) bool {
 	return strings.HasPrefix(cap, prefix)
 }
 
+type capabilitiesContextKey struct{}
+
+// WithCapabilities attaches a resolved CapabilitySet to the context. It is
+// set by the transport capability-resolution middleware and read by any
+// layer that needs to make authorization decisions (e.g. analytics).
+func WithCapabilities(ctx context.Context, caps CapabilitySet) context.Context {
+	return context.WithValue(ctx, capabilitiesContextKey{}, caps)
+}
+
+// CapabilitiesFrom extracts the CapabilitySet from the context. Returns nil
+// (an empty set) when no capabilities were resolved.
+func CapabilitiesFrom(ctx context.Context) CapabilitySet {
+	caps, _ := ctx.Value(capabilitiesContextKey{}).(CapabilitySet)
+	return caps
+}
+
 // CapabilityResolver resolves the full capability set for a request context.
 type CapabilityResolver interface {
 	// Resolve returns all capabilities for the given subject/tenant/partition.

@@ -17,3 +17,6 @@ roles:
   order_approver:
     - "orders:view"
     - "orders:approve"
+
+  platform_observer:
+    - "analytics:global:view"

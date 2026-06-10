@@ -76,6 +76,63 @@ func TestEnvOverrides(t *testing.T) {
 	}
 }
 
+func TestEnvOverrides_AnalyticsUptrace(t *testing.T) {
+	t.Setenv("ANALYTICS_BACKEND_TYPE", "uptrace")
+	t.Setenv("ANALYTICS_BACKEND_URL", "https://api.uptrace.dev/api/prometheus/4242")
+	t.Setenv("ANALYTICS_TOKEN", "project-token-abc")
+	t.Setenv("ANALYTICS_CACHE_TTL", "45s")
+	t.Setenv("ANALYTICS_ALLOWED_METRICS", `^foo_.+, ^bar\..+`)
+
+	cfg, err := Load("testdata/valid.yaml")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Analytics.BackendType != "uptrace" {
+		t.Errorf("Analytics.BackendType = %q, want uptrace", cfg.Analytics.BackendType)
+	}
+	if cfg.Analytics.BackendURL != "https://api.uptrace.dev/api/prometheus/4242" {
+		t.Errorf("Analytics.BackendURL = %q", cfg.Analytics.BackendURL)
+	}
+	if !cfg.Analytics.Enabled {
+		t.Error("Analytics.Enabled = false, want true when ANALYTICS_BACKEND_URL is set")
+	}
+	if cfg.Analytics.Token != "project-token-abc" {
+		t.Errorf("Analytics.Token = %q, want project-token-abc", cfg.Analytics.Token)
+	}
+	if cfg.Analytics.CacheTTL != 45*time.Second {
+		t.Errorf("Analytics.CacheTTL = %v, want 45s", cfg.Analytics.CacheTTL)
+	}
+	want := []string{`^foo_.+`, `^bar\..+`}
+	if len(cfg.Analytics.AllowedMetrics) != len(want) {
+		t.Fatalf("Analytics.AllowedMetrics = %v, want %v", cfg.Analytics.AllowedMetrics, want)
+	}
+	for i, p := range want {
+		if cfg.Analytics.AllowedMetrics[i] != p {
+			t.Errorf("Analytics.AllowedMetrics[%d] = %q, want %q", i, cfg.Analytics.AllowedMetrics[i], p)
+		}
+	}
+}
+
+func TestEnvOverrides_AnalyticsCacheTTLPlainSeconds(t *testing.T) {
+	t.Setenv("ANALYTICS_CACHE_TTL", "300")
+
+	cfg, err := Load("testdata/valid.yaml")
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if cfg.Analytics.CacheTTL != 300*time.Second {
+		t.Errorf("Analytics.CacheTTL = %v, want 300s (plain integer seconds)", cfg.Analytics.CacheTTL)
+	}
+}
+
+func TestDefaults_AnalyticsCacheTTL(t *testing.T) {
+	cfg := Defaults()
+	if cfg.Analytics.CacheTTL != 120*time.Second {
+		t.Errorf("default Analytics.CacheTTL = %v, want 120s", cfg.Analytics.CacheTTL)
+	}
+}
+
 func TestValidate_invalid_port(t *testing.T) {
 	cfg := Defaults()
 	cfg.Server.Port = 0

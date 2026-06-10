@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,11 +34,21 @@ type Config struct {
 type AnalyticsConfig struct {
 	Enabled     bool   `yaml:"enabled"`
 	BackendType string `yaml:"backend_type"` // "prometheus" (default), "openobserve", or "uptrace"
-	BackendURL  string `yaml:"backend_url"`  // metrics query endpoint, e.g. "http://mimir:9090" or "https://uptrace.example.com"
+	BackendURL  string `yaml:"backend_url"`  // Prometheus API base, used as-is; the driver appends /api/v1/query[_range] (e.g. "http://mimir:9090" or "https://api.uptrace.dev/api/prometheus/<project_id>")
 	Org         string `yaml:"org"`           // OpenObserve organization (default: "default")
 	Username    string `yaml:"username"`      // OpenObserve basic-auth username
 	Password    string `yaml:"password"`      // OpenObserve basic-auth password
 	Token       string `yaml:"token"`         // Uptrace project token (bearer auth)
+
+	// CacheTTL controls the analytics response cache. Identical queries within
+	// the TTL are served from memory instead of hitting the backend (Uptrace
+	// Cloud's query API is rated for occasional use). Zero or negative disables
+	// caching; the default is 120s.
+	CacheTTL time.Duration `yaml:"cache_ttl"`
+
+	// AllowedMetrics is a list of regular expressions limiting which metric
+	// names may be queried. Empty means the analytics package defaults apply.
+	AllowedMetrics []string `yaml:"allowed_metrics"`
 }
 
 // ServerConfig describes HTTP server settings.
@@ -162,6 +173,9 @@ func Defaults() *Config {
 		Specs: SpecsConfig{
 			Directory: "/specs",
 		},
+		Analytics: AnalyticsConfig{
+			CacheTTL: 120 * time.Second,
+		},
 		Capability: CapabilityConfig{
 			Cache: CacheConfig{
 				TTL:        5 * time.Minute,
@@ -268,5 +282,26 @@ func applyEnvOverrides(cfg *Config) {
 	}
 	if v := os.Getenv("ANALYTICS_PASSWORD"); v != "" {
 		cfg.Analytics.Password = v
+	}
+	if v := os.Getenv("ANALYTICS_TOKEN"); v != "" {
+		cfg.Analytics.Token = v
+	}
+	if v := os.Getenv("ANALYTICS_CACHE_TTL"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			cfg.Analytics.CacheTTL = d
+		} else if secs, serr := strconv.Atoi(v); serr == nil {
+			cfg.Analytics.CacheTTL = time.Duration(secs) * time.Second
+		}
+	}
+	if v := os.Getenv("ANALYTICS_ALLOWED_METRICS"); v != "" {
+		var patterns []string
+		for _, p := range strings.Split(v, ",") {
+			if p = strings.TrimSpace(p); p != "" {
+				patterns = append(patterns, p)
+			}
+		}
+		if len(patterns) > 0 {
+			cfg.Analytics.AllowedMetrics = patterns
+		}
 	}
 }

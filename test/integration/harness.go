@@ -20,6 +20,7 @@ import (
 	"github.com/pitabwire/frame/security/interceptors/httptor"
 	"github.com/pitabwire/frame/security/openid"
 
+	"github.com/antinvestor/service-thesa/pkg/analytics"
 	"github.com/antinvestor/service-thesa/pkg/capability"
 	"github.com/antinvestor/service-thesa/pkg/command"
 	"github.com/antinvestor/service-thesa/pkg/config"
@@ -54,13 +55,14 @@ type TestHarness struct {
 type HarnessOption func(*harnessConfig)
 
 type harnessConfig struct {
-	definitionDirs []string
-	specSources    []specSourceConfig
-	policyFile     string
-	handlerTimeout time.Duration
-	sdkHandlers    map[string]invoker.SDKHandler
-	serviceTimeout time.Duration
-	retry          *config.RetryConfig
+	definitionDirs  []string
+	specSources     []specSourceConfig
+	policyFile      string
+	handlerTimeout  time.Duration
+	sdkHandlers     map[string]invoker.SDKHandler
+	serviceTimeout  time.Duration
+	retry           *config.RetryConfig
+	analyticsEngine *analytics.Engine
 }
 
 type specSourceConfig struct {
@@ -111,6 +113,15 @@ func WithServiceTimeout(d time.Duration) HarnessOption {
 func WithRetry(r config.RetryConfig) HarnessOption {
 	return func(c *harnessConfig) {
 		c.retry = &r
+	}
+}
+
+// WithAnalyticsEngine wires a pre-built analytics engine into the router so
+// the /api/analytics/* endpoints are served. Tests typically build the engine
+// against an httptest mock of the Prometheus API.
+func WithAnalyticsEngine(engine *analytics.Engine) HarnessOption {
+	return func(c *harnessConfig) {
+		c.analyticsEngine = engine
 	}
 }
 
@@ -296,6 +307,7 @@ func NewTestHarness(t *testing.T, opts ...HarnessOption) *TestHarness {
 		CommandExecutor:    h.CommandExecutor,
 		SearchProvider:     searchProvider,
 		LookupProvider:     lookupProvider,
+		AnalyticsEngine:    hc.analyticsEngine,
 	})
 
 	// Step 12: Start test server.
