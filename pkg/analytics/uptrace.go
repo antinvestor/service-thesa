@@ -9,7 +9,7 @@ import (
 )
 
 // UptraceBackend implements MetricsBackend by querying Uptrace's
-// Prometheus-compatible API at /api/v1/prometheus/api/v1/... .
+// Prometheus-compatible API.
 //
 // Uptrace authenticates via a project token passed as a bearer token in
 // the Authorization header (see UptraceAuthTransport).
@@ -20,16 +20,14 @@ type UptraceBackend struct {
 var _ MetricsBackend = (*UptraceBackend)(nil)
 
 // NewUptraceBackend creates a backend targeting an Uptrace instance.
-// baseURL is the Uptrace root (e.g. "https://uptrace.stawi.org").
+// baseURL is the full Prometheus API base, used as-is (e.g.
+// "https://api.uptrace.dev/api/prometheus/<project_id>"); the wrapped
+// PrometheusBackend appends /api/v1/query and /api/v1/query_range to it.
 // The HTTP client should already carry the project token (see
 // UptraceAuthTransport / NewUptraceHTTPClient).
 func NewUptraceBackend(baseURL string, client *http.Client) *UptraceBackend {
 	baseURL = strings.TrimRight(baseURL, "/")
-	// Uptrace exposes PromQL at /api/v1/prometheus/api/v1/<endpoint>. The
-	// wrapped PrometheusBackend appends /api/v1/query etc., producing the
-	// correct full path.
-	promBase := fmt.Sprintf("%s/api/v1/prometheus", baseURL)
-	prom := NewPrometheusBackend(promBase, client)
+	prom := NewPrometheusBackend(baseURL, client)
 	return &UptraceBackend{prom: prom}
 }
 

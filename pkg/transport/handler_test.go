@@ -25,7 +25,7 @@ func contextMiddleware(rctx *model.RequestContext, caps model.CapabilitySet) fun
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := model.WithRequestContext(r.Context(), rctx)
-			ctx = context.WithValue(ctx, capabilitiesKey{}, caps)
+			ctx = model.WithCapabilities(ctx, caps)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

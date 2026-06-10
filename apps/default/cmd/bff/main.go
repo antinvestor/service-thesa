@@ -144,7 +144,13 @@ func main() {
 			metricsBackend = analytics.NewPrometheusBackend(cfg.Analytics.BackendURL, httpClient)
 		}
 
-		analyticsEngine = analytics.NewEngine(metricsBackend, nil)
+		analyticsEngine, err = analytics.NewEngine(metricsBackend, nil,
+			analytics.WithCacheTTL(cfg.Analytics.CacheTTL),
+			analytics.WithAllowedMetrics(cfg.Analytics.AllowedMetrics),
+		)
+		if err != nil {
+			log.WithError(err).Fatal("analytics engine configuration error")
+		}
 
 		if err := analyticsEngine.Healthy(ctx); err != nil {
 			log.WithError(err).Warn("metrics backend not reachable at startup")

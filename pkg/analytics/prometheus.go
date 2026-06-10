@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -72,10 +74,11 @@ func (b *PrometheusBackend) QueryGrouped(ctx context.Context, query MetricQuery,
 		return nil, err
 	}
 
+	groupLabel := sanitizeLabelName(groupBy)
 	items := make([]LabelValue, 0, len(results))
 	for _, r := range results {
 		val, _ := r.Value.Float64()
-		label := r.Metric[groupBy]
+		label := r.Metric[groupLabel]
 		if label == "" {
 			label = "unknown"
 		}
@@ -95,10 +98,11 @@ func (b *PrometheusBackend) QueryTopN(ctx context.Context, query MetricQuery, fi
 		return nil, err
 	}
 
+	groupLabel := sanitizeLabelName(groupBy)
 	items := make([]LabelValue, 0, len(results))
 	for _, r := range results {
 		val, _ := r.Value.Float64()
-		label := r.Metric[groupBy]
+		label := r.Metric[groupLabel]
 		if label == "" {
 			label = firstNonEmptyLabel(r.Metric)
 		}
@@ -143,43 +147,44 @@ func (b *PrometheusBackend) buildScalarPromQL(query MetricQuery, filter TenantFi
 			mult = 1
 		}
 		return fmt.Sprintf("sum(rate(%s{%s}[%s])) / sum(rate(%s{%s}[%s])) * %g",
-			query.DurationMetric, labels, rangeDur,
-			query.DurationCountMetric, labels, rangeDur,
+			sanitizeMetricName(query.DurationMetric), labels, rangeDur,
+			sanitizeMetricName(query.DurationCountMetric), labels, rangeDur,
 			mult)
 	}
 
 	labels := b.buildLabelMatchers(query, filter)
-	selector := fmt.Sprintf("%s{%s}", query.Metric, labels)
+	selector := fmt.Sprintf("%s{%s}", sanitizeMetricName(query.Metric), labels)
+	groupBy := sanitizeLabelName(query.GroupBy)
 
 	var expr string
 	switch query.Aggregation {
 	case AggGauge:
-		if query.GroupBy != "" {
-			expr = fmt.Sprintf("sum by (%s) (%s)", query.GroupBy, selector)
+		if groupBy != "" {
+			expr = fmt.Sprintf("sum by (%s) (%s)", groupBy, selector)
 		} else {
 			expr = fmt.Sprintf("sum(%s)", selector)
 		}
 	case AggCount:
-		if query.GroupBy != "" {
-			expr = fmt.Sprintf("sum by (%s) (increase(%s[%s]))", query.GroupBy, selector, rangeDur)
+		if groupBy != "" {
+			expr = fmt.Sprintf("sum by (%s) (increase(%s[%s]))", groupBy, selector, rangeDur)
 		} else {
 			expr = fmt.Sprintf("sum(increase(%s[%s]))", selector, rangeDur)
 		}
 	case AggSum:
-		if query.GroupBy != "" {
-			expr = fmt.Sprintf("sum by (%s) (increase(%s[%s]))", query.GroupBy, selector, rangeDur)
+		if groupBy != "" {
+			expr = fmt.Sprintf("sum by (%s) (increase(%s[%s]))", groupBy, selector, rangeDur)
 		} else {
 			expr = fmt.Sprintf("sum(increase(%s[%s]))", selector, rangeDur)
 		}
 	case AggAvg:
-		if query.GroupBy != "" {
-			expr = fmt.Sprintf("avg by (%s) (increase(%s[%s]))", query.GroupBy, selector, rangeDur)
+		if groupBy != "" {
+			expr = fmt.Sprintf("avg by (%s) (increase(%s[%s]))", groupBy, selector, rangeDur)
 		} else {
 			expr = fmt.Sprintf("avg(increase(%s[%s]))", selector, rangeDur)
 		}
 	case AggCountDistinct:
-		if query.GroupBy != "" {
-			expr = fmt.Sprintf("count(count by (%s) (increase(%s[%s])))", query.GroupBy, selector, rangeDur)
+		if groupBy != "" {
+			expr = fmt.Sprintf("count(count by (%s) (increase(%s[%s])))", groupBy, selector, rangeDur)
 		} else {
 			expr = fmt.Sprintf("count(increase(%s[%s]))", selector, rangeDur)
 		}
@@ -194,7 +199,7 @@ func (b *PrometheusBackend) buildScalarPromQL(query MetricQuery, filter TenantFi
 // (used by QueryTimeSeries). Uses rate() with the step duration.
 func (b *PrometheusBackend) buildRatePromQL(query MetricQuery, filter TenantFilter, step time.Duration) string {
 	labels := b.buildLabelMatchers(query, filter)
-	selector := fmt.Sprintf("%s{%s}", query.Metric, labels)
+	selector := fmt.Sprintf("%s{%s}", sanitizeMetricName(query.Metric), labels)
 	stepDur := formatDuration(step)
 
 	switch query.Aggregation {
@@ -207,23 +212,85 @@ func (b *PrometheusBackend) buildRatePromQL(query MetricQuery, filter TenantFilt
 
 // buildLabelMatchers constructs the Prometheus label matcher string combining
 // tenant/partition scope with any static query filters.
+//
+// The tenant_id/partition_id matchers always come from the resolved
+// TenantFilter; client filters on those labels are dropped so they can never
+// widen or redirect the tenancy scope. Label keys are normalized to
+// underscore form (Uptrace normalizes attribute keys dot->underscore, e.g.
+// service.name becomes service_name) and values are escaped for PromQL.
 func (b *PrometheusBackend) buildLabelMatchers(query MetricQuery, filter TenantFilter) string {
 	var parts []string
 
 	if filter.Scoped {
-		parts = append(parts, fmt.Sprintf(`tenant_id="%s"`, filter.TenantID))
+		parts = append(parts, fmt.Sprintf(`tenant_id="%s"`, escapeLabelValue(filter.TenantID)))
 		if len(filter.PartitionIDs) == 1 {
-			parts = append(parts, fmt.Sprintf(`partition_id="%s"`, filter.PartitionIDs[0]))
+			parts = append(parts, fmt.Sprintf(`partition_id="%s"`, escapeLabelValue(filter.PartitionIDs[0])))
 		} else if len(filter.PartitionIDs) > 1 {
-			parts = append(parts, fmt.Sprintf(`partition_id=~"%s"`, strings.Join(filter.PartitionIDs, "|")))
+			quoted := make([]string, len(filter.PartitionIDs))
+			for i, id := range filter.PartitionIDs {
+				quoted[i] = regexp.QuoteMeta(id)
+			}
+			parts = append(parts, fmt.Sprintf(`partition_id=~"%s"`, escapeLabelValue(strings.Join(quoted, "|"))))
 		}
 	}
 
-	for k, v := range query.Filters {
-		parts = append(parts, fmt.Sprintf(`%s="%s"`, k, v))
+	keys := make([]string, 0, len(query.Filters))
+	for k := range query.Filters {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		name := sanitizeLabelName(k)
+		if isReservedScopeLabel(name) {
+			continue
+		}
+		parts = append(parts, fmt.Sprintf(`%s="%s"`, name, escapeLabelValue(query.Filters[k])))
 	}
 
 	return strings.Join(parts, ",")
+}
+
+// isReservedScopeLabel reports whether a (normalized) label name is reserved
+// for server-side tenancy scoping and must never be client-controlled.
+func isReservedScopeLabel(name string) bool {
+	return name == "tenant_id" || name == "partition_id"
+}
+
+// labelNameSanitizer matches every character that is not valid in a
+// Prometheus label name.
+var labelNameSanitizer = regexp.MustCompile(`[^a-zA-Z0-9_]`)
+
+// metricNameSanitizer matches every character that is not valid in a
+// Prometheus metric name.
+var metricNameSanitizer = regexp.MustCompile(`[^a-zA-Z0-9_:]`)
+
+// sanitizeLabelName normalizes an attribute key into a valid Prometheus label
+// name. Uptrace applies the same normalization when ingesting OTel attributes
+// (dots become underscores: service.name -> service_name).
+func sanitizeLabelName(name string) string {
+	s := labelNameSanitizer.ReplaceAllString(name, "_")
+	if s != "" && s[0] >= '0' && s[0] <= '9' {
+		s = "_" + s
+	}
+	return s
+}
+
+// sanitizeMetricName normalizes an OTel metric name into the Prometheus form
+// Uptrace exposes (dots and slashes become underscores), and in doing so
+// guarantees the name cannot inject PromQL syntax.
+func sanitizeMetricName(name string) string {
+	s := metricNameSanitizer.ReplaceAllString(name, "_")
+	if s != "" && s[0] >= '0' && s[0] <= '9' {
+		s = "_" + s
+	}
+	return s
+}
+
+// escapeLabelValue escapes a string for inclusion in a double-quoted PromQL
+// label matcher value.
+func escapeLabelValue(v string) string {
+	r := strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", `\n`)
+	return r.Replace(v)
 }
 
 // formatDuration converts a Go duration to Prometheus duration syntax.
@@ -367,6 +434,18 @@ func (b *PrometheusBackend) apiGet(ctx context.Context, path string, params url.
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read metrics response: %w", err)
+	}
+
+	// Surface non-200 responses with the upstream status. The error must never
+	// include request headers or the bearer token — only status and the
+	// backend's own error body (when it is a valid Prometheus error payload).
+	if resp.StatusCode != http.StatusOK {
+		var pr promResponse
+		if jerr := json.Unmarshal(body, &pr); jerr == nil && pr.Error != "" {
+			return nil, fmt.Errorf("metrics backend returned status %d (%s): %s",
+				resp.StatusCode, pr.ErrorType, pr.Error)
+		}
+		return nil, fmt.Errorf("metrics backend returned status %d", resp.StatusCode)
 	}
 
 	var pr promResponse

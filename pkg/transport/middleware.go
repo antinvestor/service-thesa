@@ -16,7 +16,6 @@ import (
 
 // Context keys for middleware-injected values.
 type correlationIDKey struct{}
-type capabilitiesKey struct{}
 
 // CorrelationIDFrom extracts the correlation ID from the request context.
 func CorrelationIDFrom(ctx context.Context) string {
@@ -26,8 +25,7 @@ func CorrelationIDFrom(ctx context.Context) string {
 
 // CapabilitiesFrom extracts the CapabilitySet from the context.
 func CapabilitiesFrom(ctx context.Context) model.CapabilitySet {
-	caps, _ := ctx.Value(capabilitiesKey{}).(model.CapabilitySet)
-	return caps
+	return model.CapabilitiesFrom(ctx)
 }
 
 // Recovery catches panics in downstream handlers, logs them, and returns
@@ -158,7 +156,7 @@ func ResolveCapabilities(resolver model.CapabilityResolver) func(http.Handler) h
 						WriteError(w, model.NewBackendUnavailableError())
 						return
 					}
-					ctx := context.WithValue(r.Context(), capabilitiesKey{}, caps)
+					ctx := model.WithCapabilities(r.Context(), caps)
 					r = r.WithContext(ctx)
 				}
 			}

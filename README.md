@@ -145,10 +145,13 @@ concerns (OIDC, port, log level).
 | `OAUTH2_JWT_VERIFY_AUDIENCE`     | Expected audience (`service_thesa`).                 |
 | `OAUTH2_JWT_VERIFY_ISSUER`       | Expected issuer.                                     |
 | `LOG_LEVEL`                      | `debug` / `info` / `warn` / `error`.                 |
-| `ANALYTICS_BACKEND_TYPE`         | `openobserve` or `prometheus`.                       |
-| `ANALYTICS_BACKEND_URL`          | Metrics backend URL.                                 |
+| `ANALYTICS_BACKEND_TYPE`         | `uptrace`, `openobserve` or `prometheus`.            |
+| `ANALYTICS_BACKEND_URL`          | Prometheus API base, used as-is (e.g. `https://api.uptrace.dev/api/prometheus/<project_id>`). |
+| `ANALYTICS_TOKEN`                | Uptrace project token (bearer auth).                 |
 | `ANALYTICS_ORG`                  | OpenObserve organization (default `default`).        |
 | `ANALYTICS_USERNAME` / `_PASSWORD` | OpenObserve basic-auth.                             |
+| `ANALYTICS_CACHE_TTL`            | Analytics response cache TTL (default `120s`).       |
+| `ANALYTICS_ALLOWED_METRICS`      | Comma-separated metric-name regex allowlist.         |
 | `AUTHORIZATION_SERVICE_READ_URI` | Keto read endpoint (cluster-internal).               |
 | `THESA_SERVER_PORT`              | Legacy override for `server.port` in YAML.           |
 

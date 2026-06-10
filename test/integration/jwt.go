@@ -20,11 +20,12 @@ const testKeyID = "test-key-1"
 
 // TestClaims holds the configurable claims for generating test JWT tokens.
 type TestClaims struct {
-	SubjectID string
-	TenantID  string
-	Email     string
-	Roles     []string
-	Extra     map[string]any
+	SubjectID   string
+	TenantID    string
+	PartitionID string
+	Email       string
+	Roles       []string
+	Extra       map[string]any
 }
 
 // tokenIssuer holds an RSA key pair for signing JWTs and serves a JWKS endpoint.
@@ -100,8 +101,9 @@ func (ti *tokenIssuer) GenerateToken(claims TestClaims) string {
 	now := time.Now()
 
 	authClaims := &security.AuthenticationClaims{
-		TenantID: claims.TenantID,
-		Ext:      map[string]any{"email": claims.Email},
+		TenantID:    claims.TenantID,
+		PartitionID: claims.PartitionID,
+		Ext:         map[string]any{"email": claims.Email},
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    ti.issuer,
 			Audience:  jwt.ClaimStrings{ti.audience},
