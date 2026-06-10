@@ -40,7 +40,6 @@ import 'core/auth/migration.dart';
 import 'core/auth/runtime_provider.dart';
 import 'core/config/url_strategy.dart';
 import 'core/networking/runtime_transport.dart';
-import 'core/services/analytics_client.dart';
 import 'core/services/api_config.dart';
 import 'core/services/permission_checker.dart';
 import 'core/services/tenant_context.dart';
@@ -106,14 +105,12 @@ Future<void> main() async {
           return ctx.roles.toSet();
         }),
         // Analytics data source for AnalyticsDashboard across all service
-        // overview pages. Routes queries through the auth runtime via
-        // ThesaAnalyticsClient so tokens are attached automatically.
-        analyticsDataSourceProvider.overrideWith((ref) {
-          final runtime = ref.watch(authRuntimeProvider);
-          return ThesaAnalyticsDataSource(
-            ThesaAnalyticsClient(runtime, ApiConfig.thesaBaseUrl),
-          );
-        }),
+        // overview pages. The standard ui_core ThesaAnalyticsDataSource
+        // posts through the auth runtime so tokens are attached
+        // automatically and tenant scope is injected server-side.
+        analyticsDataSourceProvider.overrideWith(
+          (ref) => ref.watch(adminAnalyticsProvider),
+        ),
         // Batch permission check at startup — routed through the
         // runtime's fetch so the access token stays inside the runtime.
         userPermissionsProvider.overrideWith((ref) async {
@@ -236,169 +233,507 @@ void _registerPermissionManifests() {
   final registry = PermissionRegistry.instance;
 
   // Profile service
-  registry.register(const PermissionManifest(
-    namespace: 'service_profile',
-    permissions: [
-      PermissionEntry(key: 'profile_view', label: 'View Profiles', scope: PermissionScope.service),
-      PermissionEntry(key: 'profile_create', label: 'Create Profiles', scope: PermissionScope.action),
-      PermissionEntry(key: 'profile_update', label: 'Update Profiles', scope: PermissionScope.action),
-      PermissionEntry(key: 'profile_merge', label: 'Merge Profiles', scope: PermissionScope.action),
-      PermissionEntry(key: 'contact_manage', label: 'Manage Contacts', scope: PermissionScope.feature),
-      PermissionEntry(key: 'roster_view', label: 'View Roster', scope: PermissionScope.feature),
-      PermissionEntry(key: 'roster_manage', label: 'Manage Roster', scope: PermissionScope.action),
-      PermissionEntry(key: 'address_manage', label: 'Manage Addresses', scope: PermissionScope.feature),
-      PermissionEntry(key: 'relationship_view', label: 'View Relationships', scope: PermissionScope.feature),
-      PermissionEntry(key: 'relationship_manage', label: 'Manage Relationships', scope: PermissionScope.action),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_profile',
+      permissions: [
+        PermissionEntry(
+          key: 'profile_view',
+          label: 'View Profiles',
+          scope: PermissionScope.service,
+        ),
+        PermissionEntry(
+          key: 'profile_create',
+          label: 'Create Profiles',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'profile_update',
+          label: 'Update Profiles',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'profile_merge',
+          label: 'Merge Profiles',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'contact_manage',
+          label: 'Manage Contacts',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'roster_view',
+          label: 'View Roster',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'roster_manage',
+          label: 'Manage Roster',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'address_manage',
+          label: 'Manage Addresses',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'relationship_view',
+          label: 'View Relationships',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'relationship_manage',
+          label: 'Manage Relationships',
+          scope: PermissionScope.action,
+        ),
+      ],
+    ),
+  );
 
   // Device service
-  registry.register(const PermissionManifest(
-    namespace: 'service_device',
-    permissions: [
-      PermissionEntry(key: 'device_view', label: 'View Devices', scope: PermissionScope.service),
-      PermissionEntry(key: 'device_create', label: 'Create Devices', scope: PermissionScope.action),
-      PermissionEntry(key: 'device_update', label: 'Update Devices', scope: PermissionScope.action),
-      PermissionEntry(key: 'device_remove', label: 'Remove Devices', scope: PermissionScope.action),
-      PermissionEntry(key: 'device_key_manage', label: 'Manage Device Keys', scope: PermissionScope.feature),
-      PermissionEntry(key: 'device_log_view', label: 'View Device Logs', scope: PermissionScope.feature),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_device',
+      permissions: [
+        PermissionEntry(
+          key: 'device_view',
+          label: 'View Devices',
+          scope: PermissionScope.service,
+        ),
+        PermissionEntry(
+          key: 'device_create',
+          label: 'Create Devices',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'device_update',
+          label: 'Update Devices',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'device_remove',
+          label: 'Remove Devices',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'device_key_manage',
+          label: 'Manage Device Keys',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'device_log_view',
+          label: 'View Device Logs',
+          scope: PermissionScope.feature,
+        ),
+      ],
+    ),
+  );
 
   // Settings service
-  registry.register(const PermissionManifest(
-    namespace: 'service_setting',
-    permissions: [
-      PermissionEntry(key: 'setting_view', label: 'View Settings', scope: PermissionScope.service),
-      PermissionEntry(key: 'setting_update', label: 'Update Settings', scope: PermissionScope.action),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_setting',
+      permissions: [
+        PermissionEntry(
+          key: 'setting_view',
+          label: 'View Settings',
+          scope: PermissionScope.service,
+        ),
+        PermissionEntry(
+          key: 'setting_update',
+          label: 'Update Settings',
+          scope: PermissionScope.action,
+        ),
+      ],
+    ),
+  );
 
   // Geolocation service
-  registry.register(const PermissionManifest(
-    namespace: 'service_geolocation',
-    permissions: [
-      PermissionEntry(key: 'area_view', label: 'View Areas', scope: PermissionScope.feature),
-      PermissionEntry(key: 'area_manage', label: 'Manage Areas', scope: PermissionScope.action),
-      PermissionEntry(key: 'route_view', label: 'View Routes', scope: PermissionScope.feature),
-      PermissionEntry(key: 'route_manage', label: 'Manage Routes', scope: PermissionScope.action),
-      PermissionEntry(key: 'location_view', label: 'View Locations', scope: PermissionScope.feature),
-      PermissionEntry(key: 'event_view', label: 'View Geo Events', scope: PermissionScope.feature),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_geolocation',
+      permissions: [
+        PermissionEntry(
+          key: 'area_view',
+          label: 'View Areas',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'area_manage',
+          label: 'Manage Areas',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'route_view',
+          label: 'View Routes',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'route_manage',
+          label: 'Manage Routes',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'location_view',
+          label: 'View Locations',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'event_view',
+          label: 'View Geo Events',
+          scope: PermissionScope.feature,
+        ),
+      ],
+    ),
+  );
 
   // Payment service
-  registry.register(const PermissionManifest(
-    namespace: 'service_payment',
-    permissions: [
-      PermissionEntry(key: 'payment_search', label: 'Search Payments', scope: PermissionScope.service),
-      PermissionEntry(key: 'payment_send', label: 'Send Payments', scope: PermissionScope.action),
-      PermissionEntry(key: 'payment_receive', label: 'Receive Payments', scope: PermissionScope.action),
-      PermissionEntry(key: 'payment_link_create', label: 'Create Payment Links', scope: PermissionScope.action),
-      PermissionEntry(key: 'payment_reconcile', label: 'Reconcile Payments', scope: PermissionScope.action),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_payment',
+      permissions: [
+        PermissionEntry(
+          key: 'payment_search',
+          label: 'Search Payments',
+          scope: PermissionScope.service,
+        ),
+        PermissionEntry(
+          key: 'payment_send',
+          label: 'Send Payments',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'payment_receive',
+          label: 'Receive Payments',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'payment_link_create',
+          label: 'Create Payment Links',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'payment_reconcile',
+          label: 'Reconcile Payments',
+          scope: PermissionScope.action,
+        ),
+      ],
+    ),
+  );
 
   // Ledger service
-  registry.register(const PermissionManifest(
-    namespace: 'service_ledger',
-    permissions: [
-      PermissionEntry(key: 'ledger_view', label: 'View Ledgers', scope: PermissionScope.service),
-      PermissionEntry(key: 'ledger_create', label: 'Create Ledgers', scope: PermissionScope.action),
-      PermissionEntry(key: 'account_view', label: 'View Accounts', scope: PermissionScope.feature),
-      PermissionEntry(key: 'account_create', label: 'Create Accounts', scope: PermissionScope.action),
-      PermissionEntry(key: 'transaction_view', label: 'View Transactions', scope: PermissionScope.feature),
-      PermissionEntry(key: 'transaction_create', label: 'Create Transactions', scope: PermissionScope.action),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_ledger',
+      permissions: [
+        PermissionEntry(
+          key: 'ledger_view',
+          label: 'View Ledgers',
+          scope: PermissionScope.service,
+        ),
+        PermissionEntry(
+          key: 'ledger_create',
+          label: 'Create Ledgers',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'account_view',
+          label: 'View Accounts',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'account_create',
+          label: 'Create Accounts',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'transaction_view',
+          label: 'View Transactions',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'transaction_create',
+          label: 'Create Transactions',
+          scope: PermissionScope.action,
+        ),
+      ],
+    ),
+  );
 
   // Billing service
-  registry.register(const PermissionManifest(
-    namespace: 'service_billing',
-    permissions: [
-      PermissionEntry(key: 'catalog_view', label: 'View Catalogs', scope: PermissionScope.feature),
-      PermissionEntry(key: 'catalog_manage', label: 'Manage Catalogs', scope: PermissionScope.action),
-      PermissionEntry(key: 'subscription_view', label: 'View Subscriptions', scope: PermissionScope.feature),
-      PermissionEntry(key: 'subscription_manage', label: 'Manage Subscriptions', scope: PermissionScope.action),
-      PermissionEntry(key: 'invoice_view', label: 'View Invoices', scope: PermissionScope.feature),
-      PermissionEntry(key: 'invoice_manage', label: 'Manage Invoices', scope: PermissionScope.action),
-      PermissionEntry(key: 'usage_view', label: 'View Usage Events', scope: PermissionScope.feature),
-      PermissionEntry(key: 'billing_run_execute', label: 'Execute Billing Runs', scope: PermissionScope.action),
-      PermissionEntry(key: 'credit_manage', label: 'Manage Credits', scope: PermissionScope.action),
-      PermissionEntry(key: 'discount_view', label: 'View Discounts', scope: PermissionScope.feature),
-      PermissionEntry(key: 'discount_manage', label: 'Manage Discounts', scope: PermissionScope.action),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_billing',
+      permissions: [
+        PermissionEntry(
+          key: 'catalog_view',
+          label: 'View Catalogs',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'catalog_manage',
+          label: 'Manage Catalogs',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'subscription_view',
+          label: 'View Subscriptions',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'subscription_manage',
+          label: 'Manage Subscriptions',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'invoice_view',
+          label: 'View Invoices',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'invoice_manage',
+          label: 'Manage Invoices',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'usage_view',
+          label: 'View Usage Events',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'billing_run_execute',
+          label: 'Execute Billing Runs',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'credit_manage',
+          label: 'Manage Credits',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'discount_view',
+          label: 'View Discounts',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'discount_manage',
+          label: 'Manage Discounts',
+          scope: PermissionScope.action,
+        ),
+      ],
+    ),
+  );
 
   // Notification service
-  registry.register(const PermissionManifest(
-    namespace: 'service_notification',
-    permissions: [
-      PermissionEntry(key: 'notification_send', label: 'Send Notifications', scope: PermissionScope.action),
-      PermissionEntry(key: 'notification_search', label: 'Search Notifications', scope: PermissionScope.service),
-      PermissionEntry(key: 'notification_status_view', label: 'View Notification Status', scope: PermissionScope.feature),
-      PermissionEntry(key: 'template_manage', label: 'Manage Templates', scope: PermissionScope.feature),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_notification',
+      permissions: [
+        PermissionEntry(
+          key: 'notification_send',
+          label: 'Send Notifications',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'notification_search',
+          label: 'Search Notifications',
+          scope: PermissionScope.service,
+        ),
+        PermissionEntry(
+          key: 'notification_status_view',
+          label: 'View Notification Status',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'template_manage',
+          label: 'Manage Templates',
+          scope: PermissionScope.feature,
+        ),
+      ],
+    ),
+  );
 
   // Files service
-  registry.register(const PermissionManifest(
-    namespace: 'service_files',
-    permissions: [
-      PermissionEntry(key: 'file_view', label: 'View Files', scope: PermissionScope.service),
-      PermissionEntry(key: 'file_upload', label: 'Upload Files', scope: PermissionScope.action),
-      PermissionEntry(key: 'file_delete', label: 'Delete Files', scope: PermissionScope.action),
-      PermissionEntry(key: 'file_access_manage', label: 'Manage File Access', scope: PermissionScope.feature),
-      PermissionEntry(key: 'file_version_manage', label: 'Manage File Versions', scope: PermissionScope.feature),
-      PermissionEntry(key: 'file_retention_manage', label: 'Manage Retention Policies', scope: PermissionScope.feature),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_files',
+      permissions: [
+        PermissionEntry(
+          key: 'file_view',
+          label: 'View Files',
+          scope: PermissionScope.service,
+        ),
+        PermissionEntry(
+          key: 'file_upload',
+          label: 'Upload Files',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'file_delete',
+          label: 'Delete Files',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'file_access_manage',
+          label: 'Manage File Access',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'file_version_manage',
+          label: 'Manage File Versions',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'file_retention_manage',
+          label: 'Manage Retention Policies',
+          scope: PermissionScope.feature,
+        ),
+      ],
+    ),
+  );
 
   // Tenancy service
-  registry.register(const PermissionManifest(
-    namespace: 'service_tenancy',
-    permissions: [
-      PermissionEntry(key: 'tenancy_view', label: 'View Tenants', scope: PermissionScope.service),
-      PermissionEntry(key: 'tenancy_create', label: 'Create Tenants', scope: PermissionScope.action),
-      PermissionEntry(key: 'tenancy_update', label: 'Update Tenants', scope: PermissionScope.action),
-      PermissionEntry(key: 'partition_view', label: 'View Partitions', scope: PermissionScope.feature),
-      PermissionEntry(key: 'partition_create', label: 'Create Partitions', scope: PermissionScope.action),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_tenancy',
+      permissions: [
+        PermissionEntry(
+          key: 'tenancy_view',
+          label: 'View Tenants',
+          scope: PermissionScope.service,
+        ),
+        PermissionEntry(
+          key: 'tenancy_create',
+          label: 'Create Tenants',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'tenancy_update',
+          label: 'Update Tenants',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'partition_view',
+          label: 'View Partitions',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'partition_create',
+          label: 'Create Partitions',
+          scope: PermissionScope.action,
+        ),
+      ],
+    ),
+  );
 
   // Audit service
-  registry.register(const PermissionManifest(
-    namespace: 'service_audit',
-    permissions: [
-      PermissionEntry(key: 'audit_view', label: 'View Audit Log', scope: PermissionScope.service),
-      PermissionEntry(key: 'audit_search', label: 'Search Audit Entries', scope: PermissionScope.feature),
-      PermissionEntry(key: 'audit_export', label: 'Export Audit Data', scope: PermissionScope.action),
-      PermissionEntry(key: 'audit_verify', label: 'Verify Integrity', scope: PermissionScope.action),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_audit',
+      permissions: [
+        PermissionEntry(
+          key: 'audit_view',
+          label: 'View Audit Log',
+          scope: PermissionScope.service,
+        ),
+        PermissionEntry(
+          key: 'audit_search',
+          label: 'Search Audit Entries',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'audit_export',
+          label: 'Export Audit Data',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'audit_verify',
+          label: 'Verify Integrity',
+          scope: PermissionScope.action,
+        ),
+      ],
+    ),
+  );
 
   // Trustage (Orchestrator) service
-  registry.register(const PermissionManifest(
-    namespace: 'service_trustage',
-    permissions: [
-      PermissionEntry(key: 'trustage_read', label: 'View Workflows & Runs', scope: PermissionScope.service),
-      PermissionEntry(key: 'trustage_operate', label: 'Retry, Resume, Send Signals', scope: PermissionScope.action),
-      PermissionEntry(key: 'trustage_ingest', label: 'Trigger Events', scope: PermissionScope.action),
-      PermissionEntry(key: 'trustage_manage', label: 'Create & Activate Workflows', scope: PermissionScope.action),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_trustage',
+      permissions: [
+        PermissionEntry(
+          key: 'trustage_read',
+          label: 'View Workflows & Runs',
+          scope: PermissionScope.service,
+        ),
+        PermissionEntry(
+          key: 'trustage_operate',
+          label: 'Retry, Resume, Send Signals',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'trustage_ingest',
+          label: 'Trigger Events',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'trustage_manage',
+          label: 'Create & Activate Workflows',
+          scope: PermissionScope.action,
+        ),
+      ],
+    ),
+  );
 
   // Fort (Email Deliverability) service
-  registry.register(const PermissionManifest(
-    namespace: 'service_fort',
-    permissions: [
-      PermissionEntry(key: 'fort_domain_manage', label: 'Manage Domains', description: 'Create, verify, pause, resume, and delete sending domains', scope: PermissionScope.action),
-      PermissionEntry(key: 'fort_domain_view', label: 'View Domains', description: 'View sending domain configuration and status', scope: PermissionScope.service),
-      PermissionEntry(key: 'fort_pool_manage', label: 'Manage IP Pools', description: 'Create, modify, and manage IP address pools', scope: PermissionScope.feature),
-      PermissionEntry(key: 'fort_policy_manage', label: 'Manage Policies', description: 'Create, edit, and delete delivery policies', scope: PermissionScope.feature),
-      PermissionEntry(key: 'fort_reputation_view', label: 'View Reputation', description: 'View reputation scores and history', scope: PermissionScope.feature),
-      PermissionEntry(key: 'fort_node_view', label: 'View MTA Nodes', description: 'View MTA node status and heartbeats', scope: PermissionScope.feature),
-      PermissionEntry(key: 'fort_suppression_manage', label: 'Manage Suppression', description: 'Check and manage email suppression list', scope: PermissionScope.feature),
-    ],
-  ));
+  registry.register(
+    const PermissionManifest(
+      namespace: 'service_fort',
+      permissions: [
+        PermissionEntry(
+          key: 'fort_domain_manage',
+          label: 'Manage Domains',
+          description:
+              'Create, verify, pause, resume, and delete sending domains',
+          scope: PermissionScope.action,
+        ),
+        PermissionEntry(
+          key: 'fort_domain_view',
+          label: 'View Domains',
+          description: 'View sending domain configuration and status',
+          scope: PermissionScope.service,
+        ),
+        PermissionEntry(
+          key: 'fort_pool_manage',
+          label: 'Manage IP Pools',
+          description: 'Create, modify, and manage IP address pools',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'fort_policy_manage',
+          label: 'Manage Policies',
+          description: 'Create, edit, and delete delivery policies',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'fort_reputation_view',
+          label: 'View Reputation',
+          description: 'View reputation scores and history',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'fort_node_view',
+          label: 'View MTA Nodes',
+          description: 'View MTA node status and heartbeats',
+          scope: PermissionScope.feature,
+        ),
+        PermissionEntry(
+          key: 'fort_suppression_manage',
+          label: 'Manage Suppression',
+          description: 'Check and manage email suppression list',
+          scope: PermissionScope.feature,
+        ),
+      ],
+    ),
+  );
 }

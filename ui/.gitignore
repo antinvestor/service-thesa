@@ -44,3 +44,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 .playwright-mcp/
+
+# Local-only dependency overrides (sibling-repo paths)
+pubspec_overrides.yaml

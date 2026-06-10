@@ -1,12 +1,24 @@
-import 'package:fl_chart/fl_chart.dart';
+import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/service_definition.dart';
+import '../../../core/services/thesa_analytics_data_source.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/analytics_error_view.dart';
+import '../../../core/widgets/service_activity_widgets.dart';
 import '../../../core/widgets/service_analytics_page.dart';
 import '../data/partition_providers.dart';
 
+/// Frame `{pkg}/completed_calls` metric emitted by the partition service.
+const _partitionCallsMetric = 'partition/completed_calls';
+
+/// Partition service analytics.
+///
+/// Inventory KPIs (tenant/partition/role counts) come from the entity
+/// APIs; the growth chart, activity panel, and top-partitions table are
+/// live queries against the Thesa analytics gate (tenant scoping
+/// injected server-side from the JWT).
 class PartitionAnalyticsPage extends ConsumerWidget {
   const PartitionAnalyticsPage({super.key, required this.service});
 
@@ -17,6 +29,7 @@ class PartitionAnalyticsPage extends ConsumerWidget {
     final tenantsAsync = ref.watch(tenantsProvider);
     final partitionsAsync = ref.watch(partitionsProvider);
     final rolesAsync = ref.watch(partitionRolesProvider);
+    final analytics = ref.watch(adminAnalyticsProvider);
 
     final tenantsCount = tenantsAsync.whenOrNull(data: (d) => d.length) ?? 0;
     final partitionsCount =
@@ -25,7 +38,7 @@ class PartitionAnalyticsPage extends ConsumerWidget {
 
     return ServiceAnalyticsPage(
       title: 'Partition Service',
-      breadcrumbs: ['Services', 'Partition Service', 'Analytics'],
+      breadcrumbs: const ['Services', 'Partition Service', 'Analytics'],
       kpis: [
         ServiceKpi(
           label: 'Total Tenants',
@@ -44,38 +57,62 @@ class PartitionAnalyticsPage extends ConsumerWidget {
         ),
       ],
       chartTitle: 'Partition Growth',
-      chartSubtitle: '12-month network-wide scaling metrics',
-      chartWidget: _PartitionGrowthChart(),
-      events: const [
-        ServiceEvent(
-          title: 'New Partition Created',
-          timeAgo: '2 mins ago',
-          severity: EventSeverity.success,
-          icon: Icons.add_box_outlined,
+      chartSubtitle:
+          'Organizations created across accessible partitions (12 months)',
+      chartWidget: AnalyticsTrendChart(
+        label: 'Organizations created',
+        granularity: TimeGranularity.month,
+        loader: () => analytics.queryTimeSeriesAllPartitions(
+          metric: 'identity_organizations_created_total',
+          timeRange: AnalyticsTimeRange.lastYear(),
         ),
-        ServiceEvent(
-          title: 'Security Policy Update',
-          timeAgo: '45 mins ago',
-          severity: EventSeverity.warning,
-          icon: Icons.shield_outlined,
-        ),
-        ServiceEvent(
-          title: 'Threshold Alert',
-          timeAgo: '3 hours ago',
-          severity: EventSeverity.error,
-          icon: Icons.warning_amber,
-        ),
-        ServiceEvent(
-          title: 'Tenant Onboarded',
-          timeAgo: '5 hours ago',
-          severity: EventSeverity.info,
-        ),
-      ],
-      bottomSection: _buildTopTenants(context),
+      ),
+      sidePanel: ServiceActivityPanel(
+        dataSource: analytics,
+        metric: _partitionCallsMetric,
+      ),
+      bottomSection: _TopPartitionsTable(analytics: analytics),
+    );
+  }
+}
+
+/// Top partitions ranked by organizations created in the last 30 days,
+/// from the analytics gate's top-N endpoint.
+class _TopPartitionsTable extends StatefulWidget {
+  const _TopPartitionsTable({required this.analytics});
+
+  final AdminAnalyticsDataSource analytics;
+
+  @override
+  State<_TopPartitionsTable> createState() => _TopPartitionsTableState();
+}
+
+class _TopPartitionsTableState extends State<_TopPartitionsTable> {
+  late Future<List<TopNItem>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _load();
+  }
+
+  Future<List<TopNItem>> _load() {
+    return widget.analytics.queryTopNAllPartitions(
+      metric: 'identity_organizations_created_total',
+      groupBy: 'partition_id',
+      limit: 5,
+      timeRange: AnalyticsTimeRange.last30Days(),
     );
   }
 
-  Widget _buildTopTenants(BuildContext context) {
+  void _reload() {
+    setState(() {
+      _future = _load();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -86,155 +123,68 @@ class PartitionAnalyticsPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Top Performing Tenants',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            'Top Partitions by Organizations Created (30d)',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 16),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              showCheckboxColumn: false,
-              columns: const [
-                DataColumn(label: Text('ORGANIZATION')),
-                DataColumn(label: Text('PARTITIONS'), numeric: true),
-                DataColumn(label: Text('IOPS AVG')),
-                DataColumn(label: Text('SECURITY SCORE')),
-                DataColumn(label: Text('STATUS')),
-              ],
-              rows: const [
-                DataRow(cells: [
-                  DataCell(Text('Vortex Dynamics')),
-                  DataCell(Text('2,490')),
-                  DataCell(Text('14.2k/s')),
-                  DataCell(Text('98%')),
-                  DataCell(_StatusBadge('OPTIMIZED', AppColors.success)),
-                ]),
-                DataRow(cells: [
-                  DataCell(Text('Nexus Logistics')),
-                  DataCell(Text('1,823')),
-                  DataCell(Text('11.8k/s')),
-                  DataCell(Text('95%')),
-                  DataCell(_StatusBadge('OPTIMIZED', AppColors.success)),
-                ]),
-                DataRow(cells: [
-                  DataCell(Text('Atlas Industries')),
-                  DataCell(Text('1,204')),
-                  DataCell(Text('9.4k/s')),
-                  DataCell(Text('87%')),
-                  DataCell(_StatusBadge('ACTIVE', AppColors.info)),
-                ]),
-              ],
-            ),
+          FutureBuilder<List<TopNItem>>(
+            future: _future,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SizedBox(
+                  height: 120,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (snapshot.hasError) {
+                return SizedBox(
+                  height: 160,
+                  child: AnalyticsErrorView(
+                    error: snapshot.error!,
+                    onRetry: _reload,
+                  ),
+                );
+              }
+              final items = snapshot.data ?? const <TopNItem>[];
+              if (items.isEmpty) {
+                return const SizedBox(
+                  height: 80,
+                  child: Center(
+                    child: Text(
+                      'No partition activity in this period yet',
+                      style: TextStyle(color: AppColors.onSurfaceMuted),
+                    ),
+                  ),
+                );
+              }
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  showCheckboxColumn: false,
+                  columns: const [
+                    DataColumn(label: Text('PARTITION')),
+                    DataColumn(
+                      label: Text('ORGANIZATIONS CREATED'),
+                      numeric: true,
+                    ),
+                  ],
+                  rows: [
+                    for (final item in items)
+                      DataRow(
+                        cells: [
+                          DataCell(Text(item.label)),
+                          DataCell(Text(item.value.toStringAsFixed(0))),
+                        ],
+                      ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge(this.label, this.color);
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
-      ),
-    );
-  }
-}
-
-class _PartitionGrowthChart extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BarChart(
-      BarChartData(
-        alignment: BarChartAlignment.spaceAround,
-        maxY: 2000,
-        barTouchData: BarTouchData(enabled: false),
-        titlesData: FlTitlesData(
-          show: true,
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                const months = [
-                  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-                ];
-                if (value.toInt() >= 0 && value.toInt() < months.length) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(months[value.toInt()],
-                        style: const TextStyle(
-                            fontSize: 10, color: AppColors.onSurfaceMuted)),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 40,
-              getTitlesWidget: (value, meta) {
-                return Text('${value.toInt()}',
-                    style: const TextStyle(
-                        fontSize: 10, color: AppColors.onSurfaceMuted));
-              },
-            ),
-          ),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        ),
-        borderData: FlBorderData(show: false),
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: 500,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: AppColors.border,
-            strokeWidth: 1,
-          ),
-        ),
-        barGroups: List.generate(12, (i) {
-          final values = [
-            800, 950, 1100, 1050, 1200, 1400,
-            1350, 1500, 1600, 1550, 1700, 1850,
-          ];
-          return BarChartGroupData(
-            x: i,
-            barRods: [
-              BarChartRodData(
-                toY: values[i].toDouble(),
-                color: AppColors.tertiary,
-                width: 16,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(4),
-                  topRight: Radius.circular(4),
-                ),
-              ),
-            ],
-          );
-        }),
       ),
     );
   }

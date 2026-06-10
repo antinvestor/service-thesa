@@ -3,9 +3,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/services/thesa_analytics_data_source.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/analytics_error_view.dart';
 import '../../core/widgets/page_header.dart';
-import '../dashboard/dashboard_page.dart';
 
 /// Analytics query explorer page.
 ///
@@ -19,48 +20,52 @@ class AnalyticsPage extends ConsumerStatefulWidget {
 }
 
 class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
-  final _metricController = TextEditingController(
-    text: 'rpc_server_duration_count',
-  );
+  final _metricController = TextEditingController(text: 'rpc.server.duration');
   final _groupByController = TextEditingController(text: 'rpc_service');
 
   String _selectedRange = '30d';
+  AnalyticsAggregation _aggregation = AnalyticsAggregation.count;
 
   Future<double>? _scalarFuture;
   Future<List<TimeSeriesPoint>>? _timeSeriesFuture;
   Future<List<DistributionSegment>>? _groupedFuture;
 
   AnalyticsTimeRange get _timeRange => switch (_selectedRange) {
-        '24h' => AnalyticsTimeRange.last24Hours(),
-        '7d' => AnalyticsTimeRange.last7Days(),
-        '90d' => AnalyticsTimeRange.last90Days(),
-        '1y' => AnalyticsTimeRange.lastYear(),
-        _ => AnalyticsTimeRange.last30Days(),
-      };
+    '24h' => AnalyticsTimeRange.last24Hours(),
+    '7d' => AnalyticsTimeRange.last7Days(),
+    '90d' => AnalyticsTimeRange.last90Days(),
+    '1y' => AnalyticsTimeRange.lastYear(),
+    _ => AnalyticsTimeRange.last30Days(),
+  };
 
   void _runQuery() {
-    final client = ref.read(analyticsClientProvider);
+    final dataSource = ref.read(adminAnalyticsProvider);
     final metric = _metricController.text.trim();
     if (metric.isEmpty) return;
 
     setState(() {
-      _scalarFuture = client.queryScalar(
+      // `.ignore()` keeps gate rejections (400/403) from surfacing as
+      // unhandled async errors before the FutureBuilders subscribe; the
+      // builders still receive and render them.
+      _scalarFuture = dataSource.queryScalar(
         metric: metric,
-        aggregation: 'sum',
+        aggregation: _aggregation,
         timeRange: _timeRange,
-      );
-      _timeSeriesFuture = client.queryTimeSeries(
+      )..ignore();
+      _timeSeriesFuture = dataSource.queryTimeSeries(
         metric: metric,
+        aggregation: _aggregation,
         timeRange: _timeRange,
-      );
+      )..ignore();
 
       final groupBy = _groupByController.text.trim();
       if (groupBy.isNotEmpty) {
-        _groupedFuture = client.queryGrouped(
+        _groupedFuture = dataSource.queryGrouped(
           metric: metric,
+          aggregation: _aggregation,
           groupBy: groupBy,
           timeRange: _timeRange,
-        );
+        )..ignore();
       } else {
         _groupedFuture = null;
       }
@@ -130,7 +135,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                   controller: _metricController,
                   decoration: const InputDecoration(
                     labelText: 'Metric name',
-                    hintText: 'e.g. rpc_server_duration_count',
+                    hintText: 'e.g. rpc.server.duration',
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
@@ -148,6 +153,18 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                     isDense: true,
                   ),
                 ),
+              ),
+              const SizedBox(width: 12),
+              DropdownButton<AnalyticsAggregation>(
+                value: _aggregation,
+                underline: const SizedBox.shrink(),
+                items: [
+                  for (final agg in AnalyticsAggregation.values)
+                    DropdownMenuItem(value: agg, child: Text(agg.wireName)),
+                ],
+                onChanged: (v) {
+                  if (v != null) setState(() => _aggregation = v);
+                },
               ),
               const SizedBox(width: 12),
               DropdownButton<String>(
@@ -188,8 +205,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Scalar Result',
-              style: Theme.of(context).textTheme.titleMedium),
+          Text('Scalar Result', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
           FutureBuilder<double>(
             future: _scalarFuture,
@@ -198,15 +214,17 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                 return const CircularProgressIndicator();
               }
               if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}',
-                    style: TextStyle(color: AppColors.error));
+                return SizedBox(
+                  height: 140,
+                  child: AnalyticsErrorView(error: snapshot.error!),
+                );
               }
               final value = snapshot.data ?? 0;
               return Text(
                 _formatNumber(value),
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                  fontWeight: FontWeight.w700,
+                ),
               );
             },
           ),
@@ -226,8 +244,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Time Series',
-              style: Theme.of(context).textTheme.titleMedium),
+          Text('Time Series', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 16),
           SizedBox(
             height: 200,
@@ -238,15 +255,16 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return Center(
-                      child: Text('Error: ${snapshot.error}',
-                          style: TextStyle(color: AppColors.error)));
+                  return AnalyticsErrorView(error: snapshot.error!);
                 }
                 final points = snapshot.data ?? [];
                 if (points.isEmpty) {
                   return Center(
-                      child: Text('No data',
-                          style: Theme.of(context).textTheme.bodySmall));
+                    child: Text(
+                      'No data',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  );
                 }
                 return _buildLineChart(context, points);
               },
@@ -257,8 +275,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
     );
   }
 
-  Widget _buildLineChart(
-      BuildContext context, List<TimeSeriesPoint> points) {
+  Widget _buildLineChart(BuildContext context, List<TimeSeriesPoint> points) {
     final maxY = points.fold(0.0, (m, p) => p.value > m ? p.value : m);
     final ceilY = maxY > 0 ? maxY * 1.2 : 10.0;
 
@@ -272,17 +289,22 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
               showTitles: true,
               reservedSize: 50,
               getTitlesWidget: (value, meta) {
-                return Text(_formatNumber(value),
-                    style: Theme.of(context).textTheme.labelSmall);
+                return Text(
+                  _formatNumber(value),
+                  style: Theme.of(context).textTheme.labelSmall,
+                );
               },
             ),
           ),
-          bottomTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         gridData: FlGridData(
           show: true,
@@ -321,28 +343,37 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Grouped by "${_groupByController.text}"',
-              style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Grouped by "${_groupByController.text}"',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 16),
           FutureBuilder<List<DistributionSegment>>(
             future: _groupedFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const SizedBox(
-                    height: 100,
-                    child: Center(child: CircularProgressIndicator()));
+                  height: 100,
+                  child: Center(child: CircularProgressIndicator()),
+                );
               }
               if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}',
-                    style: TextStyle(color: AppColors.error));
+                return SizedBox(
+                  height: 160,
+                  child: AnalyticsErrorView(error: snapshot.error!),
+                );
               }
               final segments = snapshot.data ?? [];
               if (segments.isEmpty) {
-                return Text('No data',
-                    style: Theme.of(context).textTheme.bodySmall);
+                return Text(
+                  'No data',
+                  style: Theme.of(context).textTheme.bodySmall,
+                );
               }
-              final maxVal =
-                  segments.fold(0.0, (m, s) => s.value > m ? s.value : m);
+              final maxVal = segments.fold(
+                0.0,
+                (m, s) => s.value > m ? s.value : m,
+              );
               return Column(
                 children: segments.map((s) {
                   return Padding(
@@ -391,15 +422,18 @@ class _GroupedBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: Text(label,
-                  style: Theme.of(context).textTheme.bodySmall,
-                  overflow: TextOverflow.ellipsis),
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodySmall,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            Text(display,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              display,
+              style: Theme.of(
+                context,
+              ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
           ],
         ),
         const SizedBox(height: 4),
@@ -409,8 +443,7 @@ class _GroupedBar extends StatelessWidget {
             value: value.clamp(0.0, 1.0),
             minHeight: 6,
             backgroundColor: AppColors.surfaceVariant,
-            valueColor:
-                const AlwaysStoppedAnimation(AppColors.tertiary),
+            valueColor: const AlwaysStoppedAnimation(AppColors.tertiary),
           ),
         ),
       ],

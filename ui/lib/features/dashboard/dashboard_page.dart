@@ -1,10 +1,9 @@
-import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart';
 import 'package:antinvestor_ui_core/analytics/analytics_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/services/analytics_client.dart';
-import '../../core/services/api_config.dart';
+import '../../core/services/thesa_analytics_data_source.dart';
+import '../../core/widgets/analytics_error_view.dart';
 import '../../core/widgets/page_header.dart';
 import '../../core/widgets/responsive_layout.dart';
 import 'widgets/activity_feed.dart';
@@ -12,12 +11,6 @@ import 'widgets/asset_distribution.dart';
 import 'widgets/kpi_card.dart';
 import 'widgets/portfolio_chart.dart';
 import 'widgets/regional_performance.dart';
-
-/// Riverpod provider for the analytics client used by the dashboard.
-final analyticsClientProvider = Provider<ThesaAnalyticsClient>((ref) {
-  final runtime = ref.watch(authRuntimeProvider);
-  return ThesaAnalyticsClient(runtime, ApiConfig.thesaBaseUrl);
-});
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -27,14 +20,16 @@ class DashboardPage extends ConsumerStatefulWidget {
 }
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
-  late final ThesaAnalyticsClient _client;
+  late final AdminAnalyticsDataSource _analytics;
   late final AnalyticsTimeRange _timeRange;
 
   // KPI futures
   late Future<double> _totalApiRequests;
   late Future<double> _errorRate;
-  late Future<double> _activeTenants;
+  late Future<double> _organizationsCreated;
   late Future<double> _notificationsSent;
+
+  bool _initialized = false;
 
   @override
   void initState() {
@@ -45,43 +40,47 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _client = ref.read(analyticsClientProvider);
+    if (_initialized) return;
+    _initialized = true;
+    _analytics = ref.read(adminAnalyticsProvider);
     _loadMetrics();
   }
 
   void _loadMetrics() {
-    _totalApiRequests = _client.queryScalar(
-      metric: 'rpc_server_duration_count',
-      aggregation: 'sum',
+    // All metric names below are in the gate's allowlist; tenant scoping
+    // is injected server-side from the JWT.
+    _totalApiRequests = _analytics.queryScalar(
+      metric: 'rpc.server.duration',
+      aggregation: AnalyticsAggregation.count,
       timeRange: _timeRange,
     );
 
     _errorRate = _computeErrorRate();
 
-    _activeTenants = _client.queryScalar(
-      metric: 'tenancy_tenants_created_total',
-      aggregation: 'sum',
+    _organizationsCreated = _analytics.queryScalar(
+      metric: 'identity_organizations_created_total',
       timeRange: _timeRange,
     );
 
-    _notificationsSent = _client.queryScalar(
-      metric: 'notification_sent_total',
-      aggregation: 'sum',
+    _notificationsSent = _analytics.queryScalar(
+      metric: 'notifications_sent_total',
       timeRange: _timeRange,
     );
   }
 
+  /// Error rate computed client-side from two allowlisted scalars; the
+  /// standardized gate has no ratio endpoint.
   Future<double> _computeErrorRate() async {
     final results = await Future.wait([
-      _client.queryScalar(
-        metric: 'rpc_server_duration_count',
-        aggregation: 'sum',
+      _analytics.queryScalar(
+        metric: 'rpc.server.duration',
+        aggregation: AnalyticsAggregation.count,
         filters: {'rpc_grpc_status_code': 'OK'},
         timeRange: _timeRange,
       ),
-      _client.queryScalar(
-        metric: 'rpc_server_duration_count',
-        aggregation: 'sum',
+      _analytics.queryScalar(
+        metric: 'rpc.server.duration',
+        aggregation: AnalyticsAggregation.count,
         timeRange: _timeRange,
       ),
     ]);
@@ -121,7 +120,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     // Row 2: Traffic charts
                     _buildTrafficCharts(context, screenSize),
                     const SizedBox(height: 24),
-                    // Row 3 + Row 4: Distribution + Resources
+                    // Row 3 + Row 4: Distribution + Service load
                     _buildBottomRow(context, screenSize),
                     // Activity feed inline on mobile/tablet
                     if (!showSideFeed) ...[
@@ -139,8 +138,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           SizedBox(
             width: 340,
             child: SingleChildScrollView(
-              padding:
-                  const EdgeInsets.only(top: 24, right: 24, bottom: 24),
+              padding: const EdgeInsets.only(top: 24, right: 24, bottom: 24),
               child: const ActivityFeed(),
             ),
           ),
@@ -162,8 +160,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         unit: 'percent',
       ),
       _scalarKpiCard(
-        future: _activeTenants,
-        label: 'Active Tenants',
+        future: _organizationsCreated,
+        label: 'Organizations Created',
         icon: Icons.domain_outlined,
       ),
       _scalarKpiCard(
@@ -176,21 +174,24 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (screenSize == ScreenSize.mobile) {
       return Column(
         children: cards
-            .map((c) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: c,
-                ))
+            .map(
+              (c) =>
+                  Padding(padding: const EdgeInsets.only(bottom: 12), child: c),
+            )
             .toList(),
       );
     }
 
     return Row(
       children: cards
-          .map((c) => Expanded(
-                  child: Padding(
+          .map(
+            (c) => Expanded(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 child: c,
-              )))
+              ),
+            ),
+          )
           .toList(),
     );
   }
@@ -208,7 +209,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           return KpiCard(label: label, value: '...', icon: icon);
         }
         if (snapshot.hasError) {
-          return KpiCard(label: label, value: '--', icon: icon);
+          // Friendly classified state: card shows a dash, the tooltip
+          // carries the reason (no tenant scope, allowlist reject, ...).
+          final info = describeAnalyticsError(snapshot.error!);
+          return Tooltip(
+            message: '${info.title}: ${info.detail}',
+            child: KpiCard(label: label, value: '--', icon: icon),
+          );
         }
         final value = snapshot.data ?? 0;
         return KpiCard(
@@ -224,9 +231,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (screenSize == ScreenSize.mobile) {
       return Column(
         children: [
-          PortfolioChart(client: _client),
+          PortfolioChart(dataSource: _analytics),
           const SizedBox(height: 24),
-          _PaymentVolumeChart(client: _client),
+          _PaymentVolumeChart(dataSource: _analytics),
         ],
       );
     }
@@ -237,13 +244,13 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: PortfolioChart(client: _client),
+            child: PortfolioChart(dataSource: _analytics),
           ),
         ),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(left: 6),
-            child: _PaymentVolumeChart(client: _client),
+            child: _PaymentVolumeChart(dataSource: _analytics),
           ),
         ),
       ],
@@ -254,9 +261,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     if (screenSize == ScreenSize.mobile) {
       return Column(
         children: [
-          AssetDistribution(client: _client),
+          AssetDistribution(dataSource: _analytics),
           const SizedBox(height: 24),
-          RegionalPerformance(client: _client),
+          RegionalPerformance(dataSource: _analytics),
         ],
       );
     }
@@ -265,15 +272,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-            child: Padding(
-          padding: const EdgeInsets.only(right: 6),
-          child: AssetDistribution(client: _client),
-        )),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: AssetDistribution(dataSource: _analytics),
+          ),
+        ),
         Expanded(
-            child: Padding(
-          padding: const EdgeInsets.only(left: 6),
-          child: RegionalPerformance(client: _client),
-        )),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 6),
+            child: RegionalPerformance(dataSource: _analytics),
+          ),
+        ),
       ],
     );
   }
@@ -304,9 +313,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
 /// Payment Volume time series chart (Row 2, right panel).
 class _PaymentVolumeChart extends StatefulWidget {
-  const _PaymentVolumeChart({required this.client});
+  const _PaymentVolumeChart({required this.dataSource});
 
-  final ThesaAnalyticsClient client;
+  final AdminAnalyticsDataSource dataSource;
 
   @override
   State<_PaymentVolumeChart> createState() => _PaymentVolumeChartState();
@@ -318,8 +327,8 @@ class _PaymentVolumeChartState extends State<_PaymentVolumeChart> {
   @override
   void initState() {
     super.initState();
-    _future = widget.client.queryTimeSeries(
-      metric: 'payment_transactions_total',
+    _future = widget.dataSource.queryTimeSeries(
+      metric: 'payments_transactions_total',
       timeRange: AnalyticsTimeRange.lastYear(),
     );
   }
