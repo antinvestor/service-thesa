@@ -79,8 +79,8 @@ dependencies:
   # ── Antinvestor UI Libraries (published on pub.dev) ───────────────────────
   antinvestor_ui_core: ^0.5.0
   antinvestor_ui_profile: ^0.2.5
-  antinvestor_ui_device: ^0.1.2
-  antinvestor_ui_settings: ^0.1.2
+  antinvestor_ui_device: ^0.3.0
+  antinvestor_ui_settings: ^0.3.0
   antinvestor_ui_geolocation: ^0.2.3
   antinvestor_ui_payment: ^0.2.1
   antinvestor_ui_ledger: ^0.3.0
