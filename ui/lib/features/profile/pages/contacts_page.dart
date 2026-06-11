@@ -13,8 +13,7 @@ import '../widgets/profile_badge.dart';
 typedef ProfileContact = ({String profileId, ContactObject contact});
 
 /// Provider that extracts all contacts from loaded profiles into a flat list.
-final contactsProvider =
-    FutureProvider<List<ProfileContact>>((ref) async {
+final contactsProvider = FutureProvider<List<ProfileContact>>((ref) async {
   final profiles = await ref.watch(profilesProvider('').future);
   final contacts = <ProfileContact>[];
   for (final profile in profiles) {
@@ -26,11 +25,7 @@ final contactsProvider =
 });
 
 class ContactsPage extends ConsumerWidget {
-  const ContactsPage({
-    super.key,
-    required this.service,
-    required this.feature,
-  });
+  const ContactsPage({super.key, required this.service, required this.feature});
 
   final ServiceDefinition service;
   final SubFeatureDefinition feature;
@@ -67,26 +62,32 @@ class ContactsPage extends ConsumerWidget {
             return null;
           }),
           cells: [
-            DataCell(Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  contact.type == ContactType.EMAIL
-                      ? Icons.email_outlined
-                      : Icons.phone_outlined,
-                  size: 16,
-                  color: typeColor,
-                ),
-                const SizedBox(width: 8),
-                Text(contact.detail),
-              ],
-            )),
+            DataCell(
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    contact.type == ContactType.EMAIL
+                        ? Icons.email_outlined
+                        : Icons.phone_outlined,
+                    size: 16,
+                    color: typeColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(contact.detail),
+                ],
+              ),
+            ),
             DataCell(ColorBadge(typeLabel, typeColor)),
-            DataCell(Icon(
-              contact.verified ? Icons.check_circle : Icons.cancel_outlined,
-              size: 18,
-              color: contact.verified ? AppColors.success : AppColors.onSurfaceMuted,
-            )),
+            DataCell(
+              Icon(
+                contact.verified ? Icons.check_circle : Icons.cancel_outlined,
+                size: 18,
+                color: contact.verified
+                    ? AppColors.success
+                    : AppColors.onSurfaceMuted,
+              ),
+            ),
             DataCell(ProfileBadge(profileId: entry.profileId, compact: true)),
             DataCell(StateBadge(contact.state)),
           ],
@@ -135,15 +136,19 @@ class _ContactDetail extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(contact.detail,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
-                  Text(contact.id,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceMuted,
-                          fontFamily: 'monospace')),
+                  Text(
+                    contact.detail,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    contact.id,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -151,18 +156,19 @@ class _ContactDetail extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         _DetailRow(label: 'Type', value: contact.type.name),
+        _DetailRow(label: 'Verified', value: contact.verified ? 'Yes' : 'No'),
         _DetailRow(
-            label: 'Verified', value: contact.verified ? 'Yes' : 'No'),
-        _DetailRow(
-            label: 'Communication',
-            value: contact.communicationLevel.name),
+          label: 'Communication',
+          value: contact.communicationLevel.name,
+        ),
         _DetailRow(label: 'State', value: contact.state.name),
         const SizedBox(height: 8),
-        Text('Profile',
-            style: Theme.of(context)
-                .textTheme
-                .labelMedium
-                ?.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          'Profile',
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 4),
         ProfileBadge(profileId: entry.profileId),
       ],
@@ -185,18 +191,20 @@ class _DetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 120,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ),
           Expanded(
-            child: Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w500)),
+            child: Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),

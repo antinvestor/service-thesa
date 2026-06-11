@@ -56,20 +56,21 @@ class ApiConfig {
   static String get deviceBaseUrl =>
       _deviceExplicit.isNotEmpty ? _deviceExplicit : '$_apiBaseUrl/devices';
 
-  static const String _geolocationExplicit =
-      String.fromEnvironment('GEOLOCATION_URL');
+  static const String _geolocationExplicit = String.fromEnvironment(
+    'GEOLOCATION_URL',
+  );
   static String get geolocationBaseUrl => _geolocationExplicit.isNotEmpty
       ? _geolocationExplicit
       : '$_apiBaseUrl/geolocation';
 
-  static const String _notificationExplicit =
-      String.fromEnvironment('NOTIFICATION_URL');
+  static const String _notificationExplicit = String.fromEnvironment(
+    'NOTIFICATION_URL',
+  );
   static String get notificationBaseUrl => _notificationExplicit.isNotEmpty
       ? _notificationExplicit
       : '$_apiBaseUrl/notification';
 
-  static const String _paymentExplicit =
-      String.fromEnvironment('PAYMENT_URL');
+  static const String _paymentExplicit = String.fromEnvironment('PAYMENT_URL');
   static String get paymentBaseUrl =>
       _paymentExplicit.isNotEmpty ? _paymentExplicit : '$_apiBaseUrl/payment';
 
@@ -77,13 +78,14 @@ class ApiConfig {
   static String get ledgerBaseUrl =>
       _ledgerExplicit.isNotEmpty ? _ledgerExplicit : '$_apiBaseUrl/ledger';
 
-  static const String _settingsExplicit =
-      String.fromEnvironment('SETTINGS_URL');
-  static String get settingsBaseUrl =>
-      _settingsExplicit.isNotEmpty ? _settingsExplicit : '$_apiBaseUrl/settings';
+  static const String _settingsExplicit = String.fromEnvironment(
+    'SETTINGS_URL',
+  );
+  static String get settingsBaseUrl => _settingsExplicit.isNotEmpty
+      ? _settingsExplicit
+      : '$_apiBaseUrl/settings';
 
-  static const String _billingExplicit =
-      String.fromEnvironment('BILLING_URL');
+  static const String _billingExplicit = String.fromEnvironment('BILLING_URL');
   static String get billingBaseUrl =>
       _billingExplicit.isNotEmpty ? _billingExplicit : '$_apiBaseUrl/billing';
 
@@ -95,8 +97,9 @@ class ApiConfig {
   static String get auditBaseUrl =>
       _auditExplicit.isNotEmpty ? _auditExplicit : '$_apiBaseUrl/audit';
 
-  static const String _trustageExplicit =
-      String.fromEnvironment('TRUSTAGE_URL');
+  static const String _trustageExplicit = String.fromEnvironment(
+    'TRUSTAGE_URL',
+  );
   static String get trustageBaseUrl => _trustageExplicit.isNotEmpty
       ? _trustageExplicit
       : '$_apiBaseUrl/trustage';
@@ -116,21 +119,21 @@ class ApiConfig {
   /// Returns a map of service name → resolved endpoint URL.
   /// Useful for debugging and health checks.
   static Map<String, String> get allEndpoints => {
-        'tenancy': tenancyBaseUrl,
-        'profile': profileBaseUrl,
-        'device': deviceBaseUrl,
-        'geolocation': geolocationBaseUrl,
-        'notification': notificationBaseUrl,
-        'payment': paymentBaseUrl,
-        'ledger': ledgerBaseUrl,
-        'settings': settingsBaseUrl,
-        'billing': billingBaseUrl,
-        'files': filesBaseUrl,
-        'audit': auditBaseUrl,
-        'trustage': trustageBaseUrl,
-        'fort': fortBaseUrl,
-        'thesa': thesaBaseUrl,
-      };
+    'tenancy': tenancyBaseUrl,
+    'profile': profileBaseUrl,
+    'device': deviceBaseUrl,
+    'geolocation': geolocationBaseUrl,
+    'notification': notificationBaseUrl,
+    'payment': paymentBaseUrl,
+    'ledger': ledgerBaseUrl,
+    'settings': settingsBaseUrl,
+    'billing': billingBaseUrl,
+    'files': filesBaseUrl,
+    'audit': auditBaseUrl,
+    'trustage': trustageBaseUrl,
+    'fort': fortBaseUrl,
+    'thesa': thesaBaseUrl,
+  };
 
   // ── OAuth2 configuration ────────────────────────────────────────────────
 

@@ -4,17 +4,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'service_definition.dart';
 
 /// Callback that builds the analytics page for a service.
-typedef ServiceAnalyticsBuilder = Widget Function(
-    BuildContext context, ServiceDefinition service);
+typedef ServiceAnalyticsBuilder =
+    Widget Function(BuildContext context, ServiceDefinition service);
 
 /// Callback that builds the entity list page for a sub-feature.
-typedef SubFeaturePageBuilder = Widget Function(
-    BuildContext context, ServiceDefinition service, SubFeatureDefinition feature);
+typedef SubFeaturePageBuilder =
+    Widget Function(
+      BuildContext context,
+      ServiceDefinition service,
+      SubFeatureDefinition feature,
+    );
 
 /// Callback that builds a detail page for a specific entity within a sub-feature.
-typedef EntityDetailPageBuilder = Widget Function(
-    BuildContext context, ServiceDefinition service,
-    SubFeatureDefinition feature, String entityId);
+typedef EntityDetailPageBuilder =
+    Widget Function(
+      BuildContext context,
+      ServiceDefinition service,
+      SubFeatureDefinition feature,
+      String entityId,
+    );
 
 /// Registration entry binding a service definition to its page builders.
 class ServiceRegistration {
@@ -80,7 +88,10 @@ class ServiceRegistry {
 
   /// Build the entity list page for a sub-feature.
   Widget buildFeaturePage(
-      BuildContext context, String serviceId, String featureId) {
+    BuildContext context,
+    String serviceId,
+    String featureId,
+  ) {
     final reg = _services[serviceId];
     if (reg == null) {
       return Center(child: Text('Service "$serviceId" not found'));
@@ -100,7 +111,11 @@ class ServiceRegistry {
 
   /// Build the entity detail page for a specific entity within a sub-feature.
   Widget buildEntityDetailPage(
-      BuildContext context, String serviceId, String featureId, String entityId) {
+    BuildContext context,
+    String serviceId,
+    String featureId,
+    String entityId,
+  ) {
     final reg = _services[serviceId];
     if (reg == null) {
       return Center(child: Text('Service "$serviceId" not found'));

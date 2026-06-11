@@ -4,7 +4,10 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_webview_window
+  file_saver
+  file_selector_linux
   flutter_secure_storage_linux
+  printing
   url_launcher_linux
   window_to_front
 )

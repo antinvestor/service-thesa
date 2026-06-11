@@ -26,24 +26,24 @@ String _resolveRedirectUri() {
 /// host/port — not just localhost:5173. See [_resolveRedirectUri].
 @visibleForTesting
 AuthConfig buildThesaAuthConfig() => AuthConfig(
-      clientId: ApiConfig.oauth2ClientId,
-      idpBaseUrl: ApiConfig.oauth2IssuerUrl,
-      apiBaseUrl: ApiConfig.apiBaseUrl,
-      redirectScheme: 'org.stawi.thesa',
-      redirectUri: _resolveRedirectUri(),
-      scopes: const ['openid', 'profile', 'offline_access'],
-      audiences: const [
-        'service_tenancy',
-        'service_device',
-        'service_profile',
-        'service_notification',
-        'service_payment',
-        'service_ledger',
-        'service_setting',
-        'service_file',
-        'service_trustage',
-      ],
-    );
+  clientId: ApiConfig.oauth2ClientId,
+  idpBaseUrl: ApiConfig.oauth2IssuerUrl,
+  apiBaseUrl: ApiConfig.apiBaseUrl,
+  redirectScheme: 'org.stawi.thesa',
+  redirectUri: _resolveRedirectUri(),
+  scopes: const ['openid', 'profile', 'offline_access'],
+  audiences: const [
+    'service_tenancy',
+    'service_device',
+    'service_profile',
+    'service_notification',
+    'service_payment',
+    'service_ledger',
+    'service_setting',
+    'service_file',
+    'service_trustage',
+  ],
+);
 
 /// Constructs a fresh [AuthRuntime] for the thesa admin console.
 ///

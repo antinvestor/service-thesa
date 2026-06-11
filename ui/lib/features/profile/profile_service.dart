@@ -14,7 +14,8 @@ const profileServiceDef = ServiceDefinition(
   id: 'profile',
   label: 'Profile Service',
   icon: Icons.people_outlined,
-  description: 'Manage profiles, contacts, addresses, relationships, and devices',
+  description:
+      'Manage profiles, contacts, addresses, relationships, and devices',
   requiredPermissions: {'profile_view'},
   subFeatures: [
     SubFeatureDefinition(
@@ -77,25 +78,33 @@ void registerProfileService() {
     ServiceRegistration(
       definition: profileServiceDef,
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
-            service: 'profile',
-            title: 'Profile Analytics',
-            metrics: [
-              'total_profiles',
-              'active_profiles',
-              'new_registrations',
-              'verification_rate',
-            ],
-            charts: [
-              ChartConfig.timeSeries('registrations',
-                  label: 'Registrations Over Time'),
-              ChartConfig.distribution('profile_types',
-                  groupBy: 'profile_type', label: 'By Type'),
-            ],
-            tables: [
-              TableConfig.topN('top_active_profiles',
-                  label: 'Most Active Profiles', limit: 10),
-            ],
+        service: 'profile',
+        title: 'Profile Analytics',
+        metrics: [
+          'total_profiles',
+          'active_profiles',
+          'new_registrations',
+          'verification_rate',
+        ],
+        charts: [
+          ChartConfig.timeSeries(
+            'registrations',
+            label: 'Registrations Over Time',
           ),
+          ChartConfig.distribution(
+            'profile_types',
+            groupBy: 'profile_type',
+            label: 'By Type',
+          ),
+        ],
+        tables: [
+          TableConfig.topN(
+            'top_active_profiles',
+            label: 'Most Active Profiles',
+            limit: 10,
+          ),
+        ],
+      ),
       featureBuilders: {
         // All screens from antinvestor_ui_profile library
         'profiles': (context, service, feature) =>

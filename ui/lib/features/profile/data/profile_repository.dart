@@ -15,17 +15,11 @@ class ProfileRepository {
       (await _client.getById(GetByIdRequest(id: id))).data;
 
   Future<ProfileObject> getByContact(String contact) async =>
-      (await _client
-              .getByContact(GetByContactRequest(contact: contact)))
-          .data;
+      (await _client.getByContact(GetByContactRequest(contact: contact))).data;
 
-  Future<List<ProfileObject>> search({
-    String query = '',
-  }) async {
+  Future<List<ProfileObject>> search({String query = ''}) async {
     final items = <ProfileObject>[];
-    await for (final response in _client.search(SearchRequest(
-      query: query,
-    ))) {
+    await for (final response in _client.search(SearchRequest(query: query))) {
       items.addAll(response.data);
     }
     return items;
@@ -35,25 +29,17 @@ class ProfileRepository {
     required ProfileType type,
     required String contact,
     Struct? properties,
-  }) async =>
-      (await _client.create(CreateRequest(
-        type: type,
-        contact: contact,
-        properties: properties,
-      )))
-          .data;
+  }) async => (await _client.create(
+    CreateRequest(type: type, contact: contact, properties: properties),
+  )).data;
 
   Future<ProfileObject> update({
     required String id,
     Struct? properties,
     STATE? state,
-  }) async =>
-      (await _client.update(UpdateRequest(
-        id: id,
-        properties: properties,
-        state: state,
-      )))
-          .data;
+  }) async => (await _client.update(
+    UpdateRequest(id: id, properties: properties, state: state),
+  )).data;
 
   Future<ProfileObject> merge({
     required String id,
@@ -68,28 +54,19 @@ class ProfileRepository {
     required String contact,
     Struct? extras,
   }) async {
-    final response = await _client.addContact(AddContactRequest(
-      id: profileId,
-      contact: contact,
-      extras: extras,
-    ));
-    return (
-      profile: response.data,
-      verificationId: response.verificationId,
+    final response = await _client.addContact(
+      AddContactRequest(id: profileId, contact: contact, extras: extras),
     );
+    return (profile: response.data, verificationId: response.verificationId);
   }
 
   Future<ContactObject> createContact({
     required String profileId,
     required String contact,
     Struct? extras,
-  }) async =>
-      (await _client.createContact(CreateContactRequest(
-        id: profileId,
-        contact: contact,
-        extras: extras,
-      )))
-          .data;
+  }) async => (await _client.createContact(
+    CreateContactRequest(id: profileId, contact: contact, extras: extras),
+  )).data;
 
   Future<({String id, bool success})> createContactVerification({
     required String profileId,
@@ -97,13 +74,14 @@ class ProfileRepository {
     String code = '',
     String durationToExpire = '',
   }) async {
-    final response = await _client
-        .createContactVerification(CreateContactVerificationRequest(
-      id: profileId,
-      contactId: contactId,
-      code: code,
-      durationToExpire: durationToExpire,
-    ));
+    final response = await _client.createContactVerification(
+      CreateContactVerificationRequest(
+        id: profileId,
+        contactId: contactId,
+        code: code,
+        durationToExpire: durationToExpire,
+      ),
+    );
     return (id: response.id, success: response.success);
   }
 
@@ -111,11 +89,9 @@ class ProfileRepository {
     required String verificationId,
     required String code,
   }) async {
-    final response =
-        await _client.checkVerification(CheckVerificationRequest(
-      id: verificationId,
-      code: code,
-    ));
+    final response = await _client.checkVerification(
+      CheckVerificationRequest(id: verificationId, code: code),
+    );
     return (
       id: response.id,
       success: response.success,
@@ -124,21 +100,16 @@ class ProfileRepository {
   }
 
   Future<ProfileObject> removeContact(String contactId) async =>
-      (await _client
-              .removeContact(RemoveContactRequest(id: contactId)))
-          .data;
+      (await _client.removeContact(RemoveContactRequest(id: contactId))).data;
 
   // ── Addresses ────────────────────────────────────────────────────────────
 
   Future<ProfileObject> addAddress({
     required String profileId,
     required AddressObject address,
-  }) async =>
-      (await _client.addAddress(AddAddressRequest(
-        id: profileId,
-        address: address,
-      )))
-          .data;
+  }) async => (await _client.addAddress(
+    AddAddressRequest(id: profileId, address: address),
+  )).data;
 
   // ── Relationships ────────────────────────────────────────────────────────
 
@@ -149,13 +120,14 @@ class ProfileRepository {
     bool invertRelation = false,
   }) async {
     final items = <RelationshipObject>[];
-    await for (final response
-        in _client.listRelationship(ListRelationshipRequest(
-      peerName: peerName,
-      peerId: peerId,
-      count: count,
-      invertRelation: invertRelation,
-    ))) {
+    await for (final response in _client.listRelationship(
+      ListRelationshipRequest(
+        peerName: peerName,
+        peerId: peerId,
+        count: count,
+        invertRelation: invertRelation,
+      ),
+    )) {
       items.addAll(response.data);
     }
     return items;
@@ -168,26 +140,23 @@ class ProfileRepository {
     required String childId,
     RelationshipType type = RelationshipType.MEMBER,
     Struct? properties,
-  }) async =>
-      (await _client.addRelationship(AddRelationshipRequest(
-        parent: parent,
-        parentId: parentId,
-        child: child,
-        childId: childId,
-        type: type,
-        properties: properties,
-      )))
-          .data;
+  }) async => (await _client.addRelationship(
+    AddRelationshipRequest(
+      parent: parent,
+      parentId: parentId,
+      child: child,
+      childId: childId,
+      type: type,
+      properties: properties,
+    ),
+  )).data;
 
   Future<RelationshipObject> deleteRelationship({
     required String id,
     String? parentId,
-  }) async =>
-      (await _client.deleteRelationship(DeleteRelationshipRequest(
-        id: id,
-        parentId: parentId,
-      )))
-          .data;
+  }) async => (await _client.deleteRelationship(
+    DeleteRelationshipRequest(id: id, parentId: parentId),
+  )).data;
 
   // ── Roster ───────────────────────────────────────────────────────────────
 
@@ -197,12 +166,9 @@ class ProfileRepository {
     int count = 50,
   }) async {
     final items = <RosterObject>[];
-    await for (final response
-        in _client.searchRoster(SearchRosterRequest(
-      profileId: profileId,
-      query: query,
-      count: count,
-    ))) {
+    await for (final response in _client.searchRoster(
+      SearchRosterRequest(profileId: profileId, query: query, count: count),
+    )) {
       items.addAll(response.data);
     }
     return items;
@@ -217,8 +183,9 @@ class ProfileRepository {
 
 // ─── Provider ────────────────────────────────────────────────────────────────
 
-final profileRepositoryProvider =
-    FutureProvider<ProfileRepository>((ref) async {
+final profileRepositoryProvider = FutureProvider<ProfileRepository>((
+  ref,
+) async {
   final client = await ref.watch(profileServiceClientProvider.future);
   return ProfileRepository(client);
 });

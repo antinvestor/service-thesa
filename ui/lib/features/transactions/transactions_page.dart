@@ -24,12 +24,60 @@ class _Transaction {
 }
 
 const _sampleTransactions = [
-  _Transaction(id: 'TXN-001', type: 'Purchase', amount: '\$12,400', from: 'Main Wallet', to: 'Blue-Chip Tech', status: 'Completed', date: '2024-04-15 09:23'),
-  _Transaction(id: 'TXN-002', type: 'Withdrawal', amount: '\$5,000', from: 'Savings Pool', to: 'Bank Account', status: 'Processing', date: '2024-04-15 08:45'),
-  _Transaction(id: 'TXN-003', type: 'Deposit', amount: '\$25,000', from: 'Wire Transfer', to: 'Main Wallet', status: 'Completed', date: '2024-04-14 16:30'),
-  _Transaction(id: 'TXN-004', type: 'Transfer', amount: '\$8,200', from: 'Portfolio A', to: 'Portfolio B', status: 'Completed', date: '2024-04-14 14:12'),
-  _Transaction(id: 'TXN-005', type: 'Purchase', amount: '\$3,100', from: 'Main Wallet', to: 'ETH Staking', status: 'Failed', date: '2024-04-14 11:00'),
-  _Transaction(id: 'TXN-006', type: 'Dividend', amount: '\$452,000', from: 'Green Bond', to: 'Main Wallet', status: 'Completed', date: '2024-04-13 09:00'),
+  _Transaction(
+    id: 'TXN-001',
+    type: 'Purchase',
+    amount: '\$12,400',
+    from: 'Main Wallet',
+    to: 'Blue-Chip Tech',
+    status: 'Completed',
+    date: '2024-04-15 09:23',
+  ),
+  _Transaction(
+    id: 'TXN-002',
+    type: 'Withdrawal',
+    amount: '\$5,000',
+    from: 'Savings Pool',
+    to: 'Bank Account',
+    status: 'Processing',
+    date: '2024-04-15 08:45',
+  ),
+  _Transaction(
+    id: 'TXN-003',
+    type: 'Deposit',
+    amount: '\$25,000',
+    from: 'Wire Transfer',
+    to: 'Main Wallet',
+    status: 'Completed',
+    date: '2024-04-14 16:30',
+  ),
+  _Transaction(
+    id: 'TXN-004',
+    type: 'Transfer',
+    amount: '\$8,200',
+    from: 'Portfolio A',
+    to: 'Portfolio B',
+    status: 'Completed',
+    date: '2024-04-14 14:12',
+  ),
+  _Transaction(
+    id: 'TXN-005',
+    type: 'Purchase',
+    amount: '\$3,100',
+    from: 'Main Wallet',
+    to: 'ETH Staking',
+    status: 'Failed',
+    date: '2024-04-14 11:00',
+  ),
+  _Transaction(
+    id: 'TXN-006',
+    type: 'Dividend',
+    amount: '\$452,000',
+    from: 'Green Bond',
+    to: 'Main Wallet',
+    status: 'Completed',
+    date: '2024-04-13 09:00',
+  ),
 ];
 
 class TransactionsPage extends StatelessWidget {
@@ -55,13 +103,25 @@ class TransactionsPage extends StatelessWidget {
           selected: selected,
           onSelectChanged: (_) => onSelect(),
           cells: [
-            DataCell(Text(item.id, style: const TextStyle(fontWeight: FontWeight.w500))),
+            DataCell(
+              Text(
+                item.id,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
             DataCell(Text(item.type)),
-            DataCell(Text(item.amount, style: const TextStyle(fontWeight: FontWeight.w600))),
+            DataCell(
+              Text(
+                item.amount,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
             DataCell(Text(item.from)),
             DataCell(Text(item.to)),
             DataCell(_TxnStatusBadge(item.status)),
-            DataCell(Text(item.date, style: Theme.of(context).textTheme.bodySmall)),
+            DataCell(
+              Text(item.date, style: Theme.of(context).textTheme.bodySmall),
+            ),
           ],
         );
       },
@@ -76,10 +136,14 @@ class _TxnStatusBadge extends StatelessWidget {
 
   Color get _color {
     switch (status) {
-      case 'Completed': return AppColors.success;
-      case 'Processing': return AppColors.warning;
-      case 'Failed': return AppColors.error;
-      default: return AppColors.onSurfaceMuted;
+      case 'Completed':
+        return AppColors.success;
+      case 'Processing':
+        return AppColors.warning;
+      case 'Failed':
+        return AppColors.error;
+      default:
+        return AppColors.onSurfaceMuted;
     }
   }
 
@@ -94,9 +158,9 @@ class _TxnStatusBadge extends StatelessWidget {
       child: Text(
         status,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: _color,
-              fontWeight: FontWeight.w600,
-            ),
+          color: _color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -138,7 +202,12 @@ class _Row extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: Theme.of(context).textTheme.bodySmall),
-          Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );

@@ -28,7 +28,12 @@ class PartitionRolesPage extends ConsumerWidget {
       title: 'Partition Roles',
       breadcrumbs: ['Services', service.label, 'Partition Roles'],
       addLabel: 'New Role',
-      exportRow: (role) => [role.name, role.id, role.partitionId, role.state.name],
+      exportRow: (role) => [
+        role.name,
+        role.id,
+        role.partitionId,
+        role.state.name,
+      ],
       columns: const [
         DataColumn(label: Text('NAME')),
         DataColumn(label: Text('ID')),
@@ -46,22 +51,35 @@ class PartitionRolesPage extends ConsumerWidget {
             return null;
           }),
           cells: [
-            DataCell(Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.shield_outlined,
-                    size: 16, color: AppColors.tertiary),
-                const SizedBox(width: 8),
-                Text(role.name,
-                    style: const TextStyle(fontWeight: FontWeight.w500)),
-              ],
-            )),
-            DataCell(Text(role.id,
-                style:
-                    const TextStyle(fontFamily: 'monospace', fontSize: 12))),
-            DataCell(Text(role.partitionId,
-                style:
-                    const TextStyle(fontFamily: 'monospace', fontSize: 12))),
+            DataCell(
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.shield_outlined,
+                    size: 16,
+                    color: AppColors.tertiary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    role.name,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+            DataCell(
+              Text(
+                role.id,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+              ),
+            ),
+            DataCell(
+              Text(
+                role.partitionId,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+              ),
+            ),
             DataCell(StateBadge(role.state)),
           ],
         );
@@ -140,23 +158,30 @@ class _RoleDetail extends StatelessWidget {
                 color: AppColors.tertiary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.shield_outlined,
-                  size: 24, color: AppColors.tertiary),
+              child: Icon(
+                Icons.shield_outlined,
+                size: 24,
+                color: AppColors.tertiary,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(role.name,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
-                  Text(role.id,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceMuted,
-                          fontFamily: 'monospace')),
+                  Text(
+                    role.name,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    role.id,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -186,18 +211,20 @@ class _DetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 100,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ),
           Expanded(
-            child: Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w500)),
+            child: Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),

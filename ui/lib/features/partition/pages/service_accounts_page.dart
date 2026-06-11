@@ -25,23 +25,24 @@ class ServiceAccountsPage extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.engineering_outlined,
-              size: 48, color: AppColors.onSurfaceMuted),
+          Icon(
+            Icons.engineering_outlined,
+            size: 48,
+            color: AppColors.onSurfaceMuted,
+          ),
           const SizedBox(height: 16),
           Text(
             'Service Accounts',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
             'Service account management will be available in a future API update.',
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: AppColors.onSurfaceMuted),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.onSurfaceMuted),
           ),
         ],
       ),

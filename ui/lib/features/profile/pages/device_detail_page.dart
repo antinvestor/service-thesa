@@ -11,16 +11,20 @@ import '../data/device_repository.dart';
 import '../data/geolocation_client.dart';
 
 /// Provider to fetch a single device by ID.
-final deviceDetailProvider =
-    FutureProvider.family<DeviceObject?, String>((ref, deviceId) async {
+final deviceDetailProvider = FutureProvider.family<DeviceObject?, String>((
+  ref,
+  deviceId,
+) async {
   final repo = await ref.watch(deviceRepositoryProvider.future);
   final devices = await repo.getById([deviceId], extensive: true);
   return devices.isNotEmpty ? devices.first : null;
 });
 
 /// Provider for device logs.
-final deviceLogsProvider =
-    FutureProvider.family<List<DeviceLog>, String>((ref, deviceId) async {
+final deviceLogsProvider = FutureProvider.family<List<DeviceLog>, String>((
+  ref,
+  deviceId,
+) async {
   final repo = await ref.watch(deviceRepositoryProvider.future);
   return repo.listLogs(deviceId, count: 50);
 });
@@ -49,14 +53,17 @@ class DeviceDetailPage extends ConsumerWidget {
           children: [
             Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 16),
-            Text('Failed to load device',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Failed to load device',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
-            Text(error.toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              error.toString(),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: () => ref.invalidate(deviceDetailProvider(deviceId)),
@@ -103,8 +110,9 @@ class _DeviceDetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final deviceName =
-        device.name.isNotEmpty ? device.name : 'Device $deviceId';
+    final deviceName = device.name.isNotEmpty
+        ? device.name
+        : 'Device $deviceId';
 
     return DefaultTabController(
       length: 5,
@@ -125,8 +133,8 @@ class _DeviceDetailContent extends StatelessWidget {
               ],
               actions: [
                 OutlinedButton.icon(
-                  onPressed: () => context
-                      .go('/services/profile/profiles/$profileId'),
+                  onPressed: () =>
+                      context.go('/services/profile/profiles/$profileId'),
                   icon: const Icon(Icons.arrow_back, size: 18),
                   label: const Text('Back to Profile'),
                 ),
@@ -141,15 +149,21 @@ class _DeviceDetailContent extends StatelessWidget {
                 const SizedBox(width: 8),
                 _PresenceBadge(device.presence.name),
                 const SizedBox(width: 12),
-                Text('ID: $deviceId',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'monospace',
-                        color: AppColors.onSurfaceMuted)),
+                Text(
+                  'ID: $deviceId',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
+                    color: AppColors.onSurfaceMuted,
+                  ),
+                ),
                 if (device.ip.isNotEmpty) ...[
                   const SizedBox(width: 12),
-                  Text('IP: ${device.ip}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceMuted)),
+                  Text(
+                    'IP: ${device.ip}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -198,24 +212,30 @@ class _OverviewTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _InfoCard(title: 'Device Information', rows: [
-            ('Name', device.name),
-            ('OS', device.os),
-            ('User Agent', device.userAgent),
-            ('IP Address', device.ip),
-            ('Session ID', device.sessionId),
-            ('Profile ID', device.profileId),
-            ('Presence', device.presence.name),
-            ('Last Seen', device.lastSeen),
-          ]),
+          _InfoCard(
+            title: 'Device Information',
+            rows: [
+              ('Name', device.name),
+              ('OS', device.os),
+              ('User Agent', device.userAgent),
+              ('IP Address', device.ip),
+              ('Session ID', device.sessionId),
+              ('Profile ID', device.profileId),
+              ('Presence', device.presence.name),
+              ('Last Seen', device.lastSeen),
+            ],
+          ),
           if (device.hasLocale()) ...[
             const SizedBox(height: 16),
-            _InfoCard(title: 'Locale', rows: [
-              ('Language', device.locale.language.join(', ')),
-              ('Timezone', device.locale.timezone),
-              ('UTC Offset', device.locale.utcOffset),
-              ('Currency', device.locale.currency),
-            ]),
+            _InfoCard(
+              title: 'Locale',
+              rows: [
+                ('Language', device.locale.language.join(', ')),
+                ('Timezone', device.locale.timezone),
+                ('UTC Offset', device.locale.utcOffset),
+                ('Currency', device.locale.currency),
+              ],
+            ),
           ],
         ],
       ),
@@ -242,14 +262,17 @@ class _LogsTab extends ConsumerWidget {
           children: [
             Icon(Icons.error_outline, size: 36, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('Failed to load logs',
-                style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              'Failed to load logs',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             const SizedBox(height: 8),
-            Text(error.toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              error.toString(),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () => ref.invalidate(deviceLogsProvider(deviceId)),
@@ -308,15 +331,21 @@ class _LogEntry extends StatelessWidget {
               children: [
                 Icon(Icons.access_time, size: 14, color: AppColors.tertiary),
                 const SizedBox(width: 6),
-                Text(log.lastSeen.isNotEmpty ? log.lastSeen : 'Unknown time',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  log.lastSeen.isNotEmpty ? log.lastSeen : 'Unknown time',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const Spacer(),
                 if (log.ip.isNotEmpty)
-                  Text(log.ip,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontFamily: 'monospace',
-                          color: AppColors.onSurfaceMuted)),
+                  Text(
+                    log.ip,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontFamily: 'monospace',
+                      color: AppColors.onSurfaceMuted,
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 8),
@@ -341,18 +370,20 @@ class _LogEntry extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('$label: ',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: AppColors.onSurfaceMuted)),
+        Text(
+          '$label: ',
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+        ),
         Flexible(
-          child: Text(value,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(fontWeight: FontWeight.w500)),
+          child: Text(
+            value,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+          ),
         ),
       ],
     );
@@ -376,11 +407,7 @@ class _LocationTrackTabState extends ConsumerState<_LocationTrackTab> {
 
   @override
   Widget build(BuildContext context) {
-    final params = (
-      subjectId: widget.profileId,
-      from: _from,
-      to: _to,
-    );
+    final params = (subjectId: widget.profileId, from: _from, to: _to);
     final asyncTrack = ref.watch(trackForSubjectProvider(params));
 
     return Column(
@@ -403,7 +430,8 @@ class _LocationTrackTabState extends ConsumerState<_LocationTrackTab> {
               ),
               const Spacer(),
               OutlinedButton.icon(
-                onPressed: () => ref.invalidate(trackForSubjectProvider(params)),
+                onPressed: () =>
+                    ref.invalidate(trackForSubjectProvider(params)),
                 icon: const Icon(Icons.refresh, size: 16),
                 label: const Text('Refresh'),
               ),
@@ -415,8 +443,10 @@ class _LocationTrackTabState extends ConsumerState<_LocationTrackTab> {
           child: asyncTrack.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) => Center(
-              child: Text('Error: $error',
-                  style: TextStyle(color: AppColors.error)),
+              child: Text(
+                'Error: $error',
+                style: TextStyle(color: AppColors.error),
+              ),
             ),
             data: (points) {
               if (points.isEmpty) {
@@ -437,26 +467,34 @@ class _LocationTrackTabState extends ConsumerState<_LocationTrackTab> {
                 itemBuilder: (context, index) {
                   final pt = points[index];
                   final time = pt.hasTimestamp()
-                      ? DateFormat.yMd().add_Hms().format(pt.timestamp.toDateTime())
+                      ? DateFormat.yMd().add_Hms().format(
+                          pt.timestamp.toDateTime(),
+                        )
                       : '';
                   final srcLabel = pt.source.name;
                   final isGps = srcLabel.contains('GPS');
                   return ListTile(
                     dense: true,
-                    leading: Icon(Icons.location_on,
-                        size: 18,
-                        color: isGps
-                            ? AppColors.success
-                            : AppColors.tertiary),
+                    leading: Icon(
+                      Icons.location_on,
+                      size: 18,
+                      color: isGps ? AppColors.success : AppColors.tertiary,
+                    ),
                     title: Text(
-                        '${pt.latitude.toStringAsFixed(6)}, ${pt.longitude.toStringAsFixed(6)}',
-                        style: const TextStyle(
-                            fontFamily: 'monospace', fontSize: 13)),
+                      '${pt.latitude.toStringAsFixed(6)}, ${pt.longitude.toStringAsFixed(6)}',
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 13,
+                      ),
+                    ),
                     subtitle: Text(
-                        '$time · $srcLabel · Accuracy: ${pt.accuracy.toStringAsFixed(0)}m'
-                        '${pt.hasSpeed() ? " · Speed: ${pt.speed.toStringAsFixed(1)}m/s" : ""}',
-                        style: TextStyle(
-                            fontSize: 11, color: AppColors.onSurfaceMuted)),
+                      '$time · $srcLabel · Accuracy: ${pt.accuracy.toStringAsFixed(0)}m'
+                      '${pt.hasSpeed() ? " · Speed: ${pt.speed.toStringAsFixed(1)}m/s" : ""}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.onSurfaceMuted,
+                      ),
+                    ),
                   );
                 },
               );
@@ -487,14 +525,17 @@ class _GeofenceEventsTab extends ConsumerWidget {
           children: [
             Icon(Icons.error_outline, size: 36, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('Failed to load geofence events',
-                style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              'Failed to load geofence events',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             const SizedBox(height: 8),
-            Text(error.toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              error.toString(),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () =>
@@ -515,8 +556,10 @@ class _GeofenceEventsTab extends ConsumerWidget {
                 SizedBox(height: 12),
                 Text('No geofence events'),
                 SizedBox(height: 4),
-                Text('Events appear when a subject enters or exits a geofence area.',
-                    style: TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(
+                  'Events appear when a subject enters or exits a geofence area.',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
               ],
             ),
           );
@@ -547,7 +590,9 @@ class _GeofenceEventsTab extends ConsumerWidget {
               _ => AppColors.onSurfaceMuted,
             };
             final time = event.hasTimestamp()
-                ? DateFormat.yMd().add_Hms().format(event.timestamp.toDateTime())
+                ? DateFormat.yMd().add_Hms().format(
+                    event.timestamp.toDateTime(),
+                  )
                 : '';
             return ListTile(
               leading: Container(
@@ -558,13 +603,14 @@ class _GeofenceEventsTab extends ConsumerWidget {
                 ),
                 child: Icon(icon, size: 18, color: color),
               ),
-              title: Text(label,
-                  style: TextStyle(
-                      fontWeight: FontWeight.w600, color: color)),
+              title: Text(
+                label,
+                style: TextStyle(fontWeight: FontWeight.w600, color: color),
+              ),
               subtitle: Text(
-                  'Area: ${event.areaId} · Confidence: ${(event.confidence * 100).toStringAsFixed(0)}%\n$time',
-                  style: TextStyle(
-                      fontSize: 11, color: AppColors.onSurfaceMuted)),
+                'Area: ${event.areaId} · Confidence: ${(event.confidence * 100).toStringAsFixed(0)}%\n$time',
+                style: TextStyle(fontSize: 11, color: AppColors.onSurfaceMuted),
+              ),
             );
           },
         );
@@ -582,8 +628,9 @@ class _RouteAssignmentsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncAssignments =
-        ref.watch(routeAssignmentsForSubjectProvider(profileId));
+    final asyncAssignments = ref.watch(
+      routeAssignmentsForSubjectProvider(profileId),
+    );
 
     return asyncAssignments.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -593,14 +640,17 @@ class _RouteAssignmentsTab extends ConsumerWidget {
           children: [
             Icon(Icons.error_outline, size: 36, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('Failed to load route assignments',
-                style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              'Failed to load route assignments',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             const SizedBox(height: 8),
-            Text(error.toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              error.toString(),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () =>
@@ -622,8 +672,9 @@ class _RouteAssignmentsTab extends ConsumerWidget {
                 Text('No route assignments'),
                 SizedBox(height: 4),
                 Text(
-                    'Route assignments track deviation when a subject strays from a defined route.',
-                    style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  'Route assignments track deviation when a subject strays from a defined route.',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
               ],
             ),
           );
@@ -641,16 +692,23 @@ class _RouteAssignmentsTab extends ConsumerWidget {
                 ? DateFormat.yMMMd().format(a.validUntil.toDateTime())
                 : 'Ongoing';
             return ListTile(
-              leading: Icon(Icons.route_outlined,
-                  size: 20, color: AppColors.tertiary),
-              title: Text('Route: ${a.routeId}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'monospace',
-                      fontSize: 13)),
-              subtitle: Text('$validFrom → $validUntil',
-                  style: TextStyle(
-                      fontSize: 12, color: AppColors.onSurfaceMuted)),
+              leading: Icon(
+                Icons.route_outlined,
+                size: 20,
+                color: AppColors.tertiary,
+              ),
+              title: Text(
+                'Route: ${a.routeId}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'monospace',
+                  fontSize: 13,
+                ),
+              ),
+              subtitle: Text(
+                '$validFrom → $validUntil',
+                style: TextStyle(fontSize: 12, color: AppColors.onSurfaceMuted),
+              ),
             );
           },
         );
@@ -717,11 +775,13 @@ class _PresenceBadge extends StatelessWidget {
             decoration: BoxDecoration(shape: BoxShape.circle, color: color),
           ),
           const SizedBox(width: 6),
-          Text(label,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelSmall
-                  ?.copyWith(color: color, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -747,11 +807,12 @@ class _InfoCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 16),
             for (final (label, value) in rows)
               if (value.isNotEmpty)
@@ -762,18 +823,18 @@ class _InfoCard extends StatelessWidget {
                     children: [
                       SizedBox(
                         width: 120,
-                        child: Text(label,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(color: AppColors.onSurfaceMuted)),
+                        child: Text(
+                          label,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.onSurfaceMuted),
+                        ),
                       ),
                       Expanded(
-                        child: Text(value,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(fontWeight: FontWeight.w500)),
+                        child: Text(
+                          value,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(fontWeight: FontWeight.w500),
+                        ),
                       ),
                     ],
                   ),

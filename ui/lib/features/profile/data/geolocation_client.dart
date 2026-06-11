@@ -14,22 +14,22 @@ import '../../../core/services/api_config.dart';
 /// `AuthRuntime.fetch` via [RuntimeTransport].
 final geolocationClientProvider =
     FutureProvider<ConnectClientBase<GeolocationServiceClient>>((ref) async {
-  final runtime = ref.watch(authRuntimeProvider);
+      final runtime = ref.watch(authRuntimeProvider);
 
-  return newClient<GeolocationServiceClient>(
-    defaultEndpoint: 'https://geolocation.antinvestor.com',
-    createServiceClient: GeolocationServiceClient.new,
-    createTransport: createRuntimeTransportFactory(runtime),
-    endpoint: ApiConfig.geolocationBaseUrl,
-  );
-});
+      return newClient<GeolocationServiceClient>(
+        defaultEndpoint: 'https://geolocation.antinvestor.com',
+        createServiceClient: GeolocationServiceClient.new,
+        createTransport: createRuntimeTransportFactory(runtime),
+        endpoint: ApiConfig.geolocationBaseUrl,
+      );
+    });
 
 /// Expose the raw GeolocationServiceClient stub.
 final geolocationServiceClientProvider =
     FutureProvider<GeolocationServiceClient>((ref) async {
-  final client = await ref.watch(geolocationClientProvider.future);
-  return client.stub;
-});
+      final client = await ref.watch(geolocationClientProvider.future);
+      return client.stub;
+    });
 
 // ─── Repository ───────────────────────────────────────────────────────────────
 
@@ -45,12 +45,14 @@ class GeolocationRepository {
     DateTime? to,
     int limit = 100,
   }) async {
-    final response = await _client.getTrack(GetTrackRequest(
-      subjectId: subjectId,
-      from: from != null ? _toTimestamp(from) : null,
-      to: to != null ? _toTimestamp(to) : null,
-      limit: limit,
-    ));
+    final response = await _client.getTrack(
+      GetTrackRequest(
+        subjectId: subjectId,
+        from: from != null ? _toTimestamp(from) : null,
+        to: to != null ? _toTimestamp(to) : null,
+        limit: limit,
+      ),
+    );
     return response.data;
   }
 
@@ -61,12 +63,14 @@ class GeolocationRepository {
     DateTime? to,
     int limit = 100,
   }) async {
-    final response = await _client.getSubjectEvents(GetSubjectEventsRequest(
-      subjectId: subjectId,
-      from: from != null ? _toTimestamp(from) : null,
-      to: to != null ? _toTimestamp(to) : null,
-      limit: limit,
-    ));
+    final response = await _client.getSubjectEvents(
+      GetSubjectEventsRequest(
+        subjectId: subjectId,
+        from: from != null ? _toTimestamp(from) : null,
+        to: to != null ? _toTimestamp(to) : null,
+        limit: limit,
+      ),
+    );
     return response.data;
   }
 
@@ -86,11 +90,9 @@ class GeolocationRepository {
     String ownerId = '',
     int limit = 50,
   }) async {
-    final response = await _client.searchAreas(SearchAreasRequest(
-      query: query,
-      ownerId: ownerId,
-      limit: limit,
-    ));
+    final response = await _client.searchAreas(
+      SearchAreasRequest(query: query, ownerId: ownerId, limit: limit),
+    );
     return response.data;
   }
 
@@ -105,10 +107,9 @@ class GeolocationRepository {
     String ownerId = '',
     int limit = 50,
   }) async {
-    final response = await _client.searchRoutes(SearchRoutesRequest(
-      ownerId: ownerId,
-      limit: limit,
-    ));
+    final response = await _client.searchRoutes(
+      SearchRoutesRequest(ownerId: ownerId, limit: limit),
+    );
     return response.data;
   }
 
@@ -122,8 +123,9 @@ class GeolocationRepository {
 }
 
 /// Riverpod provider for geolocation repository.
-final geolocationRepositoryProvider =
-    FutureProvider<GeolocationRepository>((ref) async {
+final geolocationRepositoryProvider = FutureProvider<GeolocationRepository>((
+  ref,
+) async {
   final client = await ref.watch(geolocationServiceClientProvider.future);
   return GeolocationRepository(client);
 });
@@ -131,33 +133,32 @@ final geolocationRepositoryProvider =
 // ─── Data Providers ───────────────────────────────────────────────────────────
 
 /// Location track for a profile (subject).
-final trackForSubjectProvider = FutureProvider.family<
-    List<LocationPointObject>,
-    ({String subjectId, DateTime? from, DateTime? to})>(
-  (ref, params) async {
-    final repo = await ref.watch(geolocationRepositoryProvider.future);
-    return repo.getTrack(
-      subjectId: params.subjectId,
-      from: params.from,
-      to: params.to,
-    );
-  },
-);
+final trackForSubjectProvider =
+    FutureProvider.family<
+      List<LocationPointObject>,
+      ({String subjectId, DateTime? from, DateTime? to})
+    >((ref, params) async {
+      final repo = await ref.watch(geolocationRepositoryProvider.future);
+      return repo.getTrack(
+        subjectId: params.subjectId,
+        from: params.from,
+        to: params.to,
+      );
+    });
 
 /// Geofence events for a profile (subject).
 final geoEventsForSubjectProvider =
-    FutureProvider.family<List<GeoEventObject>, String>(
-  (ref, subjectId) async {
-    final repo = await ref.watch(geolocationRepositoryProvider.future);
-    return repo.getSubjectEvents(subjectId: subjectId);
-  },
-);
+    FutureProvider.family<List<GeoEventObject>, String>((ref, subjectId) async {
+      final repo = await ref.watch(geolocationRepositoryProvider.future);
+      return repo.getSubjectEvents(subjectId: subjectId);
+    });
 
 /// Route assignments for a profile (subject).
 final routeAssignmentsForSubjectProvider =
-    FutureProvider.family<List<RouteAssignmentObject>, String>(
-  (ref, subjectId) async {
-    final repo = await ref.watch(geolocationRepositoryProvider.future);
-    return repo.getSubjectRouteAssignments(subjectId: subjectId);
-  },
-);
+    FutureProvider.family<List<RouteAssignmentObject>, String>((
+      ref,
+      subjectId,
+    ) async {
+      final repo = await ref.watch(geolocationRepositoryProvider.future);
+      return repo.getSubjectRouteAssignments(subjectId: subjectId);
+    });

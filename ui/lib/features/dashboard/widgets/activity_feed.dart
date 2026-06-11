@@ -84,13 +84,12 @@ class ActivityFeed extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('Recent Activities',
-                    style: Theme.of(context).textTheme.titleMedium),
+                child: Text(
+                  'Recent Activities',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ),
-              TextButton(
-                onPressed: () {},
-                child: const Text('VIEW ALL'),
-              ),
+              TextButton(onPressed: () {}, child: const Text('VIEW ALL')),
             ],
           ),
           Text(
@@ -114,18 +113,16 @@ class ActivityFeed extends StatelessWidget {
               children: [
                 Text(
                   'Upgrade Terminal',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(color: Colors.white),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(color: Colors.white),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Get access to real-time order flow and institutional insights.',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.white70),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.white70),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
@@ -163,20 +160,23 @@ class _ActivityTile extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: (item.iconColor ?? AppColors.tertiary).withValues(alpha: 0.1),
+              color: (item.iconColor ?? AppColors.tertiary).withValues(
+                alpha: 0.1,
+              ),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(item.icon, size: 18, color: item.iconColor ?? AppColors.tertiary),
+            child: Icon(
+              item.icon,
+              size: 18,
+              color: item.iconColor ?? AppColors.tertiary,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.title,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
+                Text(item.title, style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: 2),
                 Text(
                   item.subtitle,
@@ -188,8 +188,8 @@ class _ActivityTile extends StatelessWidget {
                     Text(
                       item.meta,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(
                       ' \u2022 ',

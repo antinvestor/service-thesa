@@ -31,14 +31,17 @@ class TenantDetailPage extends ConsumerWidget {
           children: [
             Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 16),
-            Text('Failed to load tenant',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Failed to load tenant',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
-            Text(error.toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              error.toString(),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ],
         ),
       ),
@@ -49,10 +52,7 @@ class TenantDetailPage extends ConsumerWidget {
 }
 
 class _TenantDetailContent extends ConsumerWidget {
-  const _TenantDetailContent({
-    required this.tenant,
-    required this.tenantId,
-  });
+  const _TenantDetailContent({required this.tenant, required this.tenantId});
 
   final TenantObject tenant;
   final String tenantId;
@@ -78,15 +78,15 @@ class _TenantDetailContent extends ConsumerWidget {
       ref.invalidate(tenantDetailProvider(tenantId));
       ref.invalidate(tenantsProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tenant updated')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Tenant updated')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -131,16 +131,21 @@ class _TenantDetailContent extends ConsumerWidget {
               children: [
                 StateBadge(tenant.state),
                 const SizedBox(width: 12),
-                Text('ID: ${tenant.id}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'monospace',
-                        color: AppColors.onSurfaceMuted)),
+                Text(
+                  'ID: ${tenant.id}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
+                    color: AppColors.onSurfaceMuted,
+                  ),
+                ),
                 if (tenant.hasCreatedAt()) ...[
                   const SizedBox(width: 16),
                   Text(
-                      'Created: ${DateFormat.yMMMd().format(tenant.createdAt.toDateTime())}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceMuted)),
+                    'Created: ${DateFormat.yMMMd().format(tenant.createdAt.toDateTime())}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -160,7 +165,9 @@ class _TenantDetailContent extends ConsumerWidget {
               children: [
                 _OverviewTab(tenant: tenant),
                 _PartitionsTab(
-                    tenantId: tenant.id, partitions: asyncPartitions),
+                  tenantId: tenant.id,
+                  partitions: asyncPartitions,
+                ),
               ],
             ),
           ),
@@ -176,10 +183,10 @@ class _OverviewTab extends StatelessWidget {
   final TenantObject tenant;
 
   String _envLabel() => switch (tenant.environment) {
-        TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION => 'Production',
-        TenantEnvironment.TENANT_ENVIRONMENT_STAGING => 'Staging',
-        _ => 'Unspecified',
-      };
+    TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION => 'Production',
+    TenantEnvironment.TENANT_ENVIRONMENT_STAGING => 'Staging',
+    _ => 'Unspecified',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +212,8 @@ class _OverviewTab extends StatelessWidget {
                 _TenantDetailRow(
                   label: 'Environment',
                   value: _envLabel(),
-                  icon: tenant.environment ==
+                  icon:
+                      tenant.environment ==
                           TenantEnvironment.TENANT_ENVIRONMENT_PRODUCTION
                       ? Icons.cloud_done_outlined
                       : Icons.science_outlined,
@@ -214,8 +222,9 @@ class _OverviewTab extends StatelessWidget {
                 if (tenant.hasCreatedAt())
                   _TenantDetailRow(
                     label: 'Created',
-                    value: DateFormat.yMMMd()
-                        .format(tenant.createdAt.toDateTime()),
+                    value: DateFormat.yMMMd().format(
+                      tenant.createdAt.toDateTime(),
+                    ),
                   ),
               ],
             ),
@@ -257,10 +266,12 @@ class _OverviewTab extends StatelessWidget {
     return '—';
   }
 
-  Widget _buildCard(BuildContext context,
-      {required String title,
-      required IconData icon,
-      required Widget child}) {
+  Widget _buildCard(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -276,11 +287,12 @@ class _OverviewTab extends StatelessWidget {
               children: [
                 Icon(icon, size: 18, color: AppColors.tertiary),
                 const SizedBox(width: 8),
-                Text(title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -308,22 +320,24 @@ class _TenantDetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 120,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ),
           if (icon != null) ...[
             Icon(icon, size: 14, color: AppColors.onSurfaceMuted),
             const SizedBox(width: 4),
           ],
           Expanded(
-            child: Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w500)),
+            child: Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),
@@ -391,7 +405,8 @@ class _EditTenantDialogState extends State<_EditTenantDialog> {
     if (widget.tenant.hasProperties()) {
       for (final entry in widget.tenant.properties.fields.entries) {
         _propControllers[entry.key] = TextEditingController(
-            text: _valueToString(entry.value));
+          text: _valueToString(entry.value),
+        );
       }
     }
   }
@@ -436,11 +451,12 @@ class _EditTenantDialogState extends State<_EditTenantDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Basic Information',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Basic Information',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: _nameCtl,
@@ -482,11 +498,12 @@ class _EditTenantDialogState extends State<_EditTenantDialog> {
                 const SizedBox(height: 20),
                 const Divider(),
                 const SizedBox(height: 12),
-                Text('Properties',
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelLarge
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  'Properties',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 12),
                 for (final entry in _propControllers.entries) ...[
                   TextField(
@@ -494,8 +511,11 @@ class _EditTenantDialogState extends State<_EditTenantDialog> {
                     decoration: InputDecoration(
                       labelText: entry.key,
                       suffixIcon: IconButton(
-                        icon: Icon(Icons.close, size: 16,
-                            color: AppColors.error),
+                        icon: Icon(
+                          Icons.close,
+                          size: 16,
+                          color: AppColors.error,
+                        ),
                         onPressed: () {
                           setState(() {
                             _propControllers.remove(entry.key);
@@ -532,15 +552,15 @@ class _EditTenantDialogState extends State<_EditTenantDialog> {
             for (final entry in _propControllers.entries) {
               props[entry.key] = entry.value.text.trim();
             }
-            Navigator.of(context).pop(_EditTenantResult(
-              name: _nameCtl.text.trim(),
-              description: _descCtl.text.trim(),
-              environment: env,
-              state: STATE.values
-                  .where((s) => s.name == _state)
-                  .firstOrNull,
-              properties: props.isNotEmpty ? props : null,
-            ));
+            Navigator.of(context).pop(
+              _EditTenantResult(
+                name: _nameCtl.text.trim(),
+                description: _descCtl.text.trim(),
+                environment: env,
+                state: STATE.values.where((s) => s.name == _state).firstOrNull,
+                properties: props.isNotEmpty ? props : null,
+              ),
+            );
           },
           child: const Text('Save'),
         ),
@@ -550,16 +570,16 @@ class _EditTenantDialogState extends State<_EditTenantDialog> {
 }
 
 class _PartitionsTab extends ConsumerWidget {
-  const _PartitionsTab({
-    required this.tenantId,
-    required this.partitions,
-  });
+  const _PartitionsTab({required this.tenantId, required this.partitions});
 
   final String tenantId;
   final AsyncValue<List<PartitionObject>> partitions;
 
   Future<void> _createPartition(
-      BuildContext context, WidgetRef ref, List<PartitionObject> existing) async {
+    BuildContext context,
+    WidgetRef ref,
+    List<PartitionObject> existing,
+  ) async {
     final result = await showCreatePartitionWizard(
       context: context,
       tenantId: tenantId,
@@ -594,9 +614,9 @@ class _PartitionsTab extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -607,8 +627,9 @@ class _PartitionsTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
       data: (allPartitions) {
-        final filtered =
-            allPartitions.where((p) => p.tenantId == tenantId).toList();
+        final filtered = allPartitions
+            .where((p) => p.tenantId == tenantId)
+            .toList();
 
         return Column(
           children: [
@@ -631,14 +652,18 @@ class _PartitionsTab extends ConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.account_tree_outlined,
-                          size: 48, color: AppColors.onSurfaceMuted),
+                      Icon(
+                        Icons.account_tree_outlined,
+                        size: 48,
+                        color: AppColors.onSurfaceMuted,
+                      ),
                       const SizedBox(height: 12),
-                      Text('No partitions for this tenant',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(color: AppColors.onSurfaceMuted)),
+                      Text(
+                        'No partitions for this tenant',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.onSurfaceMuted,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -648,21 +673,30 @@ class _PartitionsTab extends ConsumerWidget {
                 child: ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: filtered.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1),
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final p = filtered[index];
                     return ListTile(
-                      leading: Icon(Icons.account_tree_outlined,
-                          size: 20, color: AppColors.tertiary),
-                      title: Text(p.name,
-                          style:
-                              const TextStyle(fontWeight: FontWeight.w500)),
-                      subtitle: Text(p.id,
-                          style: const TextStyle(
-                              fontFamily: 'monospace', fontSize: 11)),
+                      leading: Icon(
+                        Icons.account_tree_outlined,
+                        size: 20,
+                        color: AppColors.tertiary,
+                      ),
+                      title: Text(
+                        p.name,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Text(
+                        p.id,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                        ),
+                      ),
                       trailing: StateBadge(p.state),
-                      onTap: () => context
-                          .go('/services/tenancy/partitions/${p.id}'),
+                      onTap: () =>
+                          context.go('/services/tenancy/partitions/${p.id}'),
                     );
                   },
                 ),

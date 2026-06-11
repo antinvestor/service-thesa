@@ -1,3 +1,17 @@
+import 'package:antinvestor_ui_core/antinvestor_ui_core.dart'
+    show ServiceAnalyticsSpec;
+import 'package:antinvestor_ui_audit/antinvestor_ui_audit.dart'
+    show auditAnalyticsSpec;
+import 'package:antinvestor_ui_files/antinvestor_ui_files.dart'
+    show filesAnalyticsSpec;
+import 'package:antinvestor_ui_fort/antinvestor_ui_fort.dart'
+    show fortAnalyticsSpec;
+import 'package:antinvestor_ui_notification/antinvestor_ui_notification.dart'
+    show notificationAnalyticsSpec;
+import 'package:antinvestor_ui_profile/antinvestor_ui_profile.dart'
+    show profileAnalyticsSpec;
+import 'package:antinvestor_ui_tenancy/antinvestor_ui_tenancy.dart'
+    show tenancyAnalyticsSpec;
 import 'dart:convert';
 
 import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart';
@@ -33,13 +47,24 @@ AnalyticsTransport runtimeAnalyticsTransport(
 /// scoping, client-side reserved-filter stripping) with admin-only
 /// queries that span every partition the caller can access
 /// (`partition_ids: ["*"]`).
+/// Every service's exported analytics spec, registered so KPI scalar
+/// queries resolve for the embedded service overview pages.
+final registeredAnalyticsSpecs = <ServiceAnalyticsSpec>[
+  fortAnalyticsSpec,
+  notificationAnalyticsSpec,
+  filesAnalyticsSpec,
+  auditAnalyticsSpec,
+  tenancyAnalyticsSpec,
+  profileAnalyticsSpec,
+];
+
 class AdminAnalyticsDataSource extends ThesaAnalyticsDataSource {
   // Not convertible to a super parameter: the transport is also kept on
   // this class for the partition-wide extension queries below.
   // ignore: use_super_parameters
   AdminAnalyticsDataSource(AnalyticsTransport transport)
     : _transport = transport,
-      super(transport);
+      super(transport, specs: registeredAnalyticsSpecs);
 
   final AnalyticsTransport _transport;
 

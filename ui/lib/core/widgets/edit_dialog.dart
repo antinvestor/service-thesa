@@ -37,11 +37,8 @@ Future<Map<String, String>?> showEditDialog({
 }) {
   return showDialog<Map<String, String>>(
     context: context,
-    builder: (context) => _EditDialogContent(
-      title: title,
-      fields: fields,
-      saveLabel: saveLabel,
-    ),
+    builder: (context) =>
+        _EditDialogContent(title: title, fields: fields, saveLabel: saveLabel),
   );
 }
 
@@ -76,8 +73,9 @@ class _EditDialogContentState extends State<_EditDialogContent> {
             ? field.initialValue
             : '';
       } else {
-        _controllers[field.key] =
-            TextEditingController(text: field.initialValue);
+        _controllers[field.key] = TextEditingController(
+          text: field.initialValue,
+        );
       }
     }
   }
@@ -158,8 +156,7 @@ class _EditDialogContentState extends State<_EditDialogContent> {
               return field.options;
             }
             final query = textEditingValue.text.toLowerCase();
-            return field.options
-                .where((o) => o.toLowerCase().contains(query));
+            return field.options.where((o) => o.toLowerCase().contains(query));
           },
           initialValue: (_dropdownValues[field.key]?.isNotEmpty == true)
               ? TextEditingValue(text: _dropdownValues[field.key]!)
@@ -168,31 +165,30 @@ class _EditDialogContentState extends State<_EditDialogContent> {
               setState(() => _dropdownValues[field.key] = value),
           fieldViewBuilder:
               (context, textController, focusNode, onFieldSubmitted) {
-            return TextField(
-              controller: textController,
-              focusNode: focusNode,
-              decoration: InputDecoration(
-                labelText: field.label,
-                hintText: field.hint ?? 'Type to search...',
-                suffixIcon: textController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () {
-                          textController.clear();
-                          setState(
-                              () => _dropdownValues[field.key] = '');
-                        },
-                      )
-                    : const Icon(Icons.search, size: 18),
-              ),
-              onChanged: (value) {
-                // Allow clearing
-                if (value.isEmpty) {
-                  _dropdownValues[field.key] = '';
-                }
+                return TextField(
+                  controller: textController,
+                  focusNode: focusNode,
+                  decoration: InputDecoration(
+                    labelText: field.label,
+                    hintText: field.hint ?? 'Type to search...',
+                    suffixIcon: textController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              textController.clear();
+                              setState(() => _dropdownValues[field.key] = '');
+                            },
+                          )
+                        : const Icon(Icons.search, size: 18),
+                  ),
+                  onChanged: (value) {
+                    // Allow clearing
+                    if (value.isEmpty) {
+                      _dropdownValues[field.key] = '';
+                    }
+                  },
+                );
               },
-            );
-          },
         );
       case DialogFieldType.textarea:
         return TextField(

@@ -38,9 +38,8 @@ GoRouter createAppRouter(Ref ref, {String initialLocation = '/'}) {
 
       // Determine auth status with proper loading handling
       final isLoading = authState.isLoading;
-      final isAuthenticated = authState.whenOrNull(
-            data: (s) => s == AuthState.authenticated,
-          ) ??
+      final isAuthenticated =
+          authState.whenOrNull(data: (s) => s == AuthState.authenticated) ??
           false;
 
       // While auth is loading, send to splash unless already there or on
@@ -67,26 +66,20 @@ GoRouter createAppRouter(Ref ref, {String initialLocation = '/'}) {
     routes: [
       GoRoute(
         path: '/splash',
-        pageBuilder: (context, state) => const NoTransitionPage(
-          child: SplashPage(),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: SplashPage()),
       ),
       GoRoute(
         path: '/login',
-        pageBuilder: (context, state) => const NoTransitionPage(
-          child: LoginPage(),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: LoginPage()),
       ),
-      GoRoute(
-        path: '/logout',
-        redirect: (context, state) => '/login',
-      ),
+      GoRoute(path: '/logout', redirect: (context, state) => '/login'),
       // Web OAuth redirect callback — shows splash while processing
       GoRoute(
         path: '/auth/callback',
-        pageBuilder: (context, state) => const NoTransitionPage(
-          child: SplashPage(),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: SplashPage()),
       ),
       ShellRoute(
         builder: (context, state, child) {
@@ -99,9 +92,8 @@ GoRouter createAppRouter(Ref ref, {String initialLocation = '/'}) {
         routes: [
           GoRoute(
             path: '/',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: DashboardPage(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: DashboardPage()),
           ),
           GoRoute(
             path: '/settings',
@@ -127,8 +119,7 @@ GoRouter createAppRouter(Ref ref, {String initialLocation = '/'}) {
                   return NoTransitionPage(
                     child: Builder(
                       builder: (context) => ServiceRegistry.instance
-                          .buildFeaturePage(
-                              context, serviceId, featureId),
+                          .buildFeaturePage(context, serviceId, featureId),
                     ),
                   );
                 },
@@ -141,9 +132,13 @@ GoRouter createAppRouter(Ref ref, {String initialLocation = '/'}) {
                       final entityId = state.pathParameters['entityId']!;
                       return NoTransitionPage(
                         child: Builder(
-                          builder: (context) => ServiceRegistry.instance
-                              .buildEntityDetailPage(
-                                  context, serviceId, featureId, entityId),
+                          builder: (context) =>
+                              ServiceRegistry.instance.buildEntityDetailPage(
+                                context,
+                                serviceId,
+                                featureId,
+                                entityId,
+                              ),
                         ),
                       );
                     },

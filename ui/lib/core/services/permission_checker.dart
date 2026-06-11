@@ -23,14 +23,13 @@ class RuntimePermissionBatchChecker {
       return const <String>{};
     }
 
-    final body = utf8.encode(jsonEncode({
-      'checks': permsByNamespace.entries
-          .map((e) => {
-                'namespace': e.key,
-                'permissions': e.value.toList(),
-              })
-          .toList(),
-    }));
+    final body = utf8.encode(
+      jsonEncode({
+        'checks': permsByNamespace.entries
+            .map((e) => {'namespace': e.key, 'permissions': e.value.toList()})
+            .toList(),
+      }),
+    );
 
     final response = await _runtime.fetch(
       '$_baseUrl/ui/capabilities/batch-check',
@@ -43,20 +42,18 @@ class RuntimePermissionBatchChecker {
       return _fallbackCheck();
     }
 
-    final decoded = jsonDecode(utf8.decode(response.body))
-        as Map<String, dynamic>;
+    final decoded =
+        jsonDecode(utf8.decode(response.body)) as Map<String, dynamic>;
     final granted = decoded['granted'] as List?;
     if (granted == null) return const <String>{};
     return granted.map((e) => e.toString()).toSet();
   }
 
   Future<Set<String>> _fallbackCheck() async {
-    final response = await _runtime.fetch(
-      '$_baseUrl/ui/capabilities',
-    );
+    final response = await _runtime.fetch('$_baseUrl/ui/capabilities');
     if (response.status != 200) return const <String>{};
-    final decoded = jsonDecode(utf8.decode(response.body))
-        as Map<String, dynamic>;
+    final decoded =
+        jsonDecode(utf8.decode(response.body)) as Map<String, dynamic>;
 
     final user = decoded['user'] as Map<String, dynamic>?;
     if (user != null) {
@@ -66,8 +63,7 @@ class RuntimePermissionBatchChecker {
       }
     }
 
-    final capabilities =
-        decoded['capabilities'] as Map<String, dynamic>?;
+    final capabilities = decoded['capabilities'] as Map<String, dynamic>?;
     if (capabilities != null) {
       return capabilities.entries
           .where((e) {

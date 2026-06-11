@@ -35,10 +35,7 @@ class TenantContext {
   /// partitions within their tenant.
   bool get canSwitchContext => isInternal || isOwner;
 
-  TenantContext copyWith({
-    String? tenantId,
-    String? partitionId,
-  }) =>
+  TenantContext copyWith({String? tenantId, String? partitionId}) =>
       TenantContext(
         tenantId: tenantId ?? this.tenantId,
         partitionId: partitionId ?? this.partitionId,
@@ -53,8 +50,7 @@ class TenantContext {
 /// The runtime owns the access/ID tokens; it surfaces the decoded claims
 /// via `getClaims()` / `getUserClaims()` without letting the raw token
 /// cross back into application code.
-final jwtTenantContextProvider =
-    FutureProvider<TenantContext>((ref) async {
+final jwtTenantContextProvider = FutureProvider<TenantContext>((ref) async {
   final runtime = ref.watch(authRuntimeProvider);
   if (!runtime.isAuthenticated) {
     return const TenantContext(tenantId: '', partitionId: '');
@@ -108,8 +104,8 @@ class ActiveTenantNotifier extends Notifier<TenantContext?> {
 
 final activeTenantProvider =
     NotifierProvider<ActiveTenantNotifier, TenantContext?>(
-  ActiveTenantNotifier.new,
-);
+      ActiveTenantNotifier.new,
+    );
 
 /// The effective tenant context - either the user's override or the JWT default.
 final effectiveTenantProvider = Provider<TenantContext>((ref) {

@@ -11,11 +11,7 @@ import '../widgets/profile_badge.dart';
 
 /// Roster page - search a profile's roster (contact book) entries.
 class RosterPage extends ConsumerStatefulWidget {
-  const RosterPage({
-    super.key,
-    required this.service,
-    required this.feature,
-  });
+  const RosterPage({super.key, required this.service, required this.feature});
 
   final ServiceDefinition service;
   final SubFeatureDefinition feature;
@@ -69,8 +65,7 @@ class _RosterPageState extends ConsumerState<RosterPage> {
     final confirmed = await showConfirmDialog(
       context: context,
       title: 'Remove Roster Entry',
-      message:
-          'Remove "${entry.contact.detail}" from roster?',
+      message: 'Remove "${entry.contact.detail}" from roster?',
     );
     if (!confirmed || !mounted) return;
 
@@ -79,14 +74,15 @@ class _RosterPageState extends ConsumerState<RosterPage> {
       await repo.removeRoster(entry.id);
       await _search(); // Refresh
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Roster entry removed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Roster entry removed')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -100,11 +96,7 @@ class _RosterPageState extends ConsumerState<RosterPage> {
         children: [
           PageHeader(
             title: 'Roster',
-            breadcrumbs: [
-              'Services',
-              widget.service.label,
-              'Roster',
-            ],
+            breadcrumbs: ['Services', widget.service.label, 'Roster'],
           ),
           const SizedBox(height: 20),
 
@@ -120,11 +112,12 @@ class _RosterPageState extends ConsumerState<RosterPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Search Roster',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    'Search Roster',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -161,7 +154,9 @@ class _RosterPageState extends ConsumerState<RosterPage> {
                                 height: 16,
                                 width: 16,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2))
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Icon(Icons.search, size: 18),
                         label: const Text('Search'),
                       ),
@@ -181,12 +176,14 @@ class _RosterPageState extends ConsumerState<RosterPage> {
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Icon(Icons.error_outline,
-                        size: 20, color: AppColors.error),
+                    Icon(Icons.error_outline, size: 20, color: AppColors.error),
                     const SizedBox(width: 8),
                     Expanded(
-                        child: Text(_error!,
-                            style: TextStyle(color: AppColors.error))),
+                      child: Text(
+                        _error!,
+                        style: TextStyle(color: AppColors.error),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -194,9 +191,12 @@ class _RosterPageState extends ConsumerState<RosterPage> {
 
           // Results
           if (_results != null) ...[
-            Text('${_results!.length} roster entries found',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.onSurfaceMuted)),
+            Text(
+              '${_results!.length} roster entries found',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 8),
             if (_results!.isEmpty)
               Center(
@@ -204,11 +204,16 @@ class _RosterPageState extends ConsumerState<RosterPage> {
                   padding: const EdgeInsets.all(48),
                   child: Column(
                     children: [
-                      Icon(Icons.contacts_outlined,
-                          size: 48, color: AppColors.onSurfaceMuted),
+                      Icon(
+                        Icons.contacts_outlined,
+                        size: 48,
+                        color: AppColors.onSurfaceMuted,
+                      ),
                       const SizedBox(height: 12),
-                      Text('No roster entries found',
-                          style: TextStyle(color: AppColors.onSurfaceMuted)),
+                      Text(
+                        'No roster entries found',
+                        style: TextStyle(color: AppColors.onSurfaceMuted),
+                      ),
                     ],
                   ),
                 ),
@@ -256,8 +261,10 @@ class _RosterEntryTile extends StatelessWidget {
         size: 20,
         color: AppColors.tertiary,
       ),
-      title: Text(contact.detail,
-          style: const TextStyle(fontWeight: FontWeight.w500)),
+      title: Text(
+        contact.detail,
+        style: const TextStyle(fontWeight: FontWeight.w500),
+      ),
       subtitle: ProfileBadge(profileId: entry.profileId, compact: true),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -265,12 +272,14 @@ class _RosterEntryTile extends StatelessWidget {
           if (contact.verified)
             Icon(Icons.verified, size: 16, color: AppColors.success)
           else
-            Icon(Icons.pending_outlined,
-                size: 16, color: AppColors.onSurfaceMuted),
+            Icon(
+              Icons.pending_outlined,
+              size: 16,
+              color: AppColors.onSurfaceMuted,
+            ),
           const SizedBox(width: 8),
           IconButton(
-            icon: Icon(Icons.delete_outline,
-                size: 18, color: AppColors.error),
+            icon: Icon(Icons.delete_outline, size: 18, color: AppColors.error),
             tooltip: 'Remove',
             onPressed: onRemove,
           ),

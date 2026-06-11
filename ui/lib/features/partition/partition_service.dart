@@ -45,25 +45,26 @@ void registerTenancyService() {
     ServiceRegistration(
       definition: tenancyServiceDef,
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
-            service: 'tenancy',
-            title: 'Tenancy Analytics',
-            metrics: [
-              'total_tenants',
-              'total_partitions',
-              'active_users',
-              'new_tenants',
-            ],
-            charts: [
-              ChartConfig.timeSeries('tenant_growth',
-                  label: 'Tenant Growth'),
-              ChartConfig.distribution('tenants_by_plan',
-                  groupBy: 'plan', label: 'By Plan'),
-            ],
-            tables: [
-              TableConfig.topN('top_tenants',
-                  label: 'Largest Tenants', limit: 10),
-            ],
+        service: 'tenancy',
+        title: 'Tenancy Analytics',
+        metrics: [
+          'total_tenants',
+          'total_partitions',
+          'active_users',
+          'new_tenants',
+        ],
+        charts: [
+          ChartConfig.timeSeries('tenant_growth', label: 'Tenant Growth'),
+          ChartConfig.distribution(
+            'tenants_by_plan',
+            groupBy: 'plan',
+            label: 'By Plan',
           ),
+        ],
+        tables: [
+          TableConfig.topN('top_tenants', label: 'Largest Tenants', limit: 10),
+        ],
+      ),
       featureBuilders: {
         'tenants': (context, service, feature) =>
             TenantsPage(service: service, feature: feature),

@@ -39,15 +39,15 @@ class RuntimeTransport implements connect.Transport {
     required Uri baseUrl,
     List<connect.Interceptor>? interceptors,
     Duration? timeout,
-  })  : _runtime = runtime,
-        _baseUrl = baseUrl,
-        _timeout = timeout,
-        _delegate = connect_protocol.Transport(
-          baseUrl: baseUrl.toString(),
-          codec: const connect_protobuf.ProtoCodec(),
-          httpClient: _buildHttpClient(runtime, baseUrl, timeout),
-          interceptors: interceptors,
-        );
+  }) : _runtime = runtime,
+       _baseUrl = baseUrl,
+       _timeout = timeout,
+       _delegate = connect_protocol.Transport(
+         baseUrl: baseUrl.toString(),
+         codec: const connect_protobuf.ProtoCodec(),
+         httpClient: _buildHttpClient(runtime, baseUrl, timeout),
+         interceptors: interceptors,
+       );
 
   final AuthRuntime _runtime;
   // ignore: unused_field
@@ -61,8 +61,7 @@ class RuntimeTransport implements connect.Transport {
   AuthRuntime get runtime => _runtime;
 
   @override
-  Future<connect.UnaryResponse<I, O>>
-      unary<I extends Object, O extends Object>(
+  Future<connect.UnaryResponse<I, O>> unary<I extends Object, O extends Object>(
     connect.Spec<I, O> spec,
     I input, [
     connect.CallOptions? options,
@@ -71,12 +70,10 @@ class RuntimeTransport implements connect.Transport {
   }
 
   @override
-  Future<connect.StreamResponse<I, O>>
-      stream<I extends Object, O extends Object>(
-    connect.Spec<I, O> spec,
-    Stream<I> input, [
-    connect.CallOptions? options,
-  ]) {
+  Future<connect.StreamResponse<I, O>> stream<
+    I extends Object,
+    O extends Object
+  >(connect.Spec<I, O> spec, Stream<I> input, [connect.CallOptions? options]) {
     throw UnimplementedError(
       'RuntimeTransport does not support ${spec.streamType.name} streaming '
       'RPCs (procedure: ${spec.procedure}). runtime.fetch is unary-only.',
@@ -107,12 +104,12 @@ class RuntimeTransport implements connect.Transport {
       final absoluteUrl = _absoluteUrl(baseUrl, req.url);
 
       Future<ApiResponse> call() => runtime.fetch(
-            absoluteUrl,
-            method: req.method,
-            headers: headersMap.isEmpty ? null : headersMap,
-            body: body,
-            timeout: timeout,
-          );
+        absoluteUrl,
+        method: req.method,
+        headers: headersMap.isEmpty ? null : headersMap,
+        body: body,
+        timeout: timeout,
+      );
 
       final ApiResponse res;
       final signal = req.signal;
@@ -120,14 +117,21 @@ class RuntimeTransport implements connect.Transport {
         res = await call();
       } else {
         final completer = Completer<ApiResponse>();
-        unawaited(signal.future.then((err) {
-          if (!completer.isCompleted) completer.completeError(err);
-        }));
-        unawaited(call().then((value) {
-          if (!completer.isCompleted) completer.complete(value);
-        }, onError: (Object err, StackTrace st) {
-          if (!completer.isCompleted) completer.completeError(err, st);
-        }));
+        unawaited(
+          signal.future.then((err) {
+            if (!completer.isCompleted) completer.completeError(err);
+          }),
+        );
+        unawaited(
+          call().then(
+            (value) {
+              if (!completer.isCompleted) completer.complete(value);
+            },
+            onError: (Object err, StackTrace st) {
+              if (!completer.isCompleted) completer.completeError(err, st);
+            },
+          ),
+        );
         res = await completer.future;
       }
 
@@ -178,7 +182,7 @@ class RuntimeTransport implements connect.Transport {
 /// antinvestor_api_common client factories (`newClient`, `newFooClient`)
 /// which expect a `(Uri, List<Interceptor>) -> Transport` function.
 connect.Transport Function(Uri, List<connect.Interceptor>)
-    createRuntimeTransportFactory(AuthRuntime runtime) {
+createRuntimeTransportFactory(AuthRuntime runtime) {
   return (Uri baseUrl, List<connect.Interceptor> interceptors) {
     return RuntimeTransport(
       runtime: runtime,

@@ -16,8 +16,8 @@ class ExpandedServiceNotifier extends Notifier<String?> {
 
 final expandedServiceProvider =
     NotifierProvider<ExpandedServiceNotifier, String?>(
-  ExpandedServiceNotifier.new,
-);
+      ExpandedServiceNotifier.new,
+    );
 
 class AppSidebar extends ConsumerWidget {
   const AppSidebar({
@@ -46,9 +46,7 @@ class AppSidebar extends ConsumerWidget {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       width: collapsed ? 72 : 272,
-      decoration: const BoxDecoration(
-        color: AppColors.sidebarBg,
-      ),
+      decoration: const BoxDecoration(color: AppColors.sidebarBg),
       child: Column(
         children: [
           _buildHeader(context),
@@ -81,12 +79,14 @@ class AppSidebar extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Column(
               children: bottomNavItems
-                  .map((item) => _NavTile(
-                        item: item,
-                        isActive: _isActive(item.route),
-                        collapsed: collapsed,
-                        onTap: () => onNavigate(item.route),
-                      ))
+                  .map(
+                    (item) => _NavTile(
+                      item: item,
+                      isActive: _isActive(item.route),
+                      collapsed: collapsed,
+                      onTap: () => onNavigate(item.route),
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -115,8 +115,11 @@ class AppSidebar extends ConsumerWidget {
                   color: AppColors.tertiary,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.diamond_outlined,
-                    color: Colors.white, size: 20),
+                child: const Icon(
+                  Icons.diamond_outlined,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
             ),
           ),
@@ -138,15 +141,15 @@ class AppSidebar extends ConsumerWidget {
                   Text(
                     'Antinvestor',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   Text(
                     'Admin Console',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.sidebarText.withValues(alpha: 0.7),
-                        ),
+                      color: AppColors.sidebarText.withValues(alpha: 0.7),
+                    ),
                   ),
                 ],
               ),
@@ -154,8 +157,11 @@ class AppSidebar extends ConsumerWidget {
             if (onToggleCollapse != null)
               IconButton(
                 onPressed: onToggleCollapse,
-                icon: const Icon(Icons.chevron_left,
-                    color: AppColors.sidebarText, size: 20),
+                icon: const Icon(
+                  Icons.chevron_left,
+                  color: AppColors.sidebarText,
+                  size: 20,
+                ),
                 splashRadius: 16,
               ),
           ],
@@ -235,8 +241,7 @@ class _ServiceGroupTileState extends ConsumerState<_ServiceGroupTile>
     // Auto-expand when navigating to this service.
     if (_isServiceActive && !isExpanded) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(expandedServiceProvider.notifier).set(
-            widget.item.serviceId);
+        ref.read(expandedServiceProvider.notifier).set(widget.item.serviceId);
       });
     }
 
@@ -274,10 +279,11 @@ class _ServiceGroupTileState extends ConsumerState<_ServiceGroupTile>
     final bg = _isServiceActive
         ? AppColors.sidebarActiveBg
         : _hovered
-            ? AppColors.sidebarHoverBg.withValues(alpha: 0.5)
-            : Colors.transparent;
-    final fg =
-        _isServiceActive ? AppColors.sidebarActiveText : AppColors.sidebarText;
+        ? AppColors.sidebarHoverBg.withValues(alpha: 0.5)
+        : Colors.transparent;
+    final fg = _isServiceActive
+        ? AppColors.sidebarActiveText
+        : AppColors.sidebarText;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -296,34 +302,47 @@ class _ServiceGroupTileState extends ConsumerState<_ServiceGroupTile>
               final items = <PopupMenuEntry<String>>[
                 PopupMenuItem<String>(
                   value: widget.item.route,
-                  child: Text(widget.item.label,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text(
+                    widget.item.label,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
                 const PopupMenuDivider(height: 1),
-                ...widget.item.children.map((child) => PopupMenuItem<String>(
-                      value: child.route,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(child.icon, size: 16,
-                              color: _isChildActive(child.route)
-                                  ? AppColors.tertiary
-                                  : null),
-                          const SizedBox(width: 8),
-                          Text(child.label,
-                              style: TextStyle(
-                                fontWeight: _isChildActive(child.route)
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                              )),
-                        ],
-                      ),
-                    )),
+                ...widget.item.children.map(
+                  (child) => PopupMenuItem<String>(
+                    value: child.route,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          child.icon,
+                          size: 16,
+                          color: _isChildActive(child.route)
+                              ? AppColors.tertiary
+                              : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          child.label,
+                          style: TextStyle(
+                            fontWeight: _isChildActive(child.route)
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ];
               showMenu<String>(
                 context: context,
                 position: RelativeRect.fromLTRB(
-                    offset.dx + 72, offset.dy, 0, 0),
+                  offset.dx + 72,
+                  offset.dy,
+                  0,
+                  0,
+                ),
                 items: items,
               ).then((value) {
                 if (value != null) widget.onNavigate(value);
@@ -348,10 +367,11 @@ class _ServiceGroupTileState extends ConsumerState<_ServiceGroupTile>
     final bg = _isServiceActive
         ? AppColors.sidebarActiveBg
         : _hovered
-            ? AppColors.sidebarHoverBg.withValues(alpha: 0.5)
-            : Colors.transparent;
-    final fg =
-        _isServiceActive ? AppColors.sidebarActiveText : AppColors.sidebarText;
+        ? AppColors.sidebarHoverBg.withValues(alpha: 0.5)
+        : Colors.transparent;
+    final fg = _isServiceActive
+        ? AppColors.sidebarActiveText
+        : AppColors.sidebarText;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -366,10 +386,13 @@ class _ServiceGroupTileState extends ConsumerState<_ServiceGroupTile>
             onTap: () {
               // Toggle expansion.
               final current = ref.read(expandedServiceProvider);
-              ref.read(expandedServiceProvider.notifier).set(
-                  current == widget.item.serviceId
-                      ? null
-                      : widget.item.serviceId);
+              ref
+                  .read(expandedServiceProvider.notifier)
+                  .set(
+                    current == widget.item.serviceId
+                        ? null
+                        : widget.item.serviceId,
+                  );
               // Navigate to analytics on expand.
               if (current != widget.item.serviceId) {
                 widget.onNavigate(widget.item.route);
@@ -385,18 +408,21 @@ class _ServiceGroupTileState extends ConsumerState<_ServiceGroupTile>
                     child: Text(
                       widget.item.label,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: fg,
-                            fontWeight: _isServiceActive
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                          ),
+                        color: fg,
+                        fontWeight: _isServiceActive
+                            ? FontWeight.w600
+                            : FontWeight.w400,
+                      ),
                     ),
                   ),
                   AnimatedRotation(
                     turns: isExpanded ? 0.25 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: Icon(Icons.chevron_right,
-                        color: fg.withValues(alpha: 0.5), size: 16),
+                    child: Icon(
+                      Icons.chevron_right,
+                      color: fg.withValues(alpha: 0.5),
+                      size: 16,
+                    ),
                   ),
                 ],
               ),
@@ -445,11 +471,12 @@ class _NavTileState extends State<_NavTile> {
     final bg = widget.isActive
         ? AppColors.sidebarActiveBg
         : _hovered
-            ? AppColors.sidebarHoverBg.withValues(alpha: 0.5)
-            : Colors.transparent;
+        ? AppColors.sidebarHoverBg.withValues(alpha: 0.5)
+        : Colors.transparent;
 
-    final fg =
-        widget.isActive ? AppColors.sidebarActiveText : AppColors.sidebarText;
+    final fg = widget.isActive
+        ? AppColors.sidebarActiveText
+        : AppColors.sidebarText;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
@@ -471,21 +498,21 @@ class _NavTileState extends State<_NavTile> {
                   ? Center(
                       child: Tooltip(
                         message: widget.item.label,
-                        child:
-                            Icon(widget.item.icon, color: fg, size: 22),
+                        child: Icon(widget.item.icon, color: fg, size: 22),
                       ),
                     )
                   : Row(
                       children: [
-                        Icon(widget.item.icon, color: fg,
-                            size: widget.compact ? 18 : 20),
+                        Icon(
+                          widget.item.icon,
+                          color: fg,
+                          size: widget.compact ? 18 : 20,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             widget.item.label,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
+                            style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   color: fg,
                                   fontSize: widget.compact ? 13 : null,

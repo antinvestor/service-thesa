@@ -13,11 +13,7 @@ import '../widgets/async_entity_list.dart';
 import '../widgets/state_badge.dart';
 
 class AccessPage extends ConsumerWidget {
-  const AccessPage({
-    super.key,
-    required this.service,
-    required this.feature,
-  });
+  const AccessPage({super.key, required this.service, required this.feature});
 
   final ServiceDefinition service;
   final SubFeatureDefinition feature;
@@ -56,9 +52,12 @@ class AccessPage extends ConsumerWidget {
             return null;
           }),
           cells: [
-            DataCell(Text(access.id,
-                style:
-                    const TextStyle(fontFamily: 'monospace', fontSize: 12))),
+            DataCell(
+              Text(
+                access.id,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+              ),
+            ),
             DataCell(ProfileBadge(profileId: access.profileId, compact: true)),
             DataCell(Text(partitionName)),
             DataCell(StateBadge(access.state)),
@@ -113,9 +112,7 @@ class _AccessDetail extends StatelessWidget {
         ? DateFormat.yMd().format(access.createdAt.toDateTime())
         : 'N/A';
 
-    final partitionName = access.hasPartition()
-        ? access.partition.name
-        : 'N/A';
+    final partitionName = access.hasPartition() ? access.partition.name : 'N/A';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,23 +125,30 @@ class _AccessDetail extends StatelessWidget {
                 color: AppColors.tertiary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.vpn_key_outlined,
-                  size: 24, color: AppColors.tertiary),
+              child: Icon(
+                Icons.vpn_key_outlined,
+                size: 24,
+                color: AppColors.tertiary,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Access Grant',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
-                  Text(access.id,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceMuted,
-                          fontFamily: 'monospace')),
+                  Text(
+                    'Access Grant',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    access.id,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -177,18 +181,20 @@ class _DetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 100,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ),
           Expanded(
-            child: Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w500)),
+            child: Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),

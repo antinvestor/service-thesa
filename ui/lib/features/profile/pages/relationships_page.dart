@@ -82,11 +82,7 @@ class _RelationshipsPageState extends ConsumerState<RelationshipsPage> {
         children: [
           PageHeader(
             title: 'Relationships',
-            breadcrumbs: [
-              'Services',
-              widget.service.label,
-              'Relationships',
-            ],
+            breadcrumbs: ['Services', widget.service.label, 'Relationships'],
           ),
           const SizedBox(height: 20),
           // Search form
@@ -100,18 +96,18 @@ class _RelationshipsPageState extends ConsumerState<RelationshipsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Search Relationships',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  'Search Relationships',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   'Enter the peer object name and ID to list relationships.',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: AppColors.onSurfaceMuted),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.onSurfaceMuted,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -123,8 +119,7 @@ class _RelationshipsPageState extends ConsumerState<RelationshipsPage> {
                           labelText: 'Peer Name',
                           hintText: 'e.g. profile',
                           isDense: true,
-                          prefixIcon:
-                              Icon(Icons.label_outlined, size: 20),
+                          prefixIcon: Icon(Icons.label_outlined, size: 20),
                         ),
                       ),
                     ),
@@ -150,11 +145,12 @@ class _RelationshipsPageState extends ConsumerState<RelationshipsPage> {
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
-                  Text(_error!,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: AppColors.error)),
+                  Text(
+                    _error!,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColors.error),
+                  ),
                 ],
               ],
             ),
@@ -180,18 +176,22 @@ class _RelationshipsPageState extends ConsumerState<RelationshipsPage> {
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.group_work_outlined,
-                        size: 48, color: AppColors.onSurfaceMuted),
+                    Icon(
+                      Icons.group_work_outlined,
+                      size: 48,
+                      color: AppColors.onSurfaceMuted,
+                    ),
                     const SizedBox(height: 12),
-                    Text('No relationships found',
-                        style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'No relationships found',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       'Try a different peer name or ID.',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: AppColors.onSurfaceMuted),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.onSurfaceMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -225,8 +225,7 @@ class _RelationshipsPageState extends ConsumerState<RelationshipsPage> {
                               final rel = _relationships![i];
                               final typeLabel = rel.type.name;
                               final typeColor = switch (rel.type) {
-                                RelationshipType.MEMBER =>
-                                  AppColors.tertiary,
+                                RelationshipType.MEMBER => AppColors.tertiary,
                                 RelationshipType.AFFILIATED =>
                                   AppColors.success,
                                 RelationshipType.BLACK_LISTED =>
@@ -238,40 +237,56 @@ class _RelationshipsPageState extends ConsumerState<RelationshipsPage> {
                                   '${rel.parentEntry.objectName}:${_truncateId(rel.parentEntry.objectId)}';
                               final childDisplay =
                                   '${rel.childEntry.objectName}:${_truncateId(rel.childEntry.objectId)}';
-                              final peerDisplay =
-                                  rel.hasPeerProfile()
-                                      ? _truncateId(rel.peerProfile.id)
-                                      : '-';
+                              final peerDisplay = rel.hasPeerProfile()
+                                  ? _truncateId(rel.peerProfile.id)
+                                  : '-';
 
                               return DataRow(
                                 selected: _selectedIndex == i,
                                 onSelectChanged: (_) => setState(() {
-                                  _selectedIndex =
-                                      _selectedIndex == i ? null : i;
+                                  _selectedIndex = _selectedIndex == i
+                                      ? null
+                                      : i;
                                 }),
-                                color:
-                                    WidgetStateProperty.resolveWith((states) {
+                                color: WidgetStateProperty.resolveWith((
+                                  states,
+                                ) {
                                   if (states.contains(WidgetState.selected)) {
-                                    return AppColors.tertiary
-                                        .withValues(alpha: 0.05);
+                                    return AppColors.tertiary.withValues(
+                                      alpha: 0.05,
+                                    );
                                   }
                                   return null;
                                 }),
                                 cells: [
+                                  DataCell(ColorBadge(typeLabel, typeColor)),
                                   DataCell(
-                                      ColorBadge(typeLabel, typeColor)),
-                                  DataCell(Text(parentDisplay,
+                                    Text(
+                                      parentDisplay,
                                       style: const TextStyle(
-                                          fontFamily: 'monospace',
-                                          fontSize: 12))),
-                                  DataCell(Text(childDisplay,
+                                        fontFamily: 'monospace',
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      childDisplay,
                                       style: const TextStyle(
-                                          fontFamily: 'monospace',
-                                          fontSize: 12))),
-                                  DataCell(Text(peerDisplay,
+                                        fontFamily: 'monospace',
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      peerDisplay,
                                       style: const TextStyle(
-                                          fontFamily: 'monospace',
-                                          fontSize: 12))),
+                                        fontFamily: 'monospace',
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               );
                             }),
@@ -287,8 +302,7 @@ class _RelationshipsPageState extends ConsumerState<RelationshipsPage> {
                       width: 380,
                       child: _RelationshipDetail(
                         relationship: _relationships![_selectedIndex!],
-                        onClose: () =>
-                            setState(() => _selectedIndex = null),
+                        onClose: () => setState(() => _selectedIndex = null),
                       ),
                     ),
                   ],
@@ -349,8 +363,7 @@ class _RelationshipDetail extends StatelessWidget {
             ),
           ),
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -359,26 +372,30 @@ class _RelationshipDetail extends StatelessWidget {
                     CircleAvatar(
                       radius: 20,
                       backgroundColor: typeColor.withValues(alpha: 0.15),
-                      child: Icon(Icons.group_work_outlined,
-                          color: typeColor, size: 20),
+                      child: Icon(
+                        Icons.group_work_outlined,
+                        color: typeColor,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(relationship.type.name,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w600)),
-                          Text(relationship.id,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                      color: AppColors.onSurfaceMuted,
-                                      fontFamily: 'monospace')),
+                          Text(
+                            relationship.type.name,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            relationship.id,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColors.onSurfaceMuted,
+                                  fontFamily: 'monospace',
+                                ),
+                          ),
                         ],
                       ),
                     ),
@@ -386,8 +403,7 @@ class _RelationshipDetail extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 _DetailRow(label: 'ID', value: relationship.id),
-                _DetailRow(
-                    label: 'Type', value: relationship.type.name),
+                _DetailRow(label: 'Type', value: relationship.type.name),
                 _DetailRow(
                   label: 'Parent',
                   value:
@@ -427,18 +443,20 @@ class _DetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ),
           Expanded(
-            child: Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w500)),
+            child: Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),

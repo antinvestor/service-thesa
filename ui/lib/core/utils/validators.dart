@@ -12,7 +12,9 @@ String? validateRedirectUri(String uri) {
   }
 
   // For http, only allow localhost
-  if (parsed.scheme == 'http' && parsed.host != 'localhost' && parsed.host != '127.0.0.1') {
+  if (parsed.scheme == 'http' &&
+      parsed.host != 'localhost' &&
+      parsed.host != '127.0.0.1') {
     return 'HTTP is only allowed for localhost';
   }
 
@@ -43,7 +45,10 @@ String? validateGrantTypes(String? value) {
     'implicit',
   };
 
-  final types = value.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty);
+  final types = value
+      .split(',')
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty);
   for (final t in types) {
     if (!valid.contains(t)) {
       return 'Invalid grant type: "$t". Valid: ${valid.join(", ")}';
@@ -58,7 +63,10 @@ String? validateResponseTypes(String? value) {
 
   const valid = {'code', 'token', 'id_token'};
 
-  final types = value.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty);
+  final types = value
+      .split(',')
+      .map((s) => s.trim())
+      .where((s) => s.isNotEmpty);
   for (final t in types) {
     if (!valid.contains(t)) {
       return 'Invalid response type: "$t". Valid: ${valid.join(", ")}';
@@ -76,7 +84,8 @@ String? validateClientName(String? value) {
 
 /// Validates OAuth2 scopes (space-separated).
 String? validateScopes(String? value) {
-  if (value == null || value.trim().isEmpty) return 'At least one scope is required';
+  if (value == null || value.trim().isEmpty)
+    return 'At least one scope is required';
   return null;
 }
 

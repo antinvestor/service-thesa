@@ -48,27 +48,35 @@ void registerAuditService() {
     ServiceRegistration(
       definition: auditServiceDef,
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
-            service: 'audit',
-            title: 'Audit Trail Analytics',
-            metrics: [
-              'total_entries',
-              'unique_actors',
-              'integrity_checks',
-              'anomalies',
-            ],
-            charts: [
-              ChartConfig.timeSeries('audit_volume',
-                  label: 'Audit Volume'),
-              ChartConfig.distribution('audit_actions',
-                  groupBy: 'action', label: 'By Action'),
-              ChartConfig.distribution('audit_services',
-                  groupBy: 'service', label: 'By Service'),
-            ],
-            tables: [
-              TableConfig.topN('top_actors',
-                  label: 'Most Active Actors', limit: 10),
-            ],
+        service: 'audit',
+        title: 'Audit Trail Analytics',
+        metrics: [
+          'total_entries',
+          'unique_actors',
+          'integrity_checks',
+          'anomalies',
+        ],
+        charts: [
+          ChartConfig.timeSeries('audit_volume', label: 'Audit Volume'),
+          ChartConfig.distribution(
+            'audit_actions',
+            groupBy: 'action',
+            label: 'By Action',
           ),
+          ChartConfig.distribution(
+            'audit_services',
+            groupBy: 'service',
+            label: 'By Service',
+          ),
+        ],
+        tables: [
+          TableConfig.topN(
+            'top_actors',
+            label: 'Most Active Actors',
+            limit: 10,
+          ),
+        ],
+      ),
       featureBuilders: {
         'log': (context, service, feature) => const AuditLogScreen(),
         'analytics': (context, service, feature) =>

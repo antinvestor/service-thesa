@@ -12,11 +12,7 @@ import '../widgets/async_entity_list.dart';
 import '../widgets/state_badge.dart';
 
 class PagesPage extends ConsumerWidget {
-  const PagesPage({
-    super.key,
-    required this.service,
-    required this.feature,
-  });
+  const PagesPage({super.key, required this.service, required this.feature});
 
   final ServiceDefinition service;
   final SubFeatureDefinition feature;
@@ -45,19 +41,29 @@ class PagesPage extends ConsumerWidget {
             return null;
           }),
           cells: [
-            DataCell(Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.article_outlined,
-                    size: 16, color: AppColors.tertiary),
-                const SizedBox(width: 8),
-                Text(page.name,
-                    style: const TextStyle(fontWeight: FontWeight.w500)),
-              ],
-            )),
-            DataCell(Text(page.id,
-                style:
-                    const TextStyle(fontFamily: 'monospace', fontSize: 12))),
+            DataCell(
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.article_outlined,
+                    size: 16,
+                    color: AppColors.tertiary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    page.name,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+            DataCell(
+              Text(
+                page.id,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+              ),
+            ),
             DataCell(StateBadge(page.state)),
           ],
         );
@@ -140,23 +146,30 @@ class _PageDetail extends StatelessWidget {
                 color: AppColors.tertiary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.article_outlined,
-                  size: 24, color: AppColors.tertiary),
+              child: Icon(
+                Icons.article_outlined,
+                size: 24,
+                color: AppColors.tertiary,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(page.name,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
-                  Text(page.id,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceMuted,
-                          fontFamily: 'monospace')),
+                  Text(
+                    page.name,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    page.id,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -168,11 +181,12 @@ class _PageDetail extends StatelessWidget {
         _DetailRow(label: 'Created', value: createdAt),
         const SizedBox(height: 16),
         if (htmlPreview.isNotEmpty) ...[
-          Text('HTML Preview',
-              style: Theme.of(context)
-                  .textTheme
-                  .labelMedium
-                  ?.copyWith(fontWeight: FontWeight.w500)),
+          Text(
+            'HTML Preview',
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
+          ),
           const SizedBox(height: 4),
           Container(
             width: double.infinity,
@@ -181,11 +195,14 @@ class _PageDetail extends StatelessWidget {
               color: AppColors.surfaceVariant,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(htmlPreview,
-                style: const TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 11,
-                    color: AppColors.onSurfaceMuted)),
+            child: Text(
+              htmlPreview,
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                color: AppColors.onSurfaceMuted,
+              ),
+            ),
           ),
         ],
       ],
@@ -208,18 +225,20 @@ class _DetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 100,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ),
           Expanded(
-            child: Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w500)),
+            child: Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),

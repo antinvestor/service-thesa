@@ -8,7 +8,7 @@ import '../../../core/services/connect_client.dart';
 /// including permission namespace management via Connect RPC.
 class PartitionRepository {
   PartitionRepository({required TenancyServiceClient client})
-      : _client = client;
+    : _client = client;
 
   final TenancyServiceClient _client;
 
@@ -26,15 +26,10 @@ class PartitionRepository {
 
   // ── Tenants ──────────────────────────────────────────────────────────────
 
-  Future<List<TenantObject>> listTenants({
-    String query = '',
-  }) =>
-      _collectStream(
-        _client.listTenant(ListTenantRequest(
-          query: query,
-        )),
-        (r) => (r as ListTenantResponse).data,
-      );
+  Future<List<TenantObject>> listTenants({String query = ''}) => _collectStream(
+    _client.listTenant(ListTenantRequest(query: query)),
+    (r) => (r as ListTenantResponse).data,
+  );
 
   Future<TenantObject> getTenant(String id) async =>
       (await _client.getTenant(GetTenantRequest(id: id))).data;
@@ -44,14 +39,14 @@ class PartitionRepository {
     String description = '',
     TenantEnvironment? environment,
     Struct? properties,
-  }) async =>
-      (await _client.createTenant(CreateTenantRequest(
-        name: name,
-        description: description,
-        environment: environment,
-        properties: properties,
-      )))
-          .data;
+  }) async => (await _client.createTenant(
+    CreateTenantRequest(
+      name: name,
+      description: description,
+      environment: environment,
+      properties: properties,
+    ),
+  )).data;
 
   Future<TenantObject> updateTenant({
     required String id,
@@ -60,34 +55,29 @@ class PartitionRepository {
     STATE? state,
     TenantEnvironment? environment,
     Struct? properties,
-  }) async =>
-      (await _client.updateTenant(UpdateTenantRequest(
-        id: id,
-        name: name,
-        description: description,
-        state: state,
-        environment: environment,
-        properties: properties,
-      )))
-          .data;
+  }) async => (await _client.updateTenant(
+    UpdateTenantRequest(
+      id: id,
+      name: name,
+      description: description,
+      state: state,
+      environment: environment,
+      properties: properties,
+    ),
+  )).data;
 
   // ── Partitions ───────────────────────────────────────────────────────────
 
-  Future<List<PartitionObject>> listPartitions({
-    String query = '',
-  }) =>
+  Future<List<PartitionObject>> listPartitions({String query = ''}) =>
       _collectStream(
-        _client.listPartition(ListPartitionRequest(
-          query: query,
-        )),
+        _client.listPartition(ListPartitionRequest(query: query)),
         (r) => (r as ListPartitionResponse).data,
       );
 
   Future<PartitionObject> getPartition(String id) async =>
       (await _client.getPartition(GetPartitionRequest(id: id))).data;
 
-  Future<GetPartitionParentsResponse> getPartitionParents(
-          String id) async =>
+  Future<GetPartitionParentsResponse> getPartitionParents(String id) async =>
       _client.getPartitionParents(GetPartitionParentsRequest(id: id));
 
   Future<PartitionObject> createPartition({
@@ -97,16 +87,16 @@ class PartitionRepository {
     String description = '',
     String? domain,
     Struct? properties,
-  }) async =>
-      (await _client.createPartition(CreatePartitionRequest(
-        tenantId: tenantId,
-        name: name,
-        parentId: parentId,
-        description: description,
-        domain: domain,
-        properties: properties,
-      )))
-          .data;
+  }) async => (await _client.createPartition(
+    CreatePartitionRequest(
+      tenantId: tenantId,
+      name: name,
+      parentId: parentId,
+      description: description,
+      domain: domain,
+      properties: properties,
+    ),
+  )).data;
 
   Future<PartitionObject> updatePartition({
     required String id,
@@ -115,26 +105,24 @@ class PartitionRepository {
     String? domain,
     STATE? state,
     Struct? properties,
-  }) async =>
-      (await _client.updatePartition(UpdatePartitionRequest(
-        id: id,
-        name: name,
-        description: description,
-        domain: domain,
-        state: state,
-        properties: properties,
-      )))
-          .data;
+  }) async => (await _client.updatePartition(
+    UpdatePartitionRequest(
+      id: id,
+      name: name,
+      description: description,
+      domain: domain,
+      state: state,
+      properties: properties,
+    ),
+  )).data;
 
   // ── Partition Roles ──────────────────────────────────────────────────────
 
-  Future<List<PartitionRoleObject>> listPartitionRoles({
-    String? partitionId,
-  }) =>
+  Future<List<PartitionRoleObject>> listPartitionRoles({String? partitionId}) =>
       _collectStream(
-        _client.listPartitionRole(ListPartitionRoleRequest(
-          partitionId: partitionId,
-        )),
+        _client.listPartitionRole(
+          ListPartitionRoleRequest(partitionId: partitionId),
+        ),
         (r) => (r as ListPartitionRoleResponse).data,
       );
 
@@ -142,28 +130,23 @@ class PartitionRepository {
     required String partitionId,
     required String name,
     Struct? properties,
-  }) async =>
-      (await _client.createPartitionRole(CreatePartitionRoleRequest(
-        partitionId: partitionId,
-        name: name,
-        properties: properties,
-      )))
-          .data;
+  }) async => (await _client.createPartitionRole(
+    CreatePartitionRoleRequest(
+      partitionId: partitionId,
+      name: name,
+      properties: properties,
+    ),
+  )).data;
 
   Future<void> removePartitionRole(String id) async =>
       _client.removePartitionRole(RemovePartitionRoleRequest(id: id));
 
   // ── Pages ────────────────────────────────────────────────────────────────
 
-  Future<List<PageObject>> listPages({
-    String? partitionId,
-  }) =>
-      _collectStream(
-        _client.listPage(ListPageRequest(
-          partitionId: partitionId,
-        )),
-        (r) => (r as ListPageResponse).data,
-      );
+  Future<List<PageObject>> listPages({String? partitionId}) => _collectStream(
+    _client.listPage(ListPageRequest(partitionId: partitionId)),
+    (r) => (r as ListPageResponse).data,
+  );
 
   Future<PageObject> getPage(String pageId) async =>
       (await _client.getPage(GetPageRequest(pageId: pageId))).data;
@@ -172,13 +155,9 @@ class PartitionRepository {
     required String partitionId,
     required String name,
     String html = '',
-  }) async =>
-      (await _client.createPage(CreatePageRequest(
-        partitionId: partitionId,
-        name: name,
-        html: html,
-      )))
-          .data;
+  }) async => (await _client.createPage(
+    CreatePageRequest(partitionId: partitionId, name: name, html: html),
+  )).data;
 
   Future<void> removePage(String id) async =>
       _client.removePage(RemovePageRequest(id: id));
@@ -188,59 +167,47 @@ class PartitionRepository {
   Future<List<AccessObject>> listAccess({
     String? partitionId,
     String? profileId,
-  }) =>
-      _collectStream(
-        _client.listAccess(ListAccessRequest(
-          partitionId: partitionId,
-          profileId: profileId,
-        )),
-        (r) => (r as ListAccessResponse).data,
-      );
+  }) => _collectStream(
+    _client.listAccess(
+      ListAccessRequest(partitionId: partitionId, profileId: profileId),
+    ),
+    (r) => (r as ListAccessResponse).data,
+  );
 
   Future<AccessObject> getAccess({
     required String accessId,
     String? profileId,
-  }) async =>
-      (await _client.getAccess(GetAccessRequest(
-        accessId: accessId,
-        profileId: profileId,
-      )))
-          .data;
+  }) async => (await _client.getAccess(
+    GetAccessRequest(accessId: accessId, profileId: profileId),
+  )).data;
 
   Future<AccessObject> createAccess({
     required String partitionId,
     required String profileId,
-  }) async =>
-      (await _client.createAccess(CreateAccessRequest(
-        partitionId: partitionId,
-        profileId: profileId,
-      )))
-          .data;
+  }) async => (await _client.createAccess(
+    CreateAccessRequest(partitionId: partitionId, profileId: profileId),
+  )).data;
 
   Future<void> removeAccess(String id) async =>
       _client.removeAccess(RemoveAccessRequest(id: id));
 
   // ── Access Roles ─────────────────────────────────────────────────────────
 
-  Future<List<AccessRoleObject>> listAccessRoles({
-    String? accessId,
-  }) =>
+  Future<List<AccessRoleObject>> listAccessRoles({String? accessId}) =>
       _collectStream(
-        _client.listAccessRole(ListAccessRoleRequest(
-          accessId: accessId,
-        )),
+        _client.listAccessRole(ListAccessRoleRequest(accessId: accessId)),
         (r) => (r as ListAccessRoleResponse).data,
       );
 
   Future<AccessRoleObject> createAccessRole({
     required String accessId,
     required String partitionRoleId,
-  }) async =>
-      (await _client.createAccessRole(CreateAccessRoleRequest(
-        accessId: accessId,
-        partitionRoleId: partitionRoleId,
-      )))
-          .data;
+  }) async => (await _client.createAccessRole(
+    CreateAccessRoleRequest(
+      accessId: accessId,
+      partitionRoleId: partitionRoleId,
+    ),
+  )).data;
 
   Future<void> removeAccessRole(String id) async =>
       _client.removeAccessRole(RemoveAccessRoleRequest(id: id));
@@ -249,13 +216,12 @@ class PartitionRepository {
 
   Future<List<ServiceAccountObject>> listServiceAccounts({
     String? partitionId,
-  }) =>
-      _collectStream(
-        _client.listServiceAccount(ListServiceAccountRequest(
-          partitionId: partitionId,
-        )),
-        (r) => (r as ListServiceAccountResponse).data,
-      );
+  }) => _collectStream(
+    _client.listServiceAccount(
+      ListServiceAccountRequest(partitionId: partitionId),
+    ),
+    (r) => (r as ListServiceAccountResponse).data,
+  );
 
   Future<ServiceAccountObject> createServiceAccount({
     required String partitionId,
@@ -263,15 +229,15 @@ class PartitionRepository {
     String type = 'internal',
     List<String>? audiences,
     List<String>? roles,
-  }) async =>
-      (await _client.createServiceAccount(CreateServiceAccountRequest(
-        partitionId: partitionId,
-        name: name,
-        type: type,
-        audiences: audiences,
-        roles: roles,
-      )))
-          .data;
+  }) async => (await _client.createServiceAccount(
+    CreateServiceAccountRequest(
+      partitionId: partitionId,
+      name: name,
+      type: type,
+      audiences: audiences,
+      roles: roles,
+    ),
+  )).data;
 
   Future<void> removeServiceAccount(String id) async =>
       _client.removeServiceAccount(RemoveServiceAccountRequest(id: id));
@@ -281,14 +247,15 @@ class PartitionRepository {
   Future<List<ClientObject>> listClients({
     String? partitionId,
     String? serviceAccountId,
-  }) =>
-      _collectStream(
-        _client.listClient(ListClientRequest(
-          partitionId: partitionId,
-          serviceAccountId: serviceAccountId,
-        )),
-        (r) => (r as ListClientResponse).data,
-      );
+  }) => _collectStream(
+    _client.listClient(
+      ListClientRequest(
+        partitionId: partitionId,
+        serviceAccountId: serviceAccountId,
+      ),
+    ),
+    (r) => (r as ListClientResponse).data,
+  );
 
   Future<ClientObject> createClient({
     required String name,
@@ -301,20 +268,20 @@ class PartitionRepository {
     List<String>? redirectUris,
     List<String>? audiences,
     List<String>? roles,
-  }) async =>
-      (await _client.createClient(CreateClientRequest(
-        name: name,
-        partitionId: partitionId,
-        serviceAccountId: serviceAccountId,
-        type: type,
-        scopes: scopes,
-        grantTypes: grantTypes,
-        responseTypes: responseTypes,
-        redirectUris: redirectUris,
-        audiences: audiences,
-        roles: roles,
-      )))
-          .data;
+  }) async => (await _client.createClient(
+    CreateClientRequest(
+      name: name,
+      partitionId: partitionId,
+      serviceAccountId: serviceAccountId,
+      type: type,
+      scopes: scopes,
+      grantTypes: grantTypes,
+      responseTypes: responseTypes,
+      redirectUris: redirectUris,
+      audiences: audiences,
+      roles: roles,
+    ),
+  )).data;
 
   Future<void> removeClient(String id) async =>
       _client.removeClient(RemoveClientRequest(id: id));
@@ -323,38 +290,42 @@ class PartitionRepository {
 
   /// List all registered service namespaces with their permissions and role bindings.
   Future<List<ServiceNamespaceObject>> listServiceNamespaces() async =>
-      (await _client.listServiceNamespaces(ListServiceNamespacesRequest()))
-          .data;
+      (await _client.listServiceNamespaces(
+        ListServiceNamespacesRequest(),
+      )).data;
 
   /// Grant a specific permission to a profile within a service namespace.
   Future<void> grantPermission({
     required String namespace,
     required String permission,
     required String profileId,
-  }) async =>
-      _client.grantPermission(GrantPermissionRequest(
-        namespace: namespace,
-        permission: permission,
-        profileId: profileId,
-      ));
+  }) async => _client.grantPermission(
+    GrantPermissionRequest(
+      namespace: namespace,
+      permission: permission,
+      profileId: profileId,
+    ),
+  );
 
   /// Revoke a specific permission from a profile within a service namespace.
   Future<void> revokePermission({
     required String namespace,
     required String permission,
     required String profileId,
-  }) async =>
-      _client.revokePermission(RevokePermissionRequest(
-        namespace: namespace,
-        permission: permission,
-        profileId: profileId,
-      ));
+  }) async => _client.revokePermission(
+    RevokePermissionRequest(
+      namespace: namespace,
+      permission: permission,
+      profileId: profileId,
+    ),
+  );
 }
 
 // ─── Riverpod Providers ─────────────────────────────────────────────────────
 
-final partitionRepositoryProvider =
-    FutureProvider<PartitionRepository>((ref) async {
+final partitionRepositoryProvider = FutureProvider<PartitionRepository>((
+  ref,
+) async {
   final client = await ref.watch(tenancyServiceClientProvider.future);
   return PartitionRepository(client: client);
 });

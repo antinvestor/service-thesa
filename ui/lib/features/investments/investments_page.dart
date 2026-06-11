@@ -22,13 +22,62 @@ class _Investment {
 }
 
 const _sampleInvestments = [
-  _Investment(name: 'Blue-Chip Tech Fund', type: 'Equity', value: '\$2,450,000', change: '+12.4%', status: 'Active', date: '2024-01-15'),
-  _Investment(name: 'Downtown Office Complex', type: 'Real Estate', value: '\$8,200,000', change: '+5.2%', status: 'Active', date: '2023-08-22'),
-  _Investment(name: 'Ethereum Staking Pool', type: 'Crypto', value: '\$890,000', change: '-8.2%', status: 'Under Review', date: '2024-03-01'),
-  _Investment(name: 'Green Energy Bond', type: 'Bond', value: '\$1,200,000', change: '+3.1%', status: 'Active', date: '2023-11-10'),
-  _Investment(name: 'Emerging Markets ETF', type: 'Equity', value: '\$3,100,000', change: '+18.7%', status: 'Active', date: '2024-02-28'),
-  _Investment(name: 'Residential REIT', type: 'Real Estate', value: '\$5,500,000', change: '+7.8%', status: 'Pending', date: '2024-04-12'),
-  _Investment(name: 'Bitcoin Reserve', type: 'Crypto', value: '\$2,100,000', change: '+22.1%', status: 'Active', date: '2023-06-05'),
+  _Investment(
+    name: 'Blue-Chip Tech Fund',
+    type: 'Equity',
+    value: '\$2,450,000',
+    change: '+12.4%',
+    status: 'Active',
+    date: '2024-01-15',
+  ),
+  _Investment(
+    name: 'Downtown Office Complex',
+    type: 'Real Estate',
+    value: '\$8,200,000',
+    change: '+5.2%',
+    status: 'Active',
+    date: '2023-08-22',
+  ),
+  _Investment(
+    name: 'Ethereum Staking Pool',
+    type: 'Crypto',
+    value: '\$890,000',
+    change: '-8.2%',
+    status: 'Under Review',
+    date: '2024-03-01',
+  ),
+  _Investment(
+    name: 'Green Energy Bond',
+    type: 'Bond',
+    value: '\$1,200,000',
+    change: '+3.1%',
+    status: 'Active',
+    date: '2023-11-10',
+  ),
+  _Investment(
+    name: 'Emerging Markets ETF',
+    type: 'Equity',
+    value: '\$3,100,000',
+    change: '+18.7%',
+    status: 'Active',
+    date: '2024-02-28',
+  ),
+  _Investment(
+    name: 'Residential REIT',
+    type: 'Real Estate',
+    value: '\$5,500,000',
+    change: '+7.8%',
+    status: 'Pending',
+    date: '2024-04-12',
+  ),
+  _Investment(
+    name: 'Bitcoin Reserve',
+    type: 'Crypto',
+    value: '\$2,100,000',
+    change: '+22.1%',
+    status: 'Active',
+    date: '2023-06-05',
+  ),
 ];
 
 class InvestmentsPage extends StatelessWidget {
@@ -57,26 +106,35 @@ class InvestmentsPage extends StatelessWidget {
           selected: selected,
           onSelectChanged: (_) => onSelect(),
           cells: [
-            DataCell(Text(item.name, style: const TextStyle(fontWeight: FontWeight.w500))),
+            DataCell(
+              Text(
+                item.name,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
             DataCell(_TypeChip(item.type)),
             DataCell(Text(item.value)),
-            DataCell(Text(
-              item.change,
-              style: TextStyle(
-                color: isNegative ? AppColors.error : AppColors.success,
-                fontWeight: FontWeight.w600,
+            DataCell(
+              Text(
+                item.change,
+                style: TextStyle(
+                  color: isNegative ? AppColors.error : AppColors.success,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            )),
+            ),
             DataCell(_StatusBadge(item.status)),
             DataCell(Text(item.date)),
-            DataCell(PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, size: 18),
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'view', child: Text('View Details')),
-                PopupMenuItem(value: 'edit', child: Text('Edit')),
-                PopupMenuItem(value: 'delete', child: Text('Delete')),
-              ],
-            )),
+            DataCell(
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 18),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'view', child: Text('View Details')),
+                  PopupMenuItem(value: 'edit', child: Text('Edit')),
+                  PopupMenuItem(value: 'delete', child: Text('Delete')),
+                ],
+              ),
+            ),
           ],
         );
       },
@@ -99,7 +157,9 @@ class _TypeChip extends StatelessWidget {
       ),
       child: Text(
         type,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w500),
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -135,10 +195,9 @@ class _StatusBadge extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           status,
-          style: Theme.of(context)
-              .textTheme
-              .labelSmall
-              ?.copyWith(fontWeight: FontWeight.w500),
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -198,10 +257,9 @@ class _DetailRow extends StatelessWidget {
           Text(label, style: Theme.of(context).textTheme.bodySmall),
           Text(
             value,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ),

@@ -7,8 +7,10 @@ import '../data/profile_repository.dart';
 
 /// Cached provider that resolves a profile ID to a ProfileObject.
 /// Returns null if the profile cannot be fetched.
-final profileLookupProvider =
-    FutureProvider.family<ProfileObject?, String>((ref, profileId) async {
+final profileLookupProvider = FutureProvider.family<ProfileObject?, String>((
+  ref,
+  profileId,
+) async {
   if (profileId.isEmpty) return null;
   try {
     final repo = await ref.watch(profileRepositoryProvider.future);
@@ -56,7 +58,9 @@ String? profileDescription(ProfileObject profile) {
   // Try 'description', 'quote', 'bio' in order
   for (final key in ['description', 'quote', 'bio']) {
     final field = profile.properties.fields[key];
-    if (field != null && field.hasStringValue() && field.stringValue.isNotEmpty) {
+    if (field != null &&
+        field.hasStringValue() &&
+        field.stringValue.isNotEmpty) {
       return field.stringValue;
     }
   }
@@ -128,8 +132,11 @@ class ProfileBadge extends ConsumerWidget {
         CircleAvatar(
           radius: compact ? 14 : 16,
           backgroundColor: AppColors.onSurfaceMuted.withValues(alpha: 0.15),
-          child: Icon(Icons.person_outlined,
-              size: compact ? 14 : 16, color: AppColors.onSurfaceMuted),
+          child: Icon(
+            Icons.person_outlined,
+            size: compact ? 14 : 16,
+            color: AppColors.onSurfaceMuted,
+          ),
         ),
         const SizedBox(width: 8),
         Flexible(
@@ -168,14 +175,13 @@ class ProfileBadgeContent extends StatelessWidget {
   final VoidCallback? onTap;
 
   Color get _typeColor => switch (profile.type) {
-        ProfileType.PERSON => AppColors.tertiary,
-        ProfileType.INSTITUTION => AppColors.success,
-        ProfileType.BOT => AppColors.warning,
-        _ => AppColors.onSurfaceMuted,
-      };
+    ProfileType.PERSON => AppColors.tertiary,
+    ProfileType.INSTITUTION => AppColors.success,
+    ProfileType.BOT => AppColors.warning,
+    _ => AppColors.onSurfaceMuted,
+  };
 
-  int get _verifiedCount =>
-      profile.contacts.where((c) => c.verified).length;
+  int get _verifiedCount => profile.contacts.where((c) => c.verified).length;
 
   bool get _hasVerified => _verifiedCount > 0;
 
@@ -361,8 +367,11 @@ class ProfileBadgeContent extends StatelessWidget {
                           ),
                           if (contact.verified) ...[
                             const SizedBox(width: 2),
-                            Icon(Icons.verified,
-                                size: 11, color: AppColors.success),
+                            Icon(
+                              Icons.verified,
+                              size: 11,
+                              color: AppColors.success,
+                            ),
                           ],
                         ],
                       ),
@@ -405,8 +414,11 @@ class ProfileBadgeContent extends StatelessWidget {
       return Icon(Icons.verified, size: size, color: AppColors.success);
     }
     if (profile.contacts.isNotEmpty) {
-      return Icon(Icons.pending_outlined,
-          size: size, color: AppColors.onSurfaceMuted);
+      return Icon(
+        Icons.pending_outlined,
+        size: size,
+        color: AppColors.onSurfaceMuted,
+      );
     }
     return const SizedBox.shrink();
   }
