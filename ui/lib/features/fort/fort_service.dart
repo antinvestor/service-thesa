@@ -74,30 +74,27 @@ void registerFortService() {
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
         service: 'fort',
         title: 'Deliverability Analytics',
+        // KPI keys resolve through fortAnalyticsSpec; charts mirror the
+        // spec's fort_* metric declarations.
         metrics: [
-          'domains_active',
-          'reputation_score',
-          'delivery_rate',
-          'suppression_count',
+          'delivery_events',
+          'complaints',
+          'domains_verified',
+          'dkim_rotations',
         ],
         charts: [
-          ChartConfig.timeSeries('delivery_volume', label: 'Delivery Volume'),
-          ChartConfig.distribution(
-            'domain_status',
-            groupBy: 'status',
-            label: 'By Domain Status',
+          ChartConfig.timeSeries(
+            'fort_delivery_events_total',
+            label: 'Delivery Events',
           ),
           ChartConfig.distribution(
-            'reputation_band',
-            groupBy: 'band',
-            label: 'By Reputation Band',
+            'fort_delivery_events_total',
+            groupBy: 'event_type',
+            label: 'Delivery Events by Type',
           ),
-        ],
-        tables: [
-          TableConfig.topN(
-            'top_domains',
-            label: 'Top Sending Domains',
-            limit: 10,
+          ChartConfig.timeSeries(
+            'fort_complaints_total',
+            label: 'Complaints Trend',
           ),
         ],
       ),

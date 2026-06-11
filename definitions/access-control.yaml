@@ -6,28 +6,28 @@ navigation:
   icon: admin_panel_settings
   order: 1
   capabilities:
-    - "tenants:view"
+    - "tenant:view"
   children:
     - label: Tenants
       icon: business
       route: /tenants
       page_id: tenants.list
       capabilities:
-        - "tenants:view"
+        - "tenant:view"
       order: 1
     - label: Partitions
       icon: account_tree
       route: /partitions
       page_id: partitions.list
       capabilities:
-        - "partitions:view"
+        - "partition:view"
       order: 2
     - label: Roles
       icon: badge
       route: /roles
       page_id: roles.list
       capabilities:
-        - "roles:view"
+        - "role:manage"
       order: 3
     - label: Access Grants
       icon: vpn_key
@@ -44,7 +44,7 @@ pages:
     route: /tenants
     layout: table
     capabilities:
-      - "tenants:view"
+      - "tenant:view"
     breadcrumb:
       - label: Home
         route: /
@@ -100,14 +100,14 @@ pages:
         type: form
         form_id: tenants.create_form
         capabilities:
-          - "tenants:create"
+          - "tenant:manage"
 
   - id: tenants.detail
     title: "{name}"
     route: /tenants/{id}
     layout: detail
     capabilities:
-      - "tenants:view"
+      - "tenant:view"
     breadcrumb:
       - label: Home
         route: /
@@ -148,7 +148,7 @@ pages:
         type: form
         form_id: tenants.edit_form
         capabilities:
-          - "tenants:edit"
+          - "tenant:manage"
 
   # ===== Partitions =====
   - id: partitions.list
@@ -156,7 +156,7 @@ pages:
     route: /partitions
     layout: table
     capabilities:
-      - "partitions:view"
+      - "partition:view"
     breadcrumb:
       - label: Home
         route: /
@@ -222,14 +222,14 @@ pages:
         type: form
         form_id: partitions.create_form
         capabilities:
-          - "partitions:create"
+          - "partition:manage"
 
   - id: partitions.detail
     title: "{name}"
     route: /partitions/{id}
     layout: detail
     capabilities:
-      - "partitions:view"
+      - "partition:view"
     breadcrumb:
       - label: Home
         route: /
@@ -278,7 +278,7 @@ pages:
         type: form
         form_id: partitions.edit_form
         capabilities:
-          - "partitions:edit"
+          - "partition:manage"
 
   # ===== Roles =====
   - id: roles.list
@@ -286,7 +286,7 @@ pages:
     route: /roles
     layout: table
     capabilities:
-      - "roles:view"
+      - "role:manage"
     breadcrumb:
       - label: Home
         route: /
@@ -333,7 +333,7 @@ pages:
           type: command
           command_id: access-control.removePartitionRole
           capabilities:
-            - "roles:delete"
+            - "role:manage"
           confirmation:
             title: Delete Role
             message: "Are you sure you want to delete role {name}?"
@@ -351,7 +351,7 @@ pages:
         type: form
         form_id: roles.create_form
         capabilities:
-          - "roles:create"
+          - "role:manage"
 
   # ===== Access Grants =====
   - id: access.list
@@ -406,7 +406,7 @@ pages:
           type: command
           command_id: access-control.removeAccess
           capabilities:
-            - "access:delete"
+            - "access:manage"
           confirmation:
             title: Revoke Access
             message: "Revoke this access grant?"
@@ -424,7 +424,7 @@ pages:
         type: form
         form_id: access.grant_form
         capabilities:
-          - "access:create"
+          - "access:manage"
 
   - id: access.detail
     title: Access Grant
@@ -472,7 +472,7 @@ pages:
         type: form
         form_id: access.assign_role_form
         capabilities:
-          - "access:edit"
+          - "access:manage"
       - id: revoke_access
         label: Revoke Access
         icon: remove_circle
@@ -480,7 +480,7 @@ pages:
         type: command
         command_id: access-control.removeAccess
         capabilities:
-          - "access:delete"
+          - "access:manage"
         confirmation:
           title: Revoke Access
           message: "Revoke this entire access grant?"
@@ -528,7 +528,7 @@ pages:
           type: command
           command_id: access-control.removeAccessRole
           capabilities:
-            - "access:edit"
+            - "access:manage"
           confirmation:
             title: Remove Role
             message: "Remove this role from the access grant?"
@@ -546,13 +546,13 @@ pages:
         type: form
         form_id: access.assign_role_form
         capabilities:
-          - "access:edit"
+          - "access:manage"
 
 forms:
   - id: tenants.create_form
     title: Create Tenant
     capabilities:
-      - "tenants:create"
+      - "tenant:manage"
     submit_command: access-control.createTenant
     success_route: /tenants
     success_message: Tenant created successfully.
@@ -576,7 +576,7 @@ forms:
   - id: tenants.edit_form
     title: Edit Tenant
     capabilities:
-      - "tenants:edit"
+      - "tenant:manage"
     submit_command: access-control.updateTenant
     load_source:
       operation_id: getTenant
@@ -609,7 +609,7 @@ forms:
   - id: partitions.create_form
     title: Create Partition
     capabilities:
-      - "partitions:create"
+      - "partition:manage"
     submit_command: access-control.createPartition
     success_route: /partitions
     success_message: Partition created successfully.
@@ -638,7 +638,7 @@ forms:
   - id: partitions.edit_form
     title: Edit Partition
     capabilities:
-      - "partitions:edit"
+      - "partition:manage"
     submit_command: access-control.updatePartition
     load_source:
       operation_id: getPartition
@@ -679,7 +679,7 @@ forms:
   - id: roles.create_form
     title: Create Role
     capabilities:
-      - "roles:create"
+      - "role:manage"
     submit_command: access-control.createPartitionRole
     success_route: /roles
     success_message: Role created successfully.
@@ -712,7 +712,7 @@ forms:
   - id: access.grant_form
     title: Grant Access
     capabilities:
-      - "access:create"
+      - "access:manage"
     submit_command: access-control.createAccess
     success_route: /access
     success_message: Access granted successfully.
@@ -753,7 +753,7 @@ forms:
   - id: access.assign_role_form
     title: Assign Role
     capabilities:
-      - "access:edit"
+      - "access:manage"
     submit_command: access-control.createAccessRole
     success_route: /access/{access_id}
     success_message: Role assigned successfully.
@@ -779,7 +779,7 @@ forms:
 commands:
   - id: access-control.createTenant
     capabilities:
-      - "tenants:create"
+      - "tenant:manage"
     operation:
       type: openapi
       operation_id: createTenant
@@ -794,7 +794,7 @@ commands:
 
   - id: access-control.updateTenant
     capabilities:
-      - "tenants:edit"
+      - "tenant:manage"
     operation:
       type: openapi
       operation_id: updateTenant
@@ -811,7 +811,7 @@ commands:
 
   - id: access-control.createPartition
     capabilities:
-      - "partitions:create"
+      - "partition:manage"
     operation:
       type: openapi
       operation_id: createPartition
@@ -827,7 +827,7 @@ commands:
 
   - id: access-control.updatePartition
     capabilities:
-      - "partitions:edit"
+      - "partition:manage"
     operation:
       type: openapi
       operation_id: updatePartition
@@ -845,7 +845,7 @@ commands:
 
   - id: access-control.createPartitionRole
     capabilities:
-      - "roles:create"
+      - "role:manage"
     operation:
       type: openapi
       operation_id: createPartitionRole
@@ -861,7 +861,7 @@ commands:
 
   - id: access-control.removePartitionRole
     capabilities:
-      - "roles:delete"
+      - "role:manage"
     operation:
       type: openapi
       operation_id: removePartitionRole
@@ -875,7 +875,7 @@ commands:
 
   - id: access-control.createAccess
     capabilities:
-      - "access:create"
+      - "access:manage"
     operation:
       type: openapi
       operation_id: createAccess
@@ -890,7 +890,7 @@ commands:
 
   - id: access-control.removeAccess
     capabilities:
-      - "access:delete"
+      - "access:manage"
     operation:
       type: openapi
       operation_id: removeAccess
@@ -904,7 +904,7 @@ commands:
 
   - id: access-control.createAccessRole
     capabilities:
-      - "access:edit"
+      - "access:manage"
     operation:
       type: openapi
       operation_id: createAccessRole
@@ -919,7 +919,7 @@ commands:
 
   - id: access-control.removeAccessRole
     capabilities:
-      - "access:edit"
+      - "access:manage"
     operation:
       type: openapi
       operation_id: removeAccessRole
@@ -935,7 +935,7 @@ searches:
   - id: access-control.tenants
     domain: tenants
     capabilities:
-      - "tenants:view"
+      - "tenant:view"
     operation:
       type: openapi
       operation_id: listTenants
@@ -952,7 +952,7 @@ searches:
   - id: access-control.partitions
     domain: partitions
     capabilities:
-      - "partitions:view"
+      - "partition:view"
     operation:
       type: openapi
       operation_id: listPartitions

@@ -229,7 +229,7 @@ void main() {
         'step': 'month',
       });
       expectBody(series[1], {
-        'metric': 'payments_transactions_total',
+        'metric': 'payments_initiated_total',
         'aggregation': 'sum',
         'step': 'month',
       });

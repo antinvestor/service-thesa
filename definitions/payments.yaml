@@ -6,21 +6,21 @@ navigation:
   icon: payments
   order: 6
   capabilities:
-    - "payments:view"
+    - "payment:search"
   children:
     - label: All Payments
       icon: receipt_long
       route: /payments
       page_id: payments.list
       capabilities:
-        - "payments:view"
+        - "payment:search"
       order: 1
     - label: Payment Links
       icon: link
       route: /payment-links
       page_id: payment-links.list
       capabilities:
-        - "payments:view"
+        - "payment:search"
       order: 2
 
 pages:
@@ -29,7 +29,7 @@ pages:
     route: /payments
     layout: table
     capabilities:
-      - "payments:view"
+      - "payment:search"
     breadcrumb:
       - label: Home
         route: /
@@ -126,14 +126,14 @@ pages:
         type: form
         form_id: payments.create_form
         capabilities:
-          - "payments:create"
+          - "payment:send"
 
   - id: payments.detail
     title: "Payment Detail"
     route: /payments/{id}
     layout: detail
     capabilities:
-      - "payments:view"
+      - "payment:search"
     breadcrumb:
       - label: Home
         route: /
@@ -193,7 +193,7 @@ pages:
     route: /payment-links
     layout: table
     capabilities:
-      - "payments:view"
+      - "payment:search"
     breadcrumb:
       - label: Home
         route: /
@@ -240,13 +240,13 @@ pages:
         type: form
         form_id: payment-links.create_form
         capabilities:
-          - "payments:create"
+          - "payment:send"
 
 forms:
   - id: payments.create_form
     title: Create Payment
     capabilities:
-      - "payments:create"
+      - "payment:send"
     submit_command: payments.create
     success_route: /payments
     success_message: Payment created successfully.
@@ -298,7 +298,7 @@ forms:
   - id: payment-links.create_form
     title: Create Payment Link
     capabilities:
-      - "payments:create"
+      - "payment:send"
     submit_command: payment-links.create
     success_route: /payment-links
     success_message: Payment link created successfully.
@@ -332,7 +332,7 @@ forms:
 commands:
   - id: payments.create
     capabilities:
-      - "payments:create"
+      - "payment:send"
     operation:
       type: openapi
       operation_id: createPayment
@@ -351,7 +351,7 @@ commands:
 
   - id: payment-links.create
     capabilities:
-      - "payments:create"
+      - "payment:send"
     operation:
       type: openapi
       operation_id: createPaymentLink
@@ -369,7 +369,7 @@ searches:
   - id: payments.search
     domain: payments
     capabilities:
-      - "payments:view"
+      - "payment:search"
     operation:
       type: openapi
       operation_id: listPayments

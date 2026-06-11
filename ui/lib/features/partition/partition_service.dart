@@ -1,4 +1,6 @@
 import 'package:antinvestor_ui_core/analytics/analytics_dashboard.dart';
+import 'package:antinvestor_ui_core/analytics/analytics_models.dart'
+    show TimeGranularity;
 import 'package:flutter/material.dart';
 
 import '../../core/services/service_definition.dart';
@@ -47,22 +49,15 @@ void registerTenancyService() {
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
         service: 'tenancy',
         title: 'Tenancy Analytics',
-        metrics: [
-          'total_tenants',
-          'total_partitions',
-          'active_users',
-          'new_tenants',
-        ],
+        // Mirrors tenancyAnalyticsSpec: organization creation is the only
+        // gate-visible tenancy growth signal until the tenancy service emits
+        // its own business metrics. KPI tiles stay entity-derived.
         charts: [
-          ChartConfig.timeSeries('tenant_growth', label: 'Tenant Growth'),
-          ChartConfig.distribution(
-            'tenants_by_plan',
-            groupBy: 'plan',
-            label: 'By Plan',
+          ChartConfig.timeSeries(
+            'identity_organizations_created_total',
+            label: 'Organizations created',
+            granularity: TimeGranularity.month,
           ),
-        ],
-        tables: [
-          TableConfig.topN('top_tenants', label: 'Largest Tenants', limit: 10),
         ],
       ),
       featureBuilders: {

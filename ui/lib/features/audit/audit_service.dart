@@ -50,30 +50,12 @@ void registerAuditService() {
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
         service: 'audit',
         title: 'Audit Trail Analytics',
-        metrics: [
-          'total_entries',
-          'unique_actors',
-          'integrity_checks',
-          'anomalies',
-        ],
+        // Mirrors auditAnalyticsSpec — the only audit metric the gate
+        // allows today is the frame request counter.
         charts: [
-          ChartConfig.timeSeries('audit_volume', label: 'Audit Volume'),
-          ChartConfig.distribution(
-            'audit_actions',
-            groupBy: 'action',
-            label: 'By Action',
-          ),
-          ChartConfig.distribution(
-            'audit_services',
-            groupBy: 'service',
-            label: 'By Service',
-          ),
-        ],
-        tables: [
-          TableConfig.topN(
-            'top_actors',
-            label: 'Most Active Actors',
-            limit: 10,
+          ChartConfig.timeSeries(
+            'audit/completed_calls',
+            label: 'Request activity',
           ),
         ],
       ),

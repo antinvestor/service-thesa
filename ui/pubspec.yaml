@@ -71,6 +71,15 @@ dependencies:
   shared_preferences: ^2.3.2
 
   antinvestor_auth_runtime: ^0.4.1
+  # Used directly by lib/core/config/webview_title_bar_io.dart so the
+  # Linux/Windows OAuth webview's secondary engine renders its title bar
+  # instead of booting the full app (flutter_web_auth_2 opens the auth
+  # window through this package).
+  desktop_webview_window: ^0.2.3
+  # Used directly by lib/core/auth/desktop_loopback_auth_io.dart to route
+  # Linux/Windows OAuth through the system browser + loopback server.
+  flutter_web_auth_2: ^5.0.2
+  flutter_web_auth_2_platform_interface: ^5.0.0
 
   # Used by the analytics transport adapter to hand http.Response objects
   # to ui_core's ThesaAnalyticsDataSource.

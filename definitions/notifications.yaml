@@ -6,21 +6,21 @@ navigation:
   icon: notifications
   order: 5
   capabilities:
-    - "notifications:view"
+    - "notification:search"
   children:
     - label: All Notifications
       icon: mail
       route: /notifications
       page_id: notifications.list
       capabilities:
-        - "notifications:view"
+        - "notification:search"
       order: 1
     - label: Send Notification
       icon: send
       route: /notifications/new
       page_id: notifications.create_form
       capabilities:
-        - "notifications:create"
+        - "notification:send"
       order: 2
 
 pages:
@@ -29,7 +29,7 @@ pages:
     route: /notifications
     layout: table
     capabilities:
-      - "notifications:view"
+      - "notification:search"
     breadcrumb:
       - label: Home
         route: /
@@ -112,14 +112,14 @@ pages:
         type: form
         form_id: notifications.create_form
         capabilities:
-          - "notifications:create"
+          - "notification:send"
 
   - id: notifications.detail
     title: "Notification Detail"
     route: /notifications/{id}
     layout: detail
     capabilities:
-      - "notifications:view"
+      - "notification:search"
     breadcrumb:
       - label: Home
         route: /
@@ -166,7 +166,7 @@ forms:
   - id: notifications.create_form
     title: Send Notification
     capabilities:
-      - "notifications:create"
+      - "notification:send"
     submit_command: notifications.create
     success_route: /notifications
     success_message: Notification sent successfully.
@@ -213,7 +213,7 @@ forms:
 commands:
   - id: notifications.create
     capabilities:
-      - "notifications:create"
+      - "notification:send"
     operation:
       type: openapi
       operation_id: createNotification
@@ -232,7 +232,7 @@ searches:
   - id: notifications.search
     domain: notifications
     capabilities:
-      - "notifications:view"
+      - "notification:search"
     operation:
       type: openapi
       operation_id: listNotifications

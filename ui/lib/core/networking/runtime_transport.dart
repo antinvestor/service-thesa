@@ -28,11 +28,13 @@ import 'package:connectrpc/protocol/connect.dart' as connect_protocol;
 ///
 /// ## Streaming
 ///
-/// `runtime.fetch` is a unary HTTP call. Server-streaming,
-/// client-streaming, and bidi RPCs throw [UnimplementedError]. Thesa's
-/// generated Connect clients are all unary today, so this limitation is
-/// not currently hit; if streaming is added later, this transport must
-/// grow a streaming-capable runtime adapter.
+/// `runtime.fetch` is a unary HTTP call that buffers the full response
+/// body. Server-streaming RPCs (e.g. `ListTenant`) still work through
+/// it: the client sends a single enveloped request message and the
+/// Connect protocol parser consumes every buffered response frame —
+/// messages just arrive all at once instead of incrementally.
+/// Client-streaming and bidi RPCs genuinely need incremental request
+/// bodies and throw [UnimplementedError].
 class RuntimeTransport implements connect.Transport {
   RuntimeTransport({
     required AuthRuntime runtime,
@@ -74,10 +76,14 @@ class RuntimeTransport implements connect.Transport {
     I extends Object,
     O extends Object
   >(connect.Spec<I, O> spec, Stream<I> input, [connect.CallOptions? options]) {
-    throw UnimplementedError(
-      'RuntimeTransport does not support ${spec.streamType.name} streaming '
-      'RPCs (procedure: ${spec.procedure}). runtime.fetch is unary-only.',
-    );
+    if (spec.streamType != connect.StreamType.server) {
+      throw UnimplementedError(
+        'RuntimeTransport does not support ${spec.streamType.name} streaming '
+        'RPCs (procedure: ${spec.procedure}): runtime.fetch buffers the '
+        'request body, so only unary and server-streaming calls work.',
+      );
+    }
+    return _delegate.stream(spec, input, options);
   }
 
   /// Adapter from Connect's [connect.HttpClient] typedef onto

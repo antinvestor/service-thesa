@@ -11,6 +11,10 @@ import (
 	"github.com/antinvestor/service-thesa/model"
 )
 
+// maxBatchSize is Keto's BatchCheck limit per call (its default
+// max_batch_size); larger batches are rejected with InvalidArgument.
+const maxBatchSize = 10
+
 // CapabilityCheck pairs a capability string with the Keto namespace
 // it should be checked against.
 type CapabilityCheck struct {
@@ -75,18 +79,33 @@ func (e *KetoPolicyEvaluator) ResolveCapabilities(ctx context.Context, rctx *mod
 		"check_count", len(requests),
 	)
 
-	results, err := e.authorizer.BatchCheck(ctx, requests)
-	if err != nil {
-		log.WithError(err).Error("capability: batch check failed, falling back to individual checks",
-			"subject_id", rctx.SubjectID,
-		)
-		return e.fallbackIndividualChecks(ctx, requests)
-	}
-
+	// Keto caps BatchCheck at maxBatchSize tuples per call, so issue the
+	// checks in chunks and stitch the results back together.
 	caps := make(model.CapabilitySet)
-	for i, result := range results {
-		if result.Allowed {
-			caps[e.checks[i].Capability] = true
+	for start := 0; start < len(requests); start += maxBatchSize {
+		end := min(start+maxBatchSize, len(requests))
+		chunk := requests[start:end]
+
+		results, err := e.authorizer.BatchCheck(ctx, chunk)
+		if err != nil {
+			log.WithError(err).Error("capability: batch check failed, falling back to individual checks",
+				"subject_id", rctx.SubjectID,
+				"chunk_start", start,
+			)
+			fallback, fbErr := e.fallbackIndividualChecks(ctx, requests[start:], start)
+			if fbErr != nil {
+				return nil, fbErr
+			}
+			for capName := range fallback {
+				caps[capName] = true
+			}
+			break
+		}
+
+		for i, result := range results {
+			if result.Allowed {
+				caps[e.checks[start+i].Capability] = true
+			}
 		}
 	}
 
@@ -100,8 +119,10 @@ func (e *KetoPolicyEvaluator) ResolveCapabilities(ctx context.Context, rctx *mod
 	return caps, nil
 }
 
-// fallbackIndividualChecks tries each check individually when BatchCheck fails.
-func (e *KetoPolicyEvaluator) fallbackIndividualChecks(ctx context.Context, requests []security.CheckRequest) (model.CapabilitySet, error) {
+// fallbackIndividualChecks tries each check individually when BatchCheck
+// fails. offset is the position of requests[0] within e.checks, so results
+// map back to the right capability.
+func (e *KetoPolicyEvaluator) fallbackIndividualChecks(ctx context.Context, requests []security.CheckRequest, offset int) (model.CapabilitySet, error) {
 	log := util.Log(ctx)
 	caps := make(model.CapabilitySet)
 
@@ -115,7 +136,7 @@ func (e *KetoPolicyEvaluator) fallbackIndividualChecks(ctx context.Context, requ
 			continue
 		}
 		if result.Allowed {
-			caps[e.checks[i].Capability] = true
+			caps[e.checks[offset+i].Capability] = true
 		}
 	}
 

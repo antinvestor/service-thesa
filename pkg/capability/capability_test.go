@@ -403,11 +403,14 @@ func (s *CapabilityTestSuite) TestCollectCapabilityChecks_AccessControlDomain() 
 		found[chk.Capability] = chk.Namespace
 	}
 
+	// Capability names mirror the OPL permissions generated from the
+	// service protos (tenant_view, partition_manage, role_manage, …) so
+	// CapabilityToPermission maps onto relations Keto actually knows.
 	expectedCaps := []string{
-		"tenants:view", "tenants:create", "tenants:edit",
-		"partitions:view", "partitions:create", "partitions:edit",
-		"roles:view", "roles:create", "roles:delete",
-		"access:view", "access:create", "access:delete", "access:edit",
+		"tenant:view", "tenant:manage",
+		"partition:view", "partition:manage",
+		"role:manage",
+		"access:view", "access:manage",
 	}
 
 	for _, cap := range expectedCaps {

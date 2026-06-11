@@ -6,21 +6,21 @@ navigation:
   icon: people
   order: 2
   capabilities:
-    - "profiles:view"
+    - "profile:view"
   children:
     - label: All Users
       icon: person
       route: /users
       page_id: profiles.list
       capabilities:
-        - "profiles:view"
+        - "profile:view"
       order: 1
     - label: Create User
       icon: person_add
       route: /users/new
       page_id: profiles.create_form
       capabilities:
-        - "profiles:create"
+        - "profile:create"
       order: 2
 
 pages:
@@ -29,7 +29,7 @@ pages:
     route: /users
     layout: table
     capabilities:
-      - "profiles:view"
+      - "profile:view"
     breadcrumb:
       - label: Home
         route: /
@@ -110,14 +110,14 @@ pages:
         type: form
         form_id: profiles.create_form
         capabilities:
-          - "profiles:create"
+          - "profile:create"
 
   - id: profiles.detail
     title: "User Profile"
     route: /users/{id}
     layout: detail
     capabilities:
-      - "profiles:view"
+      - "profile:view"
     breadcrumb:
       - label: Home
         route: /
@@ -178,7 +178,7 @@ pages:
         type: form
         form_id: profiles.edit_form
         capabilities:
-          - "profiles:edit"
+          - "profile:update"
       - id: add_contact
         label: Add Contact
         icon: contact_mail
@@ -186,7 +186,7 @@ pages:
         type: form
         form_id: profiles.add_contact_form
         capabilities:
-          - "profiles:contacts"
+          - "contact:manage"
       - id: add_address
         label: Add Address
         icon: location_on
@@ -194,13 +194,13 @@ pages:
         type: form
         form_id: profiles.add_address_form
         capabilities:
-          - "profiles:addresses"
+          - "address:manage"
 
 forms:
   - id: profiles.create_form
     title: Create User
     capabilities:
-      - "profiles:create"
+      - "profile:create"
     submit_command: profiles.createProfile
     success_route: /users
     success_message: User created successfully.
@@ -258,7 +258,7 @@ forms:
   - id: profiles.edit_form
     title: Edit Profile
     capabilities:
-      - "profiles:edit"
+      - "profile:update"
     submit_command: profiles.updateProfile
     load_source:
       operation_id: getProfileById
@@ -292,7 +292,7 @@ forms:
   - id: profiles.add_contact_form
     title: Add Contact
     capabilities:
-      - "profiles:contacts"
+      - "contact:manage"
     submit_command: profiles.addContact
     success_route: /users/{id}
     success_message: Contact added successfully.
@@ -321,7 +321,7 @@ forms:
   - id: profiles.add_address_form
     title: Add Address
     capabilities:
-      - "profiles:addresses"
+      - "address:manage"
     submit_command: profiles.addAddress
     success_route: /users/{id}
     success_message: Address added successfully.
@@ -349,7 +349,7 @@ forms:
 commands:
   - id: profiles.createProfile
     capabilities:
-      - "profiles:create"
+      - "profile:create"
     operation:
       type: openapi
       operation_id: createProfile
@@ -364,7 +364,7 @@ commands:
 
   - id: profiles.updateProfile
     capabilities:
-      - "profiles:edit"
+      - "profile:update"
     operation:
       type: openapi
       operation_id: updateProfile
@@ -380,7 +380,7 @@ commands:
 
   - id: profiles.addContact
     capabilities:
-      - "profiles:contacts"
+      - "contact:manage"
     operation:
       type: openapi
       operation_id: addContact
@@ -396,7 +396,7 @@ commands:
 
   - id: profiles.addAddress
     capabilities:
-      - "profiles:addresses"
+      - "address:manage"
     operation:
       type: openapi
       operation_id: addAddress
@@ -416,7 +416,7 @@ searches:
   - id: profiles.search
     domain: users
     capabilities:
-      - "profiles:view"
+      - "profile:view"
     operation:
       type: openapi
       operation_id: searchProfiles

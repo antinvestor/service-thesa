@@ -48,22 +48,22 @@ void registerGeolocationService() {
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
         service: 'geolocation',
         title: 'Geolocation Analytics',
-        metrics: [
-          'total_areas',
-          'total_routes',
-          'geo_events',
-          'active_trackers',
-        ],
+        // The geolocation service emits these via frame's tenant-scoped
+        // business metrics; names match the gate allowlist
+        // (^(devices|service_geolocation)/.+).
         charts: [
-          ChartConfig.timeSeries('geo_event_volume', label: 'Geo Events'),
-          ChartConfig.distribution(
-            'event_types',
-            groupBy: 'event_type',
-            label: 'By Event Type',
+          ChartConfig.timeSeries(
+            'service_geolocation/ingestion/accepted',
+            label: 'Accepted Points',
           ),
-        ],
-        tables: [
-          TableConfig.topN('top_areas', label: 'Most Active Areas', limit: 10),
+          ChartConfig.timeSeries(
+            'service_geolocation/ingestion/rejected',
+            label: 'Rejected Points',
+          ),
+          ChartConfig.timeSeries(
+            'service_geolocation/geofence/transitions',
+            label: 'Geofence Transitions',
+          ),
         ],
       ),
       featureBuilders: {

@@ -46,18 +46,9 @@ void registerSettingsService() {
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
         service: 'settings',
         title: 'Settings Analytics',
-        metrics: ['total_settings', 'recent_changes', 'modules_count'],
-        charts: [
-          ChartConfig.timeSeries(
-            'setting_changes',
-            label: 'Configuration Changes',
-          ),
-          ChartConfig.distribution(
-            'settings_by_module',
-            groupBy: 'module',
-            label: 'By Module',
-          ),
-        ],
+        // The settings service emits no OTel business metrics yet and the
+        // analytics gate allowlist has no settings_* entry — declare nothing
+        // rather than query metric names the gate rejects with 400.
       ),
       featureBuilders: {
         'all': (context, service, feature) =>

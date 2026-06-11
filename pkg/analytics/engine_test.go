@@ -360,3 +360,73 @@ func TestMetricAllowlist_Defaults(t *testing.T) {
 		}
 	}
 }
+
+// allowingResolver returns a fixed accessible-partition set, standing in for
+// the hierarchical resolver.
+type allowingResolver struct{ accessible []string }
+
+func (r allowingResolver) ResolveAccessiblePartitions(_ context.Context, _ *model.RequestContext) ([]string, error) {
+	return r.accessible, nil
+}
+
+func TestScalar_ExplicitPartitionsValidatedAgainstAccessibleSet(t *testing.T) {
+	backend := &recordingBackend{value: 7}
+	engine, err := NewEngine(backend, allowingResolver{accessible: []string{"part-01", "part-02"}}, WithCacheTTL(0))
+	if err != nil {
+		t.Fatalf("NewEngine() error = %v", err)
+	}
+	ctx := tenantContext("acme-corp", "part-01")
+
+	// Accessible subset: the filter must carry exactly the supplied
+	// partitions — the summation never widens beyond them.
+	if _, err = engine.Scalar(ctx, MetricQuery{Metric: "loans_disbursed_total", Aggregation: AggSum},
+		[]string{"part-02"}, testTimeRange()); err != nil {
+		t.Fatalf("Scalar(accessible partition) error = %v", err)
+	}
+	filter := backend.filters[0]
+	if len(filter.PartitionIDs) != 1 || filter.PartitionIDs[0] != "part-02" {
+		t.Errorf("filter.PartitionIDs = %v, want [part-02]", filter.PartitionIDs)
+	}
+	if filter.TenantID != "acme-corp" || !filter.Scoped {
+		t.Errorf("filter = %+v, want scoped to acme-corp", filter)
+	}
+
+	// A partition outside the accessible set must be rejected outright —
+	// never silently dropped or widened.
+	_, err = engine.Scalar(ctx, MetricQuery{Metric: "loans_disbursed_total", Aggregation: AggSum},
+		[]string{"part-02", "part-99"}, testTimeRange())
+	if err == nil || !strings.Contains(err.Error(), `"part-99" is not accessible`) {
+		t.Fatalf("Scalar(inaccessible partition) error = %v, want not-accessible rejection", err)
+	}
+	if !isForbiddenError(err) {
+		t.Errorf("isForbiddenError(%v) = false, want true (handlers must map to 403)", err)
+	}
+	if backend.calls != 1 {
+		t.Errorf("backend calls = %d, want 1: rejected query must never reach the backend", backend.calls)
+	}
+}
+
+func TestScalar_WildcardResolvesToAccessiblePartitionsOnly(t *testing.T) {
+	backend := &recordingBackend{value: 7}
+	engine, err := NewEngine(backend, allowingResolver{accessible: []string{"part-01", "part-02", "part-03"}}, WithCacheTTL(0))
+	if err != nil {
+		t.Fatalf("NewEngine() error = %v", err)
+	}
+	ctx := tenantContext("acme-corp", "part-01")
+
+	if _, err = engine.Scalar(ctx, MetricQuery{Metric: "loans_disbursed_total", Aggregation: AggSum},
+		[]string{"*"}, testTimeRange()); err != nil {
+		t.Fatalf("Scalar(wildcard) error = %v", err)
+	}
+
+	filter := backend.filters[0]
+	want := []string{"part-01", "part-02", "part-03"}
+	if len(filter.PartitionIDs) != len(want) {
+		t.Fatalf("filter.PartitionIDs = %v, want %v", filter.PartitionIDs, want)
+	}
+	for i, id := range want {
+		if filter.PartitionIDs[i] != id {
+			t.Errorf("filter.PartitionIDs[%d] = %q, want %q", i, filter.PartitionIDs[i], id)
+		}
+	}
+}
