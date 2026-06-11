@@ -47,6 +47,9 @@ AuthConfig buildThesaAuthConfig() => AuthConfig(
     // The Thesa BFF itself — its analytics endpoints verify tokens with
     // audience service_thesa.
     'service_thesa',
+    // Audit trail service — backs the dashboard activity feed and the
+    // audit log screens.
+    'service_audit',
   ],
 );
 
