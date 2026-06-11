@@ -55,22 +55,15 @@ void registerFilesService() {
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
         service: 'files',
         title: 'File Management Analytics',
-        metrics: [
-          'total_files',
-          'total_storage',
-          'uploads_today',
-          'avg_file_size',
-        ],
+        // KPI keys resolve through filesAnalyticsSpec to the
+        // file_service_* metrics the files service exposes.
+        metrics: ['uploads', 'downloads', 'upload_bytes', 'download_bytes'],
         charts: [
-          ChartConfig.timeSeries('upload_volume', label: 'Uploads'),
-          ChartConfig.distribution(
-            'file_types',
-            groupBy: 'content_type',
-            label: 'By Type',
+          ChartConfig.timeSeries('file_service_uploads_total', label: 'Uploads'),
+          ChartConfig.timeSeries(
+            'file_service_downloads_total',
+            label: 'Downloads',
           ),
-        ],
-        tables: [
-          TableConfig.topN('top_uploaders', label: 'Top Uploaders', limit: 10),
         ],
       ),
       featureBuilders: {

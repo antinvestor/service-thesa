@@ -71,31 +71,24 @@ void registerPaymentService() {
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
         service: 'payment',
         title: 'Payment Analytics',
-        metrics: [
-          'total_payments',
-          'total_volume',
-          'success_rate',
-          'avg_processing_time',
-        ],
+        // The payment service emits these via frame's tenant-scoped
+        // business metrics (payments_* prefix is gate-allowlisted).
         charts: [
-          ChartConfig.timeSeries('payment_volume', label: 'Payment Volume'),
-          ChartConfig.distribution(
-            'payment_routes',
-            groupBy: 'route',
-            label: 'By Route',
+          ChartConfig.timeSeries(
+            'payments_initiated_total',
+            label: 'Payments initiated',
           ),
-          ChartConfig.timeSeries('payment_amount', label: 'Payment Amount'),
-          ChartConfig.distribution(
-            'payment_status',
-            groupBy: 'status',
-            label: 'By Status',
+          ChartConfig.timeSeries(
+            'payments_succeeded_total',
+            label: 'Payments succeeded',
           ),
-        ],
-        tables: [
-          TableConfig.topN(
-            'top_recipients',
-            label: 'Top Recipients',
-            limit: 10,
+          ChartConfig.timeSeries(
+            'payments_failed_total',
+            label: 'Payments failed',
+          ),
+          ChartConfig.timeSeries(
+            'payments_amount_total',
+            label: 'Payment amount',
           ),
         ],
       ),

@@ -78,27 +78,9 @@ void registerBillingService() {
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
         service: 'billing',
         title: 'Billing Analytics',
-        metrics: [
-          'active_subscriptions',
-          'mrr',
-          'outstanding_invoices',
-          'churn_rate',
-        ],
-        charts: [
-          ChartConfig.timeSeries('revenue', label: 'Revenue'),
-          ChartConfig.distribution(
-            'subscription_plans',
-            groupBy: 'plan_name',
-            label: 'By Plan',
-          ),
-        ],
-        tables: [
-          TableConfig.topN(
-            'top_customers',
-            label: 'Top Customers by Revenue',
-            limit: 10,
-          ),
-        ],
+        // The billing service emits no OTel business metrics yet and the
+        // analytics gate allowlist has no billing_* entry — declare nothing
+        // rather than query metric names the gate rejects with 400.
       ),
       featureBuilders: {
         'catalogs': (context, service, feature) => const CatalogListScreen(),

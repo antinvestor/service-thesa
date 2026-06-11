@@ -327,8 +327,10 @@ class _PaymentVolumeChartState extends State<_PaymentVolumeChart> {
   @override
   void initState() {
     super.initState();
+    // The payment service's initiated-payments counter — the emitted name
+    // is payments_initiated_total (there is no payments_transactions_total).
     _future = widget.dataSource.queryTimeSeries(
-      metric: 'payments_transactions_total',
+      metric: 'payments_initiated_total',
       timeRange: AnalyticsTimeRange.lastYear(),
     );
   }

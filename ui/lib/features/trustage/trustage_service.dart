@@ -53,30 +53,21 @@ void registerTrustageService() {
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
         service: 'trustage',
         title: 'Orchestrator Analytics',
-        metrics: [
-          'total_instances',
-          'active_executions',
-          'failed_executions',
-          'avg_duration_ms',
-        ],
+        // The trustage service emits these via frame's tenant-scoped
+        // business metrics (engine./queue. and workflow_ prefixes are
+        // gate-allowlisted).
         charts: [
-          ChartConfig.timeSeries('execution_volume', label: 'Execution Volume'),
-          ChartConfig.distribution(
-            'execution_status',
-            groupBy: 'status',
-            label: 'By Status',
+          ChartConfig.timeSeries(
+            'engine.executions.total',
+            label: 'Workflow Executions',
           ),
-          ChartConfig.distribution(
-            'workflow_usage',
-            groupBy: 'workflow',
-            label: 'By Workflow',
+          ChartConfig.timeSeries(
+            'workflow_lifecycle_total',
+            label: 'Workflow Lifecycle Events',
           ),
-        ],
-        tables: [
-          TableConfig.topN(
-            'top_workflows',
-            label: 'Most Used Workflows',
-            limit: 10,
+          ChartConfig.timeSeries(
+            'queue.enqueue.total',
+            label: 'Queue Enqueues',
           ),
         ],
       ),

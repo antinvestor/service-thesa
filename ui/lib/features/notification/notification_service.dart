@@ -48,25 +48,21 @@ void registerNotificationService() {
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
         service: 'notification',
         title: 'Notification Analytics',
-        metrics: ['total_sent', 'delivery_rate', 'open_rate', 'failed_count'],
+        // KPI keys resolve through notificationAnalyticsSpec; charts mirror
+        // the spec's notifications_* metric declarations. The notification
+        // service does not emit these counters yet, so charts render empty
+        // (not errors) until emission lands.
+        metrics: ['sent', 'delivered', 'failed', 'queued'],
         charts: [
           ChartConfig.timeSeries(
-            'notifications_sent',
-            label: 'Notifications Sent',
+            'notifications_sent_total',
+            label: 'Notifications sent',
           ),
           ChartConfig.distribution(
-            'notification_channels',
+            'notifications_sent_total',
             groupBy: 'channel',
-            label: 'By Channel',
+            label: 'Channel mix',
           ),
-          ChartConfig.distribution(
-            'notification_status',
-            groupBy: 'status',
-            label: 'By Status',
-          ),
-        ],
-        tables: [
-          TableConfig.topN('top_templates', label: 'Top Templates', limit: 10),
         ],
       ),
       featureBuilders: {

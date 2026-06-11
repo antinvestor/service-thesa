@@ -80,28 +80,17 @@ void registerProfileService() {
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
         service: 'profile',
         title: 'Profile Analytics',
-        metrics: [
-          'total_profiles',
-          'active_profiles',
-          'new_registrations',
-          'verification_rate',
-        ],
+        // KPI keys resolve through profileAnalyticsSpec (device cache
+        // counters); charts mirror the spec's geolocation ingestion metrics.
+        metrics: ['cache_hits', 'cache_misses'],
         charts: [
           ChartConfig.timeSeries(
-            'registrations',
-            label: 'Registrations Over Time',
+            'service_geolocation/ingestion/accepted',
+            label: 'Accepted Points',
           ),
-          ChartConfig.distribution(
-            'profile_types',
-            groupBy: 'profile_type',
-            label: 'By Type',
-          ),
-        ],
-        tables: [
-          TableConfig.topN(
-            'top_active_profiles',
-            label: 'Most Active Profiles',
-            limit: 10,
+          ChartConfig.timeSeries(
+            'service_geolocation/ingestion/rejected',
+            label: 'Rejected Points',
           ),
         ],
       ),
