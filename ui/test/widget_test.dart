@@ -18,15 +18,17 @@ void main() {
     return container;
   }
 
-  test('initial auth state is unauthenticated when runtime has no session',
-      () async {
-    final rt = MockAuthRuntime();
-    final container = containerWith(rt);
+  test(
+    'initial auth state is unauthenticated when runtime has no session',
+    () async {
+      final rt = MockAuthRuntime();
+      final container = containerWith(rt);
 
-    final state = await container.read(authStateProvider.future);
+      final state = await container.read(authStateProvider.future);
 
-    expect(state, AuthState.unauthenticated);
-  });
+      expect(state, AuthState.unauthenticated);
+    },
+  );
 
   test('existing authenticated runtime surfaces as authenticated', () async {
     final rt = MockAuthRuntime.authenticated(
@@ -39,42 +41,46 @@ void main() {
     expect(state, AuthState.authenticated);
   });
 
-  test('login delegates to runtime.ensureAuthenticated and flips state',
-      () async {
-    final rt = MockAuthRuntime();
-    final container = containerWith(rt);
+  test(
+    'login delegates to runtime.ensureAuthenticated and flips state',
+    () async {
+      final rt = MockAuthRuntime();
+      final container = containerWith(rt);
 
-    await container.read(authStateProvider.future);
-    expect(rt.ensureAuthenticatedCalls, 0);
+      await container.read(authStateProvider.future);
+      expect(rt.ensureAuthenticatedCalls, 0);
 
-    await container.read(authStateProvider.notifier).login();
+      await container.read(authStateProvider.notifier).login();
 
-    expect(rt.ensureAuthenticatedCalls, 1);
-    expect(
-      container.read(authStateProvider).requireValue,
-      AuthState.authenticated,
-    );
-  });
+      expect(rt.ensureAuthenticatedCalls, 1);
+      expect(
+        container.read(authStateProvider).requireValue,
+        AuthState.authenticated,
+      );
+    },
+  );
 
-  test('logout delegates to runtime.logout and flips state to unauthenticated',
-      () async {
-    final rt = MockAuthRuntime.authenticated();
-    final container = containerWith(rt);
+  test(
+    'logout delegates to runtime.logout and flips state to unauthenticated',
+    () async {
+      final rt = MockAuthRuntime.authenticated();
+      final container = containerWith(rt);
 
-    await container.read(authStateProvider.future);
-    expect(
-      container.read(authStateProvider).requireValue,
-      AuthState.authenticated,
-    );
+      await container.read(authStateProvider.future);
+      expect(
+        container.read(authStateProvider).requireValue,
+        AuthState.authenticated,
+      );
 
-    await container.read(authStateProvider.notifier).logout();
+      await container.read(authStateProvider.notifier).logout();
 
-    expect(rt.logoutCalls, 1);
-    expect(
-      container.read(authStateProvider).requireValue,
-      AuthState.unauthenticated,
-    );
-  });
+      expect(rt.logoutCalls, 1);
+      expect(
+        container.read(authStateProvider).requireValue,
+        AuthState.unauthenticated,
+      );
+    },
+  );
 
   test('runtime refreshing state collapses to thesa-level loading', () async {
     final rt = MockAuthRuntime.authenticated();

@@ -5,6 +5,8 @@ import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart';
 import 'package:connectrpc/connect.dart' as connect;
 import 'package:antinvestor_api_device/antinvestor_api_device.dart';
 import 'package:antinvestor_api_files/antinvestor_api_files.dart';
+import 'package:antinvestor_api_ledger/antinvestor_api_ledger.dart'
+    show LedgerClient, LedgerServiceClient, newLedgerClient;
 import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
     hide SearchRequest, SearchResponse;
 import 'package:antinvestor_api_payment/antinvestor_api_payment.dart'
@@ -153,6 +155,23 @@ final paymentServiceClientProvider = FutureProvider<PaymentServiceClient>((
 });
 
 // ─── Ledger Client ──────────────────────────────────────────────────────────
+
+final ledgerClientProvider = FutureProvider<LedgerClient>((ref) async {
+  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+  final runtime = ref.watch(authRuntimeProvider);
+  return newLedgerClient(
+    createTransport: createRuntimeTransportFactory(runtime),
+    endpoint: ApiConfig.ledgerBaseUrl,
+    additionalInterceptors: tenantInterceptors,
+  );
+});
+
+final ledgerServiceClientProvider = FutureProvider<LedgerServiceClient>((
+  ref,
+) async {
+  final client = await ref.watch(ledgerClientProvider.future);
+  return client.stub;
+});
 
 // ─── Settings Client ────────────────────────────────────────────────────────
 

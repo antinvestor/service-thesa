@@ -23,17 +23,14 @@ void main() {
       );
     });
 
-    test(
-      'comma-joined form matches the runtime token-exchange payload',
-      () {
-        final config = buildThesaAuthConfig();
-        expect(
-          config.audiences!.join(','),
-          'service_tenancy,service_device,service_profile,service_notification,'
-          'service_payment,service_ledger,service_setting,'
-          'service_file,service_trustage',
-        );
-      },
-    );
+    test('comma-joined form matches the runtime token-exchange payload', () {
+      final config = buildThesaAuthConfig();
+      expect(
+        config.audiences!.join(','),
+        'service_tenancy,service_device,service_profile,service_notification,'
+        'service_payment,service_ledger,service_setting,'
+        'service_file,service_trustage',
+      );
+    });
   });
 }
