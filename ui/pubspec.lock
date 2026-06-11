@@ -189,10 +189,10 @@ packages:
     dependency: "direct main"
     description:
       name: antinvestor_ui_device
-      sha256: "321b48871da2a43113f5f04c89c5f2fe76bdc83631c5ce6d568349f781719839"
+      sha256: "1a6ecd8292d5161dc1c9bdcec71ff0394227c8a0b59d309331857dd28ea96eb2"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.2"
+    version: "0.3.0"
   antinvestor_ui_files:
     dependency: "direct main"
     description:
@@ -253,10 +253,10 @@ packages:
     dependency: "direct main"
     description:
       name: antinvestor_ui_settings
-      sha256: "7236c1695750907368e8255796427edde81099055c4cb1fb0d5976179c210013"
+      sha256: "9535d25fd7027738c8c10334c370e013cb7883d29fb5cfec3306a4d9fa136e97"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.2"
+    version: "0.3.0"
   antinvestor_ui_tenancy:
     dependency: "direct main"
     description:
