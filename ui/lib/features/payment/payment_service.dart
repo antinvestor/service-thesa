@@ -1,4 +1,5 @@
 import 'package:antinvestor_ui_core/analytics/analytics_dashboard.dart';
+import 'package:antinvestor_ui_ledger/antinvestor_ui_ledger.dart' as ledger_lib;
 import 'package:antinvestor_ui_payment/antinvestor_ui_payment.dart'
     as payment_lib;
 import 'package:flutter/material.dart';
@@ -63,29 +64,6 @@ const paymentServiceDef = ServiceDefinition(
   ],
 );
 
-/// Placeholder while the ledger module migrates to the v1.53 ledger API
-/// (Book→Ledger rename): the published antinvestor_ui_ledger packages are
-/// not buildable against any published antinvestor_api_common, so the
-/// module is gated out rather than shipped broken.
-Widget _ledgerMigrationPlaceholder(BuildContext context) => const Center(
-  child: Padding(
-    padding: EdgeInsets.all(32),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.engineering_outlined, size: 48),
-        SizedBox(height: 12),
-        Text('Ledger module temporarily unavailable'),
-        SizedBox(height: 4),
-        Text(
-          'Pending migration to the v1.53 ledger API.',
-          style: TextStyle(fontSize: 12),
-        ),
-      ],
-    ),
-  ),
-);
-
 void registerPaymentService() {
   ServiceRegistry.instance.register(
     ServiceRegistration(
@@ -125,11 +103,11 @@ void registerPaymentService() {
         'payments': (context, service, feature) =>
             const payment_lib.PaymentSearchScreen(),
         'ledgers': (context, service, feature) =>
-            _ledgerMigrationPlaceholder(context),
+            const ledger_lib.LedgerListScreen(),
         'transactions': (context, service, feature) =>
-            _ledgerMigrationPlaceholder(context),
+            const ledger_lib.TransactionListScreen(),
         'accounts': (context, service, feature) =>
-            _ledgerMigrationPlaceholder(context),
+            const ledger_lib.AccountListScreen(),
         'links': (context, service, feature) =>
             const payment_lib.PaymentLinksScreen(),
         'send': (context, service, feature) =>
@@ -139,11 +117,11 @@ void registerPaymentService() {
         'payments': (context, service, feature, entityId) =>
             payment_lib.PaymentDetailScreen(paymentId: entityId),
         'ledgers': (context, service, feature, entityId) =>
-            _ledgerMigrationPlaceholder(context),
+            ledger_lib.LedgerDetailScreen(ledgerId: entityId),
         'transactions': (context, service, feature, entityId) =>
-            _ledgerMigrationPlaceholder(context),
+            ledger_lib.TransactionDetailScreen(transactionId: entityId),
         'accounts': (context, service, feature, entityId) =>
-            _ledgerMigrationPlaceholder(context),
+            ledger_lib.AccountDetailScreen(accountId: entityId),
       },
     ),
   );
