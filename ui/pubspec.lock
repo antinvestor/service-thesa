@@ -81,14 +81,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.1.0"
-  antinvestor_api_ledger:
-    dependency: "direct main"
-    description:
-      name: antinvestor_api_ledger
-      sha256: "5723a6e003f9b11dcf7368519d2f77dc888a9758b158246d833afc2b117eb6e3"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.53.0"
   antinvestor_api_notification:
     dependency: "direct main"
     description:
@@ -165,112 +157,114 @@ packages:
     dependency: "direct main"
     description:
       name: antinvestor_ui_audit
-      sha256: a770db59522f436d3505262a630aaebea8975ba3cc33d342c4bbb76abf975d3f
+      sha256: "30382643036d87adfc3d56b4fc34bdf5ced2c7a30f410b185cf7ff4496127f68"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.3.1"
   antinvestor_ui_billing:
     dependency: "direct main"
     description:
       name: antinvestor_ui_billing
-      sha256: "7ad81299c19ba11e871bfc4e70877cc643b44b68e4a637d0688ed7440b0e06af"
+      sha256: "41079a856090a23bbe69c23aa9a227c244401515ed08dc357f472baa75c475cf"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.2.1"
   antinvestor_ui_core:
     dependency: "direct main"
     description:
-      path: "../../common/ui_core"
-      relative: true
-    source: path
+      name: antinvestor_ui_core
+      sha256: "613afa136b9a8eb612537a5a3d78e8482f588cf7f855dd34b79478184598e775"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.5.0"
   antinvestor_ui_device:
     dependency: "direct main"
     description:
       name: antinvestor_ui_device
-      sha256: "283c6abd6d2f6ff9673b65030aa7b06c7528e9ac8d239a45fcd728c0731838e2"
+      sha256: "321b48871da2a43113f5f04c89c5f2fe76bdc83631c5ce6d568349f781719839"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.1.2"
   antinvestor_ui_files:
     dependency: "direct main"
     description:
       name: antinvestor_ui_files
-      sha256: c5eb1998db12698070ee124bbaa25292f7ee2f36b882cae068362abf523083ab
+      sha256: "742d7d5f0a45bdb52c35d09e336c023bb62a9da831f2a6a69e06cf353df58c03"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.3.1"
   antinvestor_ui_fort:
     dependency: "direct main"
     description:
       name: antinvestor_ui_fort
-      sha256: b2948eb4c23c8c8a0f5d6f818b251fa11a5522b08a249e818df232330e78d79b
+      sha256: ba5bc0a9d5dbb73dcccc5a666a6cff4adeac25ed0a51f70a5ec72935771b7957
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.0"
+    version: "0.1.1"
   antinvestor_ui_geolocation:
     dependency: "direct main"
     description:
       name: antinvestor_ui_geolocation
-      sha256: "35b6dfe5bff9a3a080c2d97a6cfe673aaf5bfc4db2951bcfef6c90c5ee471ed9"
+      sha256: a46266ffb849187b6bee69b67c1ba4d4fef3fc8a922ee0522a47c14032598f80
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
-  antinvestor_ui_ledger:
-    dependency: "direct main"
-    description:
-      name: antinvestor_ui_ledger
-      sha256: "61d70a8bd45b521ededf46554c3b3e17b4c06a0bec39c898182fd9cb4be0422a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.0"
+    version: "0.2.3"
   antinvestor_ui_notification:
     dependency: "direct main"
     description:
       name: antinvestor_ui_notification
-      sha256: "4b3307fbdc9cfae4ea5593cce80aaaf53a03c02801f945471d76287d5daec5d9"
+      sha256: b7366396c341fe381e51ae6df329f3b30ac008b1c75ea860875e17fc0f2ae208
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.3.1"
   antinvestor_ui_payment:
     dependency: "direct main"
     description:
-      path: "../../service-payment/ui/payment"
-      relative: true
-    source: path
-    version: "0.2.0"
+      name: antinvestor_ui_payment
+      sha256: cd66b12a18af3c44b91a5e94b14f47d01076064056a4796ed963cef1d628a216
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
   antinvestor_ui_profile:
     dependency: "direct main"
     description:
       name: antinvestor_ui_profile
-      sha256: b828c3bbe0230b9563252d599df98eb62caf9e57a2b5689fc0b9ddc04834d494
+      sha256: "7d30c7fbf3b2c2bba1f45ef9902f9d4879f13d95890febe48cad7f6bfd7ffe2b"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.2.5"
   antinvestor_ui_settings:
     dependency: "direct main"
     description:
       name: antinvestor_ui_settings
-      sha256: "211912f8bffe98f272422e5de830f2a467c8e820127eb04ecc46dd1600811b5e"
+      sha256: "7236c1695750907368e8255796427edde81099055c4cb1fb0d5976179c210013"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.1.2"
   antinvestor_ui_tenancy:
     dependency: "direct main"
     description:
       name: antinvestor_ui_tenancy
-      sha256: "30103ef5cf26bafd3883bd998c6847a11ca9331a896e6a582198c4f2ba07a588"
+      sha256: b92e6b6bdd0a8bd337d6a14745783cf361847fcf94bf36a05266846c106e1e00
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.3.1"
   antinvestor_ui_trustage:
     dependency: "direct main"
     description:
       name: antinvestor_ui_trustage
-      sha256: de947376ee269e3a99f9af3ccdf2cea8939415351b9da60f1bbb631ae665287d
+      sha256: "9607ca6ad6e159e66d29a956070f6c8fee21a2e4e13d23feded7333173a893b3"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.0"
+    version: "0.1.1"
+  archive:
+    dependency: transitive
+    description:
+      name: archive
+      sha256: a96e8b390886ee8abb49b7bd3ac8df6f451c621619f52a26e815fdcf568959ff
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.9"
   args:
     dependency: transitive
     description:
@@ -287,6 +281,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.1"
+  barcode:
+    dependency: transitive
+    description:
+      name: barcode
+      sha256: "7b6729c37e3b7f34233e2318d866e8c48ddb46c1f7ad01ff7bb2a8de1da2b9f4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.9"
+  bidi:
+    dependency: transitive
+    description:
+      name: bidi
+      sha256: "77f475165e94b261745cf1032c751e2032b8ed92ccb2bf5716036db79320637d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.13"
   boolean_selector:
     dependency: transitive
     description:
@@ -375,6 +385,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.15.0"
+  cross_file:
+    dependency: transitive
+    description:
+      name: cross_file
+      sha256: "28bb3ae56f117b5aec029d702a90f57d285cd975c3c5c281eaca38dbc47c5937"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.5+2"
   crypto:
     dependency: transitive
     description:
@@ -423,6 +441,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.3"
+  dio:
+    dependency: transitive
+    description:
+      name: dio
+      sha256: aff32c08f92787a557dd5c0145ac91536481831a01b4648136373cddb0e64f8c
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.9.2"
+  dio_web_adapter:
+    dependency: transitive
+    description:
+      name: dio_web_adapter
+      sha256: "2f9e64323a7c3c7ef69567d5c800424a11f8337b8b228bad02524c9fb3c1f340"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.2"
   equatable:
     dependency: transitive
     description:
@@ -455,6 +489,46 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
+  file_saver:
+    dependency: "direct main"
+    description:
+      name: file_saver
+      sha256: "017a127de686af2d2fbbd64afea97052d95f2a0f87d19d25b87e097407bf9c1e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.14"
+  file_selector_linux:
+    dependency: transitive
+    description:
+      name: file_selector_linux
+      sha256: "2567f398e06ac72dcf2e98a0c95df2a9edd03c2c2e0cacd4780f20cdf56263a0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.4"
+  file_selector_macos:
+    dependency: transitive
+    description:
+      name: file_selector_macos
+      sha256: "5e0bbe9c312416f1787a68259ea1505b52f258c587f12920422671807c4d618a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.5"
+  file_selector_platform_interface:
+    dependency: transitive
+    description:
+      name: file_selector_platform_interface
+      sha256: "35e0bd61ebcdb91a3505813b055b09b79dfdc7d0aee9c09a7ba59ae4bb13dc85"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.7.0"
+  file_selector_windows:
+    dependency: transitive
+    description:
+      name: file_selector_windows
+      sha256: "62197474ae75893a62df75939c777763d39c2bc5f73ce5b88497208bc269abfd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.3+5"
   fixnum:
     dependency: "direct main"
     description:
@@ -484,6 +558,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.0"
+  flutter_plugin_android_lifecycle:
+    dependency: transitive
+    description:
+      name: flutter_plugin_android_lifecycle
+      sha256: "3854fe5e3bff0b113c658f260b90c95dea17c92db0f2addeac2e343dd9969785"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.35"
   flutter_riverpod:
     dependency: "direct main"
     description:
@@ -790,6 +872,78 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
+  image:
+    dependency: transitive
+    description:
+      name: image
+      sha256: f9881ff4998044947ec38d098bc7c8316ae1186fa786eddffdb867b9bc94dfce
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.8.0"
+  image_picker:
+    dependency: transitive
+    description:
+      name: image_picker
+      sha256: "91c025426c2881c551100bce834e201c835a170151545f58d17da5180ca7d9ac"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.2"
+  image_picker_android:
+    dependency: transitive
+    description:
+      name: image_picker_android
+      sha256: "6f3a1995eafb000333174fae92202622033b0ee7fd917a6cd3730295264df84a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.8.13+19"
+  image_picker_for_web:
+    dependency: transitive
+    description:
+      name: image_picker_for_web
+      sha256: "66257a3191ab360d23a55c8241c91a6e329d31e94efa7be9cf7a212e65850214"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.1"
+  image_picker_ios:
+    dependency: transitive
+    description:
+      name: image_picker_ios
+      sha256: b9c4a438a9ff4f60808c9cf0039b93a42bb6c2211ef6ebb647394b2b3fa84588
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.8.13+6"
+  image_picker_linux:
+    dependency: transitive
+    description:
+      name: image_picker_linux
+      sha256: "1f81c5f2046b9ab724f85523e4af65be1d47b038160a8c8deed909762c308ed4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.2"
+  image_picker_macos:
+    dependency: transitive
+    description:
+      name: image_picker_macos
+      sha256: "86f0f15a309de7e1a552c12df9ce5b59fe927e71385329355aec4776c6a8ec91"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.2+1"
+  image_picker_platform_interface:
+    dependency: transitive
+    description:
+      name: image_picker_platform_interface
+      sha256: "567e056716333a1647c64bb6bd873cff7622233a5c3f694be28a583d4715690c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.11.1"
+  image_picker_windows:
+    dependency: transitive
+    description:
+      name: image_picker_windows
+      sha256: d248c86554a72b5495a31c56f060cf73a41c7ff541689327b1a7dbccc33adfae
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.2"
   intl:
     dependency: "direct main"
     description:
@@ -966,6 +1120,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.1"
+  path_parsing:
+    dependency: transitive
+    description:
+      name: path_parsing
+      sha256: "883402936929eac138ee0a45da5b0f2c80f89913e6dc3bf77eb65b84b409c6ca"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
   path_provider:
     dependency: transitive
     description:
@@ -1014,6 +1176,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
+  pdf:
+    dependency: transitive
+    description:
+      name: pdf
+      sha256: e47a275b267873d5944ad5f5ff0dcc7ac2e36c02b3046a0ffac9b72fd362c44b
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.12.0"
+  pdf_widget_wrapper:
+    dependency: transitive
+    description:
+      name: pdf_widget_wrapper
+      sha256: c930860d987213a3d58c7ec3b7ecf8085c3897f773e8dc23da9cae60a5d6d0f5
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.4"
   petitparser:
     dependency: transitive
     description:
@@ -1054,6 +1232,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.2"
+  posix:
+    dependency: transitive
+    description:
+      name: posix
+      sha256: "185ef7606574f789b40f289c233efa52e96dead518aed988e040a10737febb07"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.5.0"
+  printing:
+    dependency: "direct main"
+    description:
+      name: printing
+      sha256: "689170c9ddb1bda85826466ba80378aa8993486d3c959a71cd7d2d80cb606692"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.14.3"
   protobuf:
     dependency: "direct main"
     description:
@@ -1070,6 +1264,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  qr:
+    dependency: transitive
+    description:
+      name: qr
+      sha256: "5a1d2586170e172b8a8c8470bbbffd5eb0cd38a66c0d77155ea138d3af3a4445"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.2"
   riverpod:
     dependency: transitive
     description:
@@ -1476,5 +1678,5 @@ packages:
     source: hosted
     version: "3.1.3"
 sdks:
-  dart: ">=3.11.0 <4.0.0"
-  flutter: ">=3.38.4"
+  dart: ">=3.12.0 <4.0.0"
+  flutter: ">=3.44.0"

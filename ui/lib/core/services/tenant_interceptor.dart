@@ -13,9 +13,7 @@ connect.Interceptor tenantContextInterceptor({
   required TenantContext Function() getEffectiveContext,
   required TenantContext Function() getJwtContext,
 }) {
-  return <I extends Object, O extends Object>(
-    connect.AnyFn<I, O> next,
-  ) {
+  return <I extends Object, O extends Object>(connect.AnyFn<I, O> next) {
     return (connect.Request<I, O> req) {
       final jwt = getJwtContext();
       final effective = getEffectiveContext();

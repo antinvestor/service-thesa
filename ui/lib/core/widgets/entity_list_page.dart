@@ -73,7 +73,8 @@ class EntityListPage<T> extends StatefulWidget {
   final List<String> breadcrumbs;
   final List<DataColumn> columns;
   final List<T> items;
-  final DataRow Function(T item, bool selected, VoidCallback onSelect) rowBuilder;
+  final DataRow Function(T item, bool selected, VoidCallback onSelect)
+  rowBuilder;
   final Widget Function(T item)? detailBuilder;
   final List<Widget>? actions;
   final VoidCallback? onAdd;
@@ -140,7 +141,9 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${widget.title} CSV copied to clipboard (${rows.length} rows)'),
+          content: Text(
+            '${widget.title} CSV copied to clipboard (${rows.length} rows)',
+          ),
           action: SnackBarAction(
             label: 'Download',
             onPressed: () => _downloadCsv(csv),
@@ -156,7 +159,10 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
     final base64Data = base64Encode(bytes);
     final dataUri = 'data:text/csv;base64,$base64Data';
     // ignore: undefined_prefixed_name
-    _triggerDownload(dataUri, '${widget.title.toLowerCase().replaceAll(' ', '_')}_export.csv');
+    _triggerDownload(
+      dataUri,
+      '${widget.title.toLowerCase().replaceAll(' ', '_')}_export.csv',
+    );
   }
 
   void _triggerDownload(String dataUri, String filename) {
@@ -219,8 +225,9 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
                 padding: const EdgeInsets.all(24),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints:
-                        const BoxConstraints(maxWidth: _maxContentWidth),
+                    constraints: const BoxConstraints(
+                      maxWidth: _maxContentWidth,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -260,8 +267,7 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
               SizedBox(
                 width: 380,
                 child: Container(
-                  margin: const EdgeInsets.only(
-                      top: 24, right: 24, bottom: 24),
+                  margin: const EdgeInsets.only(top: 24, right: 24, bottom: 24),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
@@ -275,19 +281,17 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
                           children: [
                             if (widget.onRowNavigate != null)
                               IconButton(
-                                icon: const Icon(Icons.open_in_new,
-                                    size: 20),
+                                icon: const Icon(Icons.open_in_new, size: 20),
                                 onPressed: () => widget.onRowNavigate!(
-                                    widget.items[_selectedIndex!]),
+                                  widget.items[_selectedIndex!],
+                                ),
                                 tooltip: 'Open full details',
                               ),
                             const Spacer(),
                             if (widget.editFields != null)
                               IconButton(
-                                icon: const Icon(Icons.edit_outlined,
-                                    size: 20),
-                                onPressed: () =>
-                                    _openEdit(_selectedIndex!),
+                                icon: const Icon(Icons.edit_outlined, size: 20),
+                                onPressed: () => _openEdit(_selectedIndex!),
                                 tooltip: 'Edit',
                               ),
                             IconButton(
@@ -301,9 +305,12 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
                       Expanded(
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 8),
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
                           child: widget.detailBuilder!(
-                              widget.items[_selectedIndex!]),
+                            widget.items[_selectedIndex!],
+                          ),
                         ),
                       ),
                     ],
@@ -396,9 +403,12 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
         ),
         child: Row(
           children: [
-            Text('Rows per page: ',
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              'Rows per page: ',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             DropdownButton<int>(
               value: _pageSize,
               underline: const SizedBox.shrink(),
@@ -408,27 +418,38 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
                   .map((s) => DropdownMenuItem(value: s, child: Text('$s')))
                   .toList(),
               onChanged: (v) {
-                if (v != null) setState(() { _pageSize = v; _currentPage = 0; });
+                if (v != null)
+                  setState(() {
+                    _pageSize = v;
+                    _currentPage = 0;
+                  });
               },
             ),
             const Spacer(),
             Text(
               totalItems == 0 ? '0 items' : '${start + 1}–$end of $totalItems',
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: AppColors.onSurfaceMuted),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
             ),
             const SizedBox(width: 16),
             IconButton(
               icon: const Icon(Icons.chevron_left, size: 20),
-              onPressed: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+              onPressed: _currentPage > 0
+                  ? () => setState(() => _currentPage--)
+                  : null,
               tooltip: 'Previous',
               visualDensity: VisualDensity.compact,
             ),
-            Text('${_currentPage + 1} / $totalPages',
-                style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              '${_currentPage + 1} / $totalPages',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             IconButton(
               icon: const Icon(Icons.chevron_right, size: 20),
-              onPressed: _currentPage < totalPages - 1 ? () => setState(() => _currentPage++) : null,
+              onPressed: _currentPage < totalPages - 1
+                  ? () => setState(() => _currentPage++)
+                  : null,
               tooltip: 'Next',
               visualDensity: VisualDensity.compact,
             ),
@@ -439,13 +460,12 @@ class _EntityListPageState<T> extends State<EntityListPage<T>> {
   }
 
   Widget _buildEditOverlay(BuildContext context) {
-    final item =
-        _editingIndex != null ? widget.items[_editingIndex!] : null;
+    final item = _editingIndex != null ? widget.items[_editingIndex!] : null;
     final title = item != null && widget.editTitle != null
         ? widget.editTitle!(item)
         : _creating
-            ? 'New ${widget.title}'
-            : 'Edit';
+        ? 'New ${widget.title}'
+        : 'Edit';
     final initialValues = item != null && widget.editValuesExtractor != null
         ? widget.editValuesExtractor!(item)
         : <String, String>{};
@@ -509,8 +529,10 @@ class _EditSlideOverState extends State<_EditSlideOver>
       begin: const Offset(1, 0),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-    _fadeAnimation = Tween<double>(begin: 0, end: 1)
-        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _fadeAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controllers = {};
     _dropdownValues = {};
@@ -556,9 +578,7 @@ class _EditSlideOverState extends State<_EditSlideOver>
           opacity: _fadeAnimation,
           child: GestureDetector(
             onTap: widget.onCancel,
-            child: Container(
-              color: AppColors.onSurface.withValues(alpha: 0.3),
-            ),
+            child: Container(color: AppColors.onSurface.withValues(alpha: 0.3)),
           ),
         ),
         // Slide-over panel
@@ -577,7 +597,8 @@ class _EditSlideOverState extends State<_EditSlideOver>
                     color: AppColors.surface.withValues(alpha: 0.95),
                     border: Border(
                       left: BorderSide(
-                          color: AppColors.border.withValues(alpha: 0.5)),
+                        color: AppColors.border.withValues(alpha: 0.5),
+                      ),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -598,9 +619,7 @@ class _EditSlideOverState extends State<_EditSlideOver>
                             Expanded(
                               child: Text(
                                 widget.title,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
+                                style: Theme.of(context).textTheme.titleLarge
                                     ?.copyWith(fontWeight: FontWeight.w600),
                               ),
                             ),
@@ -626,39 +645,42 @@ class _EditSlideOverState extends State<_EditSlideOver>
                               // Audit trail
                               if (widget.auditTrail.isNotEmpty) ...[
                                 const Divider(height: 32),
-                                Text('Audit Trail',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleSmall
-                                        ?.copyWith(
-                                            fontWeight: FontWeight.w600)),
+                                Text(
+                                  'Audit Trail',
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                ),
                                 const SizedBox(height: 12),
                                 for (final entry in widget.auditTrail)
                                   Padding(
-                                    padding:
-                                        const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.only(bottom: 8),
                                     child: Row(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Icon(Icons.circle,
-                                            size: 6,
-                                            color:
-                                                AppColors.onSurfaceMuted),
+                                        Icon(
+                                          Icons.circle,
+                                          size: 6,
+                                          color: AppColors.onSurfaceMuted,
+                                        ),
                                         const SizedBox(width: 8),
                                         Expanded(
-                                          child: Text(entry.description,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall),
+                                          child: Text(
+                                            entry.description,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                          ),
                                         ),
-                                        Text(entry.time,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelSmall
-                                                ?.copyWith(
-                                                    color: AppColors
-                                                        .onSurfaceMuted)),
+                                        Text(
+                                          entry.time,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(
+                                                color: AppColors.onSurfaceMuted,
+                                              ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -707,50 +729,43 @@ class _EditSlideOverState extends State<_EditSlideOver>
       children: [
         Text(
           field.label,
-          style: Theme.of(context)
-              .textTheme
-              .labelMedium
-              ?.copyWith(fontWeight: FontWeight.w500),
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 6),
         switch (field.type) {
           EditFieldType.dropdown => DropdownButtonFormField<String>(
-              initialValue: _dropdownValues[field.key]?.isNotEmpty == true &&
-                      field.options.contains(_dropdownValues[field.key])
-                  ? _dropdownValues[field.key]
-                  : null,
-              decoration: InputDecoration(
-                hintText: field.hint ?? 'Select...',
-                isDense: true,
-              ),
-              items: field.options
-                  .map((o) => DropdownMenuItem(value: o, child: Text(o)))
-                  .toList(),
-              onChanged: field.readOnly
-                  ? null
-                  : (v) => setState(
-                      () => _dropdownValues[field.key] = v ?? ''),
+            initialValue:
+                _dropdownValues[field.key]?.isNotEmpty == true &&
+                    field.options.contains(_dropdownValues[field.key])
+                ? _dropdownValues[field.key]
+                : null,
+            decoration: InputDecoration(
+              hintText: field.hint ?? 'Select...',
+              isDense: true,
             ),
+            items: field.options
+                .map((o) => DropdownMenuItem(value: o, child: Text(o)))
+                .toList(),
+            onChanged: field.readOnly
+                ? null
+                : (v) => setState(() => _dropdownValues[field.key] = v ?? ''),
+          ),
           EditFieldType.textarea => TextField(
-              controller: _controllers[field.key],
-              maxLines: field.maxLines > 1 ? field.maxLines : 4,
-              readOnly: field.readOnly,
-              decoration: InputDecoration(
-                hintText: field.hint,
-                isDense: true,
-              ),
-            ),
+            controller: _controllers[field.key],
+            maxLines: field.maxLines > 1 ? field.maxLines : 4,
+            readOnly: field.readOnly,
+            decoration: InputDecoration(hintText: field.hint, isDense: true),
+          ),
           _ => TextField(
-              controller: _controllers[field.key],
-              readOnly: field.readOnly,
-              keyboardType: field.type == EditFieldType.number
-                  ? TextInputType.number
-                  : TextInputType.text,
-              decoration: InputDecoration(
-                hintText: field.hint,
-                isDense: true,
-              ),
-            ),
+            controller: _controllers[field.key],
+            readOnly: field.readOnly,
+            keyboardType: field.type == EditFieldType.number
+                ? TextInputType.number
+                : TextInputType.text,
+            decoration: InputDecoration(hintText: field.hint, isDense: true),
+          ),
         },
       ],
     );

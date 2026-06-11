@@ -47,7 +47,10 @@ class KpiCard extends StatelessWidget {
               if (change != null)
                 Flexible(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: changeColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
@@ -56,25 +59,22 @@ class KpiCard extends StatelessWidget {
                       change!,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: changeColor,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: changeColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 4),
           Text(
             value,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),

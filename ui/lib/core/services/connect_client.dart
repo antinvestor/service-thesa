@@ -5,12 +5,16 @@ import 'package:antinvestor_auth_runtime/antinvestor_auth_runtime.dart';
 import 'package:connectrpc/connect.dart' as connect;
 import 'package:antinvestor_api_device/antinvestor_api_device.dart';
 import 'package:antinvestor_api_files/antinvestor_api_files.dart';
-import 'package:antinvestor_api_ledger/antinvestor_api_ledger.dart';
 import 'package:antinvestor_api_notification/antinvestor_api_notification.dart'
     hide SearchRequest, SearchResponse;
 import 'package:antinvestor_api_payment/antinvestor_api_payment.dart'
-    hide SearchRequest, SearchResponse, STATE, STATUS,
-         LedgerServiceClient, BillingServiceClient;
+    hide
+        SearchRequest,
+        SearchResponse,
+        STATE,
+        STATUS,
+        LedgerServiceClient,
+        BillingServiceClient;
 import 'package:antinvestor_api_profile/antinvestor_api_profile.dart'
     hide DeviceClient, newDeviceClient, Struct, STATE, STATUS;
 import 'package:antinvestor_api_settings/antinvestor_api_settings.dart';
@@ -27,10 +31,10 @@ import 'tenant_interceptor.dart';
 /// Provides a Connect RPC interceptor that injects tenant override headers
 /// when the effective tenant context differs from the JWT default.
 /// This enables cross-tenant administration for "internal" role users.
-final tenantInterceptorProvider =
-    Provider<List<connect.Interceptor>>((ref) {
+final tenantInterceptorProvider = Provider<List<connect.Interceptor>>((ref) {
   final jwt = ref.watch(jwtTenantContextProvider);
-  final jwtCtx = jwt.whenOrNull(data: (ctx) => ctx) ??
+  final jwtCtx =
+      jwt.whenOrNull(data: (ctx) => ctx) ??
       const TenantContext(tenantId: '', partitionId: '');
 
   if (!jwtCtx.isInternal && !jwtCtx.isOwner) return const [];
@@ -47,8 +51,7 @@ final tenantInterceptorProvider =
 
 /// Tenancy API client provider — routes RPCs through `AuthRuntime.fetch`
 /// via [RuntimeTransport].
-final tenancyClientProvider =
-    FutureProvider<TenancyClient>((ref) async {
+final tenancyClientProvider = FutureProvider<TenancyClient>((ref) async {
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   final runtime = ref.watch(authRuntimeProvider);
 
@@ -59,16 +62,16 @@ final tenancyClientProvider =
   );
 });
 
-final tenancyServiceClientProvider =
-    FutureProvider<TenancyServiceClient>((ref) async {
+final tenancyServiceClientProvider = FutureProvider<TenancyServiceClient>((
+  ref,
+) async {
   final client = await ref.watch(tenancyClientProvider.future);
   return client.stub;
 });
 
 // ─── Profile Client ──────────────────────────────────────────────────────────
 
-final profileClientProvider =
-    FutureProvider<ProfileClient>((ref) async {
+final profileClientProvider = FutureProvider<ProfileClient>((ref) async {
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   final runtime = ref.watch(authRuntimeProvider);
 
@@ -79,16 +82,16 @@ final profileClientProvider =
   );
 });
 
-final profileServiceClientProvider =
-    FutureProvider<ProfileServiceClient>((ref) async {
+final profileServiceClientProvider = FutureProvider<ProfileServiceClient>((
+  ref,
+) async {
   final client = await ref.watch(profileClientProvider.future);
   return client.stub;
 });
 
 // ─── Device Client ──────────────────────────────────────────────────────────
 
-final deviceClientProvider =
-    FutureProvider<DeviceClient>((ref) async {
+final deviceClientProvider = FutureProvider<DeviceClient>((ref) async {
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   final runtime = ref.watch(authRuntimeProvider);
 
@@ -99,8 +102,9 @@ final deviceClientProvider =
   );
 });
 
-final deviceServiceClientProvider =
-    FutureProvider<DeviceServiceClient>((ref) async {
+final deviceServiceClientProvider = FutureProvider<DeviceServiceClient>((
+  ref,
+) async {
   final client = await ref.watch(deviceClientProvider.future);
   return client.stub;
 });
@@ -109,67 +113,50 @@ final deviceServiceClientProvider =
 
 final notificationClientProvider =
     FutureProvider<ConnectClientBase<NotificationServiceClient>>((ref) async {
-  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
-  final runtime = ref.watch(authRuntimeProvider);
-  return newClient<NotificationServiceClient>(
-    defaultEndpoint: 'https://notification.antinvestor.com',
-    createServiceClient: NotificationServiceClient.new,
-    createTransport: createRuntimeTransportFactory(runtime),
-    endpoint: ApiConfig.notificationBaseUrl,
-    additionalInterceptors: tenantInterceptors,
-  );
-});
+      final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+      final runtime = ref.watch(authRuntimeProvider);
+      return newClient<NotificationServiceClient>(
+        defaultEndpoint: 'https://notification.antinvestor.com',
+        createServiceClient: NotificationServiceClient.new,
+        createTransport: createRuntimeTransportFactory(runtime),
+        endpoint: ApiConfig.notificationBaseUrl,
+        additionalInterceptors: tenantInterceptors,
+      );
+    });
 
 final notificationServiceClientProvider =
     FutureProvider<NotificationServiceClient>((ref) async {
-  final client = await ref.watch(notificationClientProvider.future);
-  return client.stub;
-});
+      final client = await ref.watch(notificationClientProvider.future);
+      return client.stub;
+    });
 
 // ─── Payment Client ─────────────────────────────────────────────────────────
 
 final paymentClientProvider =
     FutureProvider<ConnectClientBase<PaymentServiceClient>>((ref) async {
-  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
-  final runtime = ref.watch(authRuntimeProvider);
-  return newClient<PaymentServiceClient>(
-    defaultEndpoint: 'https://payment.antinvestor.com',
-    createServiceClient: PaymentServiceClient.new,
-    createTransport: createRuntimeTransportFactory(runtime),
-    endpoint: ApiConfig.paymentBaseUrl,
-    additionalInterceptors: tenantInterceptors,
-  );
-});
+      final tenantInterceptors = ref.watch(tenantInterceptorProvider);
+      final runtime = ref.watch(authRuntimeProvider);
+      return newClient<PaymentServiceClient>(
+        defaultEndpoint: 'https://payment.antinvestor.com',
+        createServiceClient: PaymentServiceClient.new,
+        createTransport: createRuntimeTransportFactory(runtime),
+        endpoint: ApiConfig.paymentBaseUrl,
+        additionalInterceptors: tenantInterceptors,
+      );
+    });
 
-final paymentServiceClientProvider =
-    FutureProvider<PaymentServiceClient>((ref) async {
+final paymentServiceClientProvider = FutureProvider<PaymentServiceClient>((
+  ref,
+) async {
   final client = await ref.watch(paymentClientProvider.future);
   return client.stub;
 });
 
 // ─── Ledger Client ──────────────────────────────────────────────────────────
 
-final ledgerClientProvider =
-    FutureProvider<LedgerClient>((ref) async {
-  final tenantInterceptors = ref.watch(tenantInterceptorProvider);
-  final runtime = ref.watch(authRuntimeProvider);
-  return newLedgerClient(
-    createTransport: createRuntimeTransportFactory(runtime),
-    endpoint: ApiConfig.ledgerBaseUrl,
-    additionalInterceptors: tenantInterceptors,
-  );
-});
-
-final ledgerServiceClientProvider =
-    FutureProvider<LedgerServiceClient>((ref) async {
-  final client = await ref.watch(ledgerClientProvider.future);
-  return client.stub;
-});
-
 // ─── Settings Client ────────────────────────────────────────────────────────
 
-final settingsClientProvider =
-    FutureProvider<SettingsClient>((ref) async {
+final settingsClientProvider = FutureProvider<SettingsClient>((ref) async {
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   final runtime = ref.watch(authRuntimeProvider);
   return newSettingsClient(
@@ -179,16 +166,18 @@ final settingsClientProvider =
   );
 });
 
-final settingsServiceClientProvider =
-    FutureProvider<SettingsServiceClient>((ref) async {
+final settingsServiceClientProvider = FutureProvider<SettingsServiceClient>((
+  ref,
+) async {
   final client = await ref.watch(settingsClientProvider.future);
   return client.stub;
 });
 
 // ─── Billing Client ────────────────────────────────────────────────────────
 
-final billingServiceClientProvider =
-    FutureProvider<BillingServiceClient>((ref) async {
+final billingServiceClientProvider = FutureProvider<BillingServiceClient>((
+  ref,
+) async {
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   final runtime = ref.watch(authRuntimeProvider);
 
@@ -204,8 +193,9 @@ final billingServiceClientProvider =
 
 // ─── Files Client ──────────────────────────────────────────────────────────
 
-final filesServiceClientProvider =
-    FutureProvider<FilesServiceClient>((ref) async {
+final filesServiceClientProvider = FutureProvider<FilesServiceClient>((
+  ref,
+) async {
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   final runtime = ref.watch(authRuntimeProvider);
 
@@ -221,8 +211,9 @@ final filesServiceClientProvider =
 
 // ─── Audit Client ──────────────────────────────────────────────────────────
 
-final auditServiceClientProvider =
-    FutureProvider<AuditServiceClient>((ref) async {
+final auditServiceClientProvider = FutureProvider<AuditServiceClient>((
+  ref,
+) async {
   final tenantInterceptors = ref.watch(tenantInterceptorProvider);
   final runtime = ref.watch(authRuntimeProvider);
 

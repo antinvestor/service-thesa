@@ -40,8 +40,7 @@ class TenantPicker extends ConsumerWidget {
           tenantName = tenant?.name ?? effectiveCtx.tenantId;
 
           if (effectiveCtx.partitionId.isNotEmpty) {
-            final partitions =
-                asyncPartitions.whenOrNull(data: (d) => d) ?? [];
+            final partitions = asyncPartitions.whenOrNull(data: (d) => d) ?? [];
             final partition = partitions
                 .where((p) => p.id == effectiveCtx.partitionId)
                 .firstOrNull;
@@ -65,32 +64,46 @@ class TenantPicker extends ConsumerWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.business_outlined,
-                  size: 16, color: AppColors.tertiary),
+              Icon(
+                Icons.business_outlined,
+                size: 16,
+                color: AppColors.tertiary,
+              ),
               const SizedBox(width: 6),
               Flexible(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Tenant: $tenantName',
+                    Text(
+                      'Tenant: $tenantName',
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (partitionName.isNotEmpty)
+                      Text(
+                        'Partition: $partitionName',
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                         style: const TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.w600)),
-                    if (partitionName.isNotEmpty)
-                      Text('Partition: $partitionName',
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                          style: const TextStyle(
-                              fontSize: 11, fontWeight: FontWeight.w500)),
-                    Text(effectiveCtx.partitionId,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        style: TextStyle(
-                            fontSize: 9,
-                            fontFamily: 'monospace',
-                            color: AppColors.onSurfaceMuted)),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    Text(
+                      effectiveCtx.partitionId,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontFamily: 'monospace',
+                        color: AppColors.onSurfaceMuted,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -104,13 +117,17 @@ class TenantPicker extends ConsumerWidget {
                       ref.read(activeTenantProvider.notifier).clear();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text('Returned to default context')),
+                          content: Text('Returned to default context'),
+                        ),
                       );
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(2),
-                      child: Icon(Icons.close,
-                          size: 14, color: AppColors.tertiary),
+                      child: Icon(
+                        Icons.close,
+                        size: 14,
+                        color: AppColors.tertiary,
+                      ),
                     ),
                   ),
                 ),

@@ -43,7 +43,7 @@ dependencies:
   intl: ^0.20.2
   connectrpc: ^1.0.0
   antinvestor_api_audit: ^0.1.0
-  antinvestor_api_common: ^1.52.0
+  antinvestor_api_common: 1.52.0
   antinvestor_api_tenancy: ^1.54.0
   fixnum: ^1.1.0
   protobuf: ^4.0.0
@@ -54,7 +54,6 @@ dependencies:
   antinvestor_api_notification: ^1.51.0
   antinvestor_api_billing: ^0.1.0
   antinvestor_api_payment: ^1.53.0
-  antinvestor_api_ledger: ^1.53.0
   antinvestor_api_settings: ^1.53.0
   # Used directly only by lib/core/auth/migration.dart to wipe stale
   # legacy tokens on first launch after the auth-runtime migration.
@@ -64,6 +63,11 @@ dependencies:
   url_launcher: ^6.3.2
   web: ^1.1.1
   csv: ^8.0.0
+  # Declared at app level: ui_billing/ui_payment use these without
+  # declaring them (previously masked by ui_ledger's dependencies) and
+  # the web plugin registrant needs them in the app graph.
+  file_saver: ^0.2.14
+  printing: ^5.13.0
   shared_preferences: ^2.3.2
 
   antinvestor_auth_runtime: ^0.4.1
@@ -74,19 +78,18 @@ dependencies:
 
   # ── Antinvestor UI Libraries (published on pub.dev) ───────────────────────
   antinvestor_ui_core: ^0.5.0
-  antinvestor_ui_profile: ^0.2.0
-  antinvestor_ui_device: ^0.2.0
-  antinvestor_ui_settings: ^0.2.0
-  antinvestor_ui_geolocation: ^0.2.0
-  antinvestor_ui_payment: ^0.2.0
-  antinvestor_ui_ledger: ^0.2.0
-  antinvestor_ui_billing: ^0.2.0
-  antinvestor_ui_notification: ^0.2.0
-  antinvestor_ui_files: ^0.2.0
-  antinvestor_ui_tenancy: ^0.2.0
-  antinvestor_ui_audit: ^0.2.0
-  antinvestor_ui_trustage: ^0.1.0
-  antinvestor_ui_fort: ^0.1.0
+  antinvestor_ui_profile: ^0.2.5
+  antinvestor_ui_device: ^0.1.2
+  antinvestor_ui_settings: ^0.1.2
+  antinvestor_ui_geolocation: ^0.2.3
+  antinvestor_ui_payment: ^0.2.1
+  antinvestor_ui_billing: ^0.2.1
+  antinvestor_ui_notification: ^0.3.1
+  antinvestor_ui_files: ^0.3.1
+  antinvestor_ui_tenancy: ^0.3.1
+  antinvestor_ui_audit: ^0.3.1
+  antinvestor_ui_trustage: ^0.1.1
+  antinvestor_ui_fort: ^0.1.1
 
 dev_dependencies:
   flutter_test:
@@ -141,3 +144,5 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+dependency_overrides:

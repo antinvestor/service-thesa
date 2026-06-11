@@ -82,14 +82,23 @@ void registerFortService() {
         ],
         charts: [
           ChartConfig.timeSeries('delivery_volume', label: 'Delivery Volume'),
-          ChartConfig.distribution('domain_status',
-              groupBy: 'status', label: 'By Domain Status'),
-          ChartConfig.distribution('reputation_band',
-              groupBy: 'band', label: 'By Reputation Band'),
+          ChartConfig.distribution(
+            'domain_status',
+            groupBy: 'status',
+            label: 'By Domain Status',
+          ),
+          ChartConfig.distribution(
+            'reputation_band',
+            groupBy: 'band',
+            label: 'By Reputation Band',
+          ),
         ],
         tables: [
-          TableConfig.topN('top_domains',
-              label: 'Top Sending Domains', limit: 10),
+          TableConfig.topN(
+            'top_domains',
+            label: 'Top Sending Domains',
+            limit: 10,
+          ),
         ],
       ),
       featureBuilders: {
@@ -101,8 +110,7 @@ void registerFortService() {
             const fort_lib.PolicyListScreen(),
         'reputation': (context, service, feature) =>
             const fort_lib.ReputationScreen(),
-        'nodes': (context, service, feature) =>
-            const fort_lib.NodeListScreen(),
+        'nodes': (context, service, feature) => const fort_lib.NodeListScreen(),
         'suppression': (context, service, feature) =>
             const fort_lib.SuppressionListScreen(),
       },

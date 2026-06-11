@@ -44,20 +44,21 @@ void registerSettingsService() {
     ServiceRegistration(
       definition: settingsServiceDef,
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
-            service: 'settings',
-            title: 'Settings Analytics',
-            metrics: [
-              'total_settings',
-              'recent_changes',
-              'modules_count',
-            ],
-            charts: [
-              ChartConfig.timeSeries('setting_changes',
-                  label: 'Configuration Changes'),
-              ChartConfig.distribution('settings_by_module',
-                  groupBy: 'module', label: 'By Module'),
-            ],
+        service: 'settings',
+        title: 'Settings Analytics',
+        metrics: ['total_settings', 'recent_changes', 'modules_count'],
+        charts: [
+          ChartConfig.timeSeries(
+            'setting_changes',
+            label: 'Configuration Changes',
           ),
+          ChartConfig.distribution(
+            'settings_by_module',
+            groupBy: 'module',
+            label: 'By Module',
+          ),
+        ],
+      ),
       featureBuilders: {
         'all': (context, service, feature) =>
             const settings_lib.SettingsListScreen(),

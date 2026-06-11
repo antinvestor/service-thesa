@@ -19,10 +19,7 @@ class SplashPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary,
-              Color(0xFF1E293B),
-            ],
+            colors: [AppColors.primary, Color(0xFF1E293B)],
           ),
         ),
         child: Center(
@@ -36,16 +33,19 @@ class SplashPage extends StatelessWidget {
                   color: AppColors.tertiary,
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.diamond_outlined,
-                    color: Colors.white, size: 32),
+                child: const Icon(
+                  Icons.diamond_outlined,
+                  color: Colors.white,
+                  size: 32,
+                ),
               ),
               const SizedBox(height: 24),
               Text(
                 'Antinvestor',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(height: 32),
               const SizedBox(

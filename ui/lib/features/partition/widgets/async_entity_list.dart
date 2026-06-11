@@ -34,7 +34,7 @@ class AsyncEntityList<T> extends ConsumerWidget {
   final List<String> breadcrumbs;
   final List<DataColumn> columns;
   final DataRow Function(T item, bool selected, VoidCallback onSelect)
-      rowBuilder;
+  rowBuilder;
   final Widget Function(T item)? detailBuilder;
   final String? addLabel;
   final VoidCallback? onAdd;
@@ -61,14 +61,17 @@ class AsyncEntityList<T> extends ConsumerWidget {
           children: [
             Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 16),
-            Text('Failed to load $title',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Failed to load $title',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
-            Text(error.toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              error.toString(),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 16),
             if (onRefresh != null)
               OutlinedButton.icon(

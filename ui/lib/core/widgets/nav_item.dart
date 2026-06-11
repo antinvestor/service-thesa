@@ -48,13 +48,15 @@ class NavItem {
           route: service.analyticsRoute,
           serviceId: service.id,
         ),
-        ...service.subFeatures.map((f) => NavItem(
-              label: f.label,
-              icon: f.icon,
-              route: service.featureRoute(f.id),
-              serviceId: service.id,
-              requiredPermissions: f.requiredPermissions,
-            )),
+        ...service.subFeatures.map(
+          (f) => NavItem(
+            label: f.label,
+            icon: f.icon,
+            route: service.featureRoute(f.id),
+            serviceId: service.id,
+            requiredPermissions: f.requiredPermissions,
+          ),
+        ),
       ],
     );
   }
@@ -107,7 +109,9 @@ List<NavItem> buildMainNavItems(ServiceRegistry registry) {
 /// Build nav items filtered by the user's resolved permissions.
 /// Services and sub-features without the required permissions are removed.
 List<NavItem> buildFilteredNavItems(
-    ServiceRegistry registry, Set<String> userPermissions) {
+  ServiceRegistry registry,
+  Set<String> userPermissions,
+) {
   final items = buildMainNavItems(registry);
   if (userPermissions.isEmpty) return items; // No permissions resolved yet
   return items

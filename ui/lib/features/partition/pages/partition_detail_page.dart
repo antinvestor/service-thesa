@@ -37,14 +37,17 @@ class PartitionDetailPage extends ConsumerWidget {
           children: [
             Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 16),
-            Text('Failed to load partition',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Failed to load partition',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
-            Text(error.toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              error.toString(),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: () =>
@@ -133,29 +136,32 @@ class _PartitionDetailContent extends ConsumerWidget {
       ref.invalidate(partitionDetailProvider(partitionId));
       ref.invalidate(partitionsProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Partition updated')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Partition updated')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   void _setAsActiveContext(WidgetRef ref) {
     final jwt = ref.read(jwtTenantContextProvider);
-    final jwtCtx = jwt.whenOrNull(data: (c) => c) ??
+    final jwtCtx =
+        jwt.whenOrNull(data: (c) => c) ??
         const TenantContext(tenantId: '', partitionId: '');
-    ref.read(activeTenantProvider.notifier).set(
-      jwtCtx.copyWith(
-        tenantId: partition.tenantId,
-        partitionId: partition.id,
-      ),
-    );
+    ref
+        .read(activeTenantProvider.notifier)
+        .set(
+          jwtCtx.copyWith(
+            tenantId: partition.tenantId,
+            partitionId: partition.id,
+          ),
+        );
   }
 
   @override
@@ -172,24 +178,25 @@ class _PartitionDetailContent extends ConsumerWidget {
           if (isActiveContext)
             Container(
               width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               color: AppColors.success.withValues(alpha: 0.1),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle,
-                      size: 18, color: AppColors.success),
-                  const SizedBox(width: 8),
-                  Text('Active Context',
-                      style: TextStyle(
-                          color: AppColors.success,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13)),
+                  Icon(Icons.check_circle, size: 18, color: AppColors.success),
                   const SizedBox(width: 8),
                   Text(
-                      'You are working within this partition',
-                      style: TextStyle(
-                          color: AppColors.success, fontSize: 12)),
+                    'Active Context',
+                    style: TextStyle(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'You are working within this partition',
+                    style: TextStyle(color: AppColors.success, fontSize: 12),
+                  ),
                 ],
               ),
             ),
@@ -223,8 +230,10 @@ class _PartitionDetailContent extends ConsumerWidget {
                       _setAsActiveContext(ref);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                            content: Text(
-                                'Switched context to ${partition.name}')),
+                          content: Text(
+                            'Switched context to ${partition.name}',
+                          ),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.login, size: 18),
@@ -241,15 +250,20 @@ class _PartitionDetailContent extends ConsumerWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 StateBadge(partition.state),
-                SelectableText('ID: ${partition.id}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'monospace',
-                        color: AppColors.onSurfaceMuted)),
+                SelectableText(
+                  'ID: ${partition.id}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
+                    color: AppColors.onSurfaceMuted,
+                  ),
+                ),
                 if (partition.hasCreatedAt())
                   Text(
-                      'Created: ${DateFormat.yMMMd().format(partition.createdAt.toDateTime())}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceMuted)),
+                    'Created: ${DateFormat.yMMMd().format(partition.createdAt.toDateTime())}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -276,8 +290,8 @@ class _PartitionDetailContent extends ConsumerWidget {
                 PermissionsTab(
                   partitionId: partitionId,
                   tenantId: partition.tenantId,
-                  isRootPartition: !partition.hasParentId() ||
-                      partition.parentId.isEmpty,
+                  isRootPartition:
+                      !partition.hasParentId() || partition.parentId.isEmpty,
                 ),
                 _ServiceAccountsTab(partitionId: partitionId),
                 _ClientsTab(partitionId: partitionId),
@@ -346,77 +360,79 @@ class _OverviewTab extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Row 1: Details + Configuration side by side ──
-          LayoutBuilder(builder: (context, constraints) {
-            final wide = constraints.maxWidth > 700;
-            final cards = [
-              // Partition details
-              _buildCard(
-                context,
-                title: 'Partition Details',
-                icon: Icons.info_outline,
-                child: Column(
-                  children: [
-                    _DetailRow(label: 'Name', value: partition.name),
-                    _DetailRow(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth > 700;
+              final cards = [
+                // Partition details
+                _buildCard(
+                  context,
+                  title: 'Partition Details',
+                  icon: Icons.info_outline,
+                  child: Column(
+                    children: [
+                      _DetailRow(label: 'Name', value: partition.name),
+                      _DetailRow(
                         label: 'Description',
                         value: partition.description.isNotEmpty
                             ? partition.description
-                            : '—'),
-                    if (partition.domain.isNotEmpty)
-                      _DetailRow(
-                        label: 'Domain',
-                        value: partition.domain,
-                        icon: Icons.language,
+                            : '—',
                       ),
-                    _DetailRow(label: 'State', value: partition.state.name),
-                    if (partition.hasCreatedAt())
-                      _DetailRow(
-                        label: 'Created',
-                        value: DateFormat.yMMMd()
-                            .format(partition.createdAt.toDateTime()),
-                      ),
-                  ],
+                      if (partition.domain.isNotEmpty)
+                        _DetailRow(
+                          label: 'Domain',
+                          value: partition.domain,
+                          icon: Icons.language,
+                        ),
+                      _DetailRow(label: 'State', value: partition.state.name),
+                      if (partition.hasCreatedAt())
+                        _DetailRow(
+                          label: 'Created',
+                          value: DateFormat.yMMMd().format(
+                            partition.createdAt.toDateTime(),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              // Configuration card
-              _buildCard(
-                context,
-                title: 'Configuration',
-                icon: Icons.settings_outlined,
-                child: Column(
+                // Configuration card
+                _buildCard(
+                  context,
+                  title: 'Configuration',
+                  icon: Icons.settings_outlined,
+                  child: Column(
+                    children: [
+                      _BoolRow(
+                        label: 'Auto Access',
+                        value: allowAutoAccess,
+                        description: allowAutoAccess
+                            ? 'Users get access automatically on login'
+                            : 'Users must be granted access explicitly',
+                      ),
+                      _DetailRow(
+                        label: 'Default Role',
+                        value: defaultRole.isNotEmpty ? defaultRole : '—',
+                        icon: Icons.badge_outlined,
+                      ),
+                    ],
+                  ),
+                ),
+              ];
+              if (wide) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _BoolRow(
-                      label: 'Auto Access',
-                      value: allowAutoAccess,
-                      description: allowAutoAccess
-                          ? 'Users get access automatically on login'
-                          : 'Users must be granted access explicitly',
-                    ),
-                    _DetailRow(
-                      label: 'Default Role',
-                      value: defaultRole.isNotEmpty ? defaultRole : '—',
-                      icon: Icons.badge_outlined,
-                    ),
+                    Expanded(child: cards[0]),
+                    const SizedBox(width: 16),
+                    Expanded(child: cards[1]),
                   ],
-                ),
-              ),
-            ];
-            if (wide) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: cards[0]),
-                  const SizedBox(width: 16),
-                  Expanded(child: cards[1]),
-                ],
+                );
+              }
+              return Column(
+                children: [cards[0], const SizedBox(height: 16), cards[1]],
               );
-            }
-            return Column(children: [
-              cards[0],
-              const SizedBox(height: 16),
-              cards[1],
-            ]);
-          }),
+            },
+          ),
           const SizedBox(height: 16),
 
           // ── Support Contacts card ──
@@ -454,22 +470,29 @@ class _OverviewTab extends ConsumerWidget {
               loading: () => const Padding(
                 padding: EdgeInsets.all(8),
                 child: Center(
-                    child: SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2))),
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
               ),
-              error: (_, _) => _DetailRow(
-                  label: 'Tenant ID', value: partition.tenantId),
+              error: (_, _) =>
+                  _DetailRow(label: 'Tenant ID', value: partition.tenantId),
               data: (tenant) => ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading:
-                    Icon(Icons.business_outlined, color: AppColors.tertiary),
-                title: Text(tenant.name,
-                    style: const TextStyle(fontWeight: FontWeight.w500)),
-                subtitle: Text(tenant.id,
-                    style: const TextStyle(
-                        fontFamily: 'monospace', fontSize: 11)),
+                leading: Icon(
+                  Icons.business_outlined,
+                  color: AppColors.tertiary,
+                ),
+                title: Text(
+                  tenant.name,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text(
+                  tenant.id,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+                ),
                 trailing: const Icon(Icons.chevron_right, size: 20),
                 onTap: () =>
                     context.go('/services/tenancy/tenants/${tenant.id}'),
@@ -488,34 +511,45 @@ class _OverviewTab extends ConsumerWidget {
                 loading: () => const Padding(
                   padding: EdgeInsets.all(8),
                   child: Center(
-                      child: SizedBox(
-                          height: 20,
-                          width: 20,
-                          child:
-                              CircularProgressIndicator(strokeWidth: 2))),
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
                 ),
-                error: (_, _) => _DetailRow(
-                    label: 'Parent ID', value: partition.parentId),
+                error: (_, _) =>
+                    _DetailRow(label: 'Parent ID', value: partition.parentId),
                 data: (partitions) {
                   final parent = partitions
                       .where((p) => p.id == partition.parentId)
                       .firstOrNull;
                   if (parent == null) {
                     return _DetailRow(
-                        label: 'Parent ID', value: partition.parentId);
+                      label: 'Parent ID',
+                      value: partition.parentId,
+                    );
                   }
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.account_tree_outlined,
-                        color: AppColors.tertiary),
-                    title: Text(parent.name,
-                        style: const TextStyle(fontWeight: FontWeight.w500)),
-                    subtitle: Text(parent.id,
-                        style: const TextStyle(
-                            fontFamily: 'monospace', fontSize: 11)),
+                    leading: Icon(
+                      Icons.account_tree_outlined,
+                      color: AppColors.tertiary,
+                    ),
+                    title: Text(
+                      parent.name,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      parent.id,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                      ),
+                    ),
                     trailing: const Icon(Icons.chevron_right, size: 20),
-                    onTap: () => context
-                        .go('/services/tenancy/partitions/${parent.id}'),
+                    onTap: () =>
+                        context.go('/services/tenancy/partitions/${parent.id}'),
                   );
                 },
               ),
@@ -532,10 +566,12 @@ class _OverviewTab extends ConsumerWidget {
                   .where((p) => p.parentId == partition.id)
                   .toList();
               final siblings = allPartitions
-                  .where((p) =>
-                      p.tenantId == partition.tenantId &&
-                      p.id != partition.id &&
-                      p.parentId != partition.id)
+                  .where(
+                    (p) =>
+                        p.tenantId == partition.tenantId &&
+                        p.id != partition.id &&
+                        p.parentId != partition.id,
+                  )
                   .toList();
               if (children.isEmpty && siblings.isEmpty) {
                 return const SizedBox.shrink();
@@ -550,13 +586,14 @@ class _OverviewTab extends ConsumerWidget {
                     if (children.isNotEmpty) ...[
                       Padding(
                         padding: const EdgeInsets.only(bottom: 4),
-                        child: Text('Child Partitions',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
-                                ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.onSurfaceMuted)),
+                        child: Text(
+                          'Child Partitions',
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.onSurfaceMuted,
+                              ),
+                        ),
                       ),
                       for (final child in children)
                         _PartitionLink(partition: child),
@@ -565,13 +602,14 @@ class _OverviewTab extends ConsumerWidget {
                     if (siblings.isNotEmpty) ...[
                       Padding(
                         padding: const EdgeInsets.only(bottom: 4),
-                        child: Text('Other Partitions',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
-                                ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.onSurfaceMuted)),
+                        child: Text(
+                          'Other Partitions',
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.onSurfaceMuted,
+                              ),
+                        ),
                       ),
                       for (final sib in siblings)
                         _PartitionLink(partition: sib),
@@ -618,10 +656,12 @@ class _OverviewTab extends ConsumerWidget {
     return '—';
   }
 
-  Widget _buildCard(BuildContext context,
-      {required String title,
-      required IconData icon,
-      required Widget child}) {
+  Widget _buildCard(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -637,11 +677,12 @@ class _OverviewTab extends ConsumerWidget {
               children: [
                 Icon(icon, size: 18, color: AppColors.tertiary),
                 const SizedBox(width: 8),
-                Text(title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -669,22 +710,24 @@ class _DetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ),
           if (icon != null) ...[
             Icon(icon, size: 14, color: AppColors.onSurfaceMuted),
             const SizedBox(width: 4),
           ],
           Expanded(
-            child: Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w500)),
+            child: Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),
@@ -693,8 +736,7 @@ class _DetailRow extends StatelessWidget {
 }
 
 class _BoolRow extends StatelessWidget {
-  const _BoolRow(
-      {required this.label, required this.value, this.description});
+  const _BoolRow({required this.label, required this.value, this.description});
 
   final String label;
   final bool value;
@@ -709,11 +751,12 @@ class _BoolRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ),
           Icon(
             value ? Icons.check_circle : Icons.cancel,
@@ -725,15 +768,20 @@ class _BoolRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value ? 'Enabled' : 'Disabled',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(fontWeight: FontWeight.w500)),
+                Text(
+                  value ? 'Enabled' : 'Disabled',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+                ),
                 if (description != null)
-                  Text(description!,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: 11, color: AppColors.onSurfaceMuted)),
+                  Text(
+                    description!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 11,
+                      color: AppColors.onSurfaceMuted,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -752,14 +800,18 @@ class _PartitionLink extends StatelessWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
-      leading: Icon(Icons.account_tree_outlined,
-          size: 18, color: AppColors.tertiary),
+      leading: Icon(
+        Icons.account_tree_outlined,
+        size: 18,
+        color: AppColors.tertiary,
+      ),
       title: Text(partition.name, style: const TextStyle(fontSize: 14)),
-      subtitle: Text(partition.id,
-          style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
+      subtitle: Text(
+        partition.id,
+        style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+      ),
       trailing: StateBadge(partition.state),
-      onTap: () =>
-          context.go('/services/tenancy/partitions/${partition.id}'),
+      onTap: () => context.go('/services/tenancy/partitions/${partition.id}'),
     );
   }
 }
@@ -801,8 +853,9 @@ class _EditPartitionResult {
       contactFields['msisdn'] = Value(stringValue: supportPhone);
     }
     if (contactFields.isNotEmpty) {
-      fields['support_contacts'] =
-          Value(structValue: Struct(fields: contactFields));
+      fields['support_contacts'] = Value(
+        structValue: Struct(fields: contactFields),
+      );
     }
     if (fields.isEmpty) return null;
     return Struct(fields: fields);
@@ -874,11 +927,12 @@ class _EditPartitionDialogState extends State<_EditPartitionDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Basic ──
-              Text('Basic Information',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Basic Information',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: _nameCtl,
@@ -919,11 +973,12 @@ class _EditPartitionDialogState extends State<_EditPartitionDialog> {
               const SizedBox(height: 12),
 
               // ── Configuration ──
-              Text('Configuration',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Configuration',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 8),
               SwitchListTile(
                 title: const Text('Allow Auto Access'),
@@ -950,11 +1005,12 @@ class _EditPartitionDialogState extends State<_EditPartitionDialog> {
               const SizedBox(height: 12),
 
               // ── Support ──
-              Text('Support Contacts',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Support Contacts',
+                style: Theme.of(
+                  context,
+                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: _emailCtl,
@@ -984,20 +1040,20 @@ class _EditPartitionDialogState extends State<_EditPartitionDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            Navigator.of(context).pop(_EditPartitionResult(
-              name: _nameCtl.text.trim(),
-              description: _descCtl.text.trim(),
-              domain: _domainCtl.text.trim().isNotEmpty
-                  ? _domainCtl.text.trim()
-                  : null,
-              state: STATE.values
-                  .where((s) => s.name == _state)
-                  .firstOrNull,
-              allowAutoAccess: _autoAccess,
-              defaultRole: _roleCtl.text.trim(),
-              supportEmail: _emailCtl.text.trim(),
-              supportPhone: _phoneCtl.text.trim(),
-            ));
+            Navigator.of(context).pop(
+              _EditPartitionResult(
+                name: _nameCtl.text.trim(),
+                description: _descCtl.text.trim(),
+                domain: _domainCtl.text.trim().isNotEmpty
+                    ? _domainCtl.text.trim()
+                    : null,
+                state: STATE.values.where((s) => s.name == _state).firstOrNull,
+                allowAutoAccess: _autoAccess,
+                defaultRole: _roleCtl.text.trim(),
+                supportEmail: _emailCtl.text.trim(),
+                supportPhone: _phoneCtl.text.trim(),
+              ),
+            );
           },
           child: const Text('Save'),
         ),
@@ -1018,9 +1074,7 @@ class _RolesTab extends ConsumerWidget {
       context: context,
       title: 'New Role',
       saveLabel: 'Create',
-      fields: [
-        const DialogField(key: 'name', label: 'Role Name'),
-      ],
+      fields: [const DialogField(key: 'name', label: 'Role Name')],
     );
     if (values == null || !context.mounted) return;
 
@@ -1032,20 +1086,24 @@ class _RolesTab extends ConsumerWidget {
       );
       ref.invalidate(partitionRolesForPartitionProvider(partitionId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Role created')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Role created')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   Future<void> _deleteRole(
-      BuildContext context, WidgetRef ref, PartitionRoleObject role) async {
+    BuildContext context,
+    WidgetRef ref,
+    PartitionRoleObject role,
+  ) async {
     final confirmed = await showConfirmDialog(
       context: context,
       title: 'Remove Role',
@@ -1058,22 +1116,24 @@ class _RolesTab extends ConsumerWidget {
       await repo.removePartitionRole(role.id);
       ref.invalidate(partitionRolesForPartitionProvider(partitionId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Role removed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Role removed')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncRoles =
-        ref.watch(partitionRolesForPartitionProvider(partitionId));
+    final asyncRoles = ref.watch(
+      partitionRolesForPartitionProvider(partitionId),
+    );
 
     return asyncRoles.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -1115,21 +1175,33 @@ class _RolesTab extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final role = roles[index];
                   return ListTile(
-                    leading: Icon(Icons.shield_outlined,
-                        size: 20, color: AppColors.tertiary),
-                    title: Text(role.name,
-                        style: const TextStyle(fontWeight: FontWeight.w500)),
-                    subtitle: Text(role.id,
-                        style: const TextStyle(
-                            fontFamily: 'monospace', fontSize: 11)),
+                    leading: Icon(
+                      Icons.shield_outlined,
+                      size: 20,
+                      color: AppColors.tertiary,
+                    ),
+                    title: Text(
+                      role.name,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      role.id,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                      ),
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         StateBadge(role.state),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: Icon(Icons.delete_outline,
-                              size: 18, color: AppColors.error),
+                          icon: Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: AppColors.error,
+                          ),
                           tooltip: 'Remove',
                           onPressed: () => _deleteRole(context, ref, role),
                         ),
@@ -1161,26 +1233,27 @@ class _AccessTab extends ConsumerWidget {
 
     try {
       final repo = await ref.read(partitionRepositoryProvider.future);
-      await repo.createAccess(
-        partitionId: partitionId,
-        profileId: result,
-      );
+      await repo.createAccess(partitionId: partitionId, profileId: result);
       ref.invalidate(accessForPartitionProvider(partitionId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Access granted')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Access granted')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   Future<void> _removeAccess(
-      BuildContext context, WidgetRef ref, AccessObject access) async {
+    BuildContext context,
+    WidgetRef ref,
+    AccessObject access,
+  ) async {
     final confirmed = await showConfirmDialog(
       context: context,
       title: 'Remove Access',
@@ -1193,14 +1266,15 @@ class _AccessTab extends ConsumerWidget {
       await repo.removeAccess(access.id);
       ref.invalidate(accessForPartitionProvider(partitionId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Access removed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Access removed')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -1214,11 +1288,9 @@ class _AccessTab extends ConsumerWidget {
       error: (error, _) => _ErrorState(
         message: 'Failed to load access grants',
         detail: error.toString(),
-        onRetry: () =>
-            ref.invalidate(accessForPartitionProvider(partitionId)),
+        onRetry: () => ref.invalidate(accessForPartitionProvider(partitionId)),
       ),
       data: (access) {
-
         return Column(
           children: [
             Padding(
@@ -1248,25 +1320,32 @@ class _AccessTab extends ConsumerWidget {
                 child: ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: access.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1),
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final a = access[index];
                     return ExpansionTile(
                       leading: null,
                       title: ProfileBadge(profileId: a.profileId),
-                      subtitle: Text('Access: ${a.id}',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontFamily: 'monospace',
-                              color: AppColors.onSurfaceMuted)),
+                      subtitle: Text(
+                        'Access: ${a.id}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                          color: AppColors.onSurfaceMuted,
+                        ),
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           StateBadge(a.state),
                           const SizedBox(width: 8),
                           IconButton(
-                            icon: Icon(Icons.delete_outline,
-                                size: 18, color: AppColors.error),
+                            icon: Icon(
+                              Icons.delete_outline,
+                              size: 18,
+                              color: AppColors.error,
+                            ),
                             tooltip: 'Remove access',
                             onPressed: () => _removeAccess(context, ref, a),
                           ),
@@ -1299,12 +1378,16 @@ class _AccessRolesSection extends ConsumerWidget {
   final String accessId;
   final String partitionId;
 
-  Future<void> _addRole(BuildContext context, WidgetRef ref,
-      List<PartitionRoleObject> availableRoles) async {
+  Future<void> _addRole(
+    BuildContext context,
+    WidgetRef ref,
+    List<PartitionRoleObject> availableRoles,
+  ) async {
     if (availableRoles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('No partition roles available. Create roles first.')),
+          content: Text('No partition roles available. Create roles first.'),
+        ),
       );
       return;
     }
@@ -1325,8 +1408,9 @@ class _AccessRolesSection extends ConsumerWidget {
     if (values == null || !context.mounted) return;
 
     final selectedText = values['roleId'] ?? '';
-    final selectedRole = availableRoles.where((r) =>
-        '${r.name} (${r.id})' == selectedText).firstOrNull;
+    final selectedRole = availableRoles
+        .where((r) => '${r.name} (${r.id})' == selectedText)
+        .firstOrNull;
     if (selectedRole == null) return;
 
     try {
@@ -1337,33 +1421,38 @@ class _AccessRolesSection extends ConsumerWidget {
       );
       ref.invalidate(accessRolesForAccessProvider(accessId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Role assigned')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Role assigned')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   Future<void> _removeRole(
-      BuildContext context, WidgetRef ref, AccessRoleObject role) async {
+    BuildContext context,
+    WidgetRef ref,
+    AccessRoleObject role,
+  ) async {
     try {
       final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.removeAccessRole(role.id);
       ref.invalidate(accessRolesForAccessProvider(accessId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Role removed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Role removed')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -1371,8 +1460,9 @@ class _AccessRolesSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncRoles = ref.watch(accessRolesForAccessProvider(accessId));
-    final asyncPartitionRoles =
-        ref.watch(partitionRolesForPartitionProvider(partitionId));
+    final asyncPartitionRoles = ref.watch(
+      partitionRolesForPartitionProvider(partitionId),
+    );
 
     return asyncRoles.when(
       loading: () => const Padding(
@@ -1381,8 +1471,10 @@ class _AccessRolesSection extends ConsumerWidget {
       ),
       error: (error, _) => Padding(
         padding: const EdgeInsets.all(16),
-        child: Text('Error: $error',
-            style: TextStyle(color: AppColors.error, fontSize: 12)),
+        child: Text(
+          'Error: $error',
+          style: TextStyle(color: AppColors.error, fontSize: 12),
+        ),
       ),
       data: (roles) => Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -1391,14 +1483,16 @@ class _AccessRolesSection extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Text('Assigned Roles',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  'Assigned Roles',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const Spacer(),
                 TextButton.icon(
                   onPressed: () {
-                    final available =
-                        asyncPartitionRoles.value ?? [];
+                    final available = asyncPartitionRoles.value ?? [];
                     _addRole(context, ref, available);
                   },
                   icon: const Icon(Icons.add, size: 16),
@@ -1409,16 +1503,23 @@ class _AccessRolesSection extends ConsumerWidget {
             if (roles.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Text('No roles assigned',
-                    style: TextStyle(
-                        color: AppColors.onSurfaceMuted, fontSize: 13)),
+                child: Text(
+                  'No roles assigned',
+                  style: TextStyle(
+                    color: AppColors.onSurfaceMuted,
+                    fontSize: 13,
+                  ),
+                ),
               )
             else
               for (final role in roles)
                 ListTile(
                   dense: true,
-                  leading: Icon(Icons.badge_outlined,
-                      size: 16, color: AppColors.tertiary),
+                  leading: Icon(
+                    Icons.badge_outlined,
+                    size: 16,
+                    color: AppColors.tertiary,
+                  ),
                   title: Text(
                     role.hasRole() ? role.role.name : role.id,
                     style: const TextStyle(fontSize: 13),
@@ -1471,7 +1572,11 @@ class _ServiceAccountsTab extends ConsumerWidget {
     try {
       final audienceStr = values['audiences'] ?? '';
       final audiences = audienceStr.isNotEmpty
-          ? audienceStr.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList()
+          ? audienceStr
+                .split(',')
+                .map((s) => s.trim())
+                .where((s) => s.isNotEmpty)
+                .toList()
           : null;
       final repo = await ref.read(partitionRepositoryProvider.future);
       await repo.createServiceAccount(
@@ -1482,19 +1587,24 @@ class _ServiceAccountsTab extends ConsumerWidget {
       );
       ref.invalidate(serviceAccountsForPartitionProvider(partitionId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Service account created')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Service account created')),
+        );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   Future<void> _remove(
-      BuildContext context, WidgetRef ref, ServiceAccountObject sa) async {
+    BuildContext context,
+    WidgetRef ref,
+    ServiceAccountObject sa,
+  ) async {
     final confirmed = await showConfirmDialog(
       context: context,
       title: 'Remove Service Account',
@@ -1507,20 +1617,24 @@ class _ServiceAccountsTab extends ConsumerWidget {
       await repo.removeServiceAccount(sa.id);
       ref.invalidate(serviceAccountsForPartitionProvider(partitionId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Service account removed')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Service account removed')),
+        );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncSAs = ref.watch(serviceAccountsForPartitionProvider(partitionId));
+    final asyncSAs = ref.watch(
+      serviceAccountsForPartitionProvider(partitionId),
+    );
 
     return asyncSAs.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -1550,7 +1664,8 @@ class _ServiceAccountsTab extends ConsumerWidget {
               child: _PlaceholderTab(
                 icon: Icons.engineering_outlined,
                 title: 'No service accounts',
-                subtitle: 'Create service accounts for machine-to-machine access.',
+                subtitle:
+                    'Create service accounts for machine-to-machine access.',
               ),
             )
           else
@@ -1562,26 +1677,35 @@ class _ServiceAccountsTab extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final sa = accounts[index];
                   return ExpansionTile(
-                    leading: Icon(Icons.engineering_outlined,
-                        size: 20, color: AppColors.tertiary),
+                    leading: Icon(
+                      Icons.engineering_outlined,
+                      size: 20,
+                      color: AppColors.tertiary,
+                    ),
                     title: sa.profileId.isNotEmpty
-                        ? ProfileBadge(
-                            profileId: sa.profileId, compact: true)
-                        : Text(sa.id,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500)),
+                        ? ProfileBadge(profileId: sa.profileId, compact: true)
+                        : Text(
+                            sa.id,
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
                     subtitle: Text(
-                        'Type: ${sa.type}',
-                        style: TextStyle(
-                            fontSize: 11, color: AppColors.onSurfaceMuted)),
+                      'Type: ${sa.type}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.onSurfaceMuted,
+                      ),
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         StateBadge(sa.state),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: Icon(Icons.delete_outline,
-                              size: 18, color: AppColors.error),
+                          icon: Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: AppColors.error,
+                          ),
                           tooltip: 'Remove',
                           onPressed: () => _remove(context, ref, sa),
                         ),
@@ -1600,7 +1724,10 @@ class _ServiceAccountsTab extends ConsumerWidget {
                               _SADetailRow('Client ID', sa.clientId),
                             _SADetailRow('Type', sa.type),
                             if (sa.audiences.isNotEmpty)
-                              _SADetailRow('Audiences', sa.audiences.join(', ')),
+                              _SADetailRow(
+                                'Audiences',
+                                sa.audiences.join(', '),
+                              ),
                           ],
                         ),
                       ),
@@ -1644,19 +1771,24 @@ class _ClientsTab extends ConsumerWidget {
       );
       ref.invalidate(clientsForPartitionProvider(partitionId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Client created')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Client created')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   Future<void> _remove(
-      BuildContext context, WidgetRef ref, ClientObject client) async {
+    BuildContext context,
+    WidgetRef ref,
+    ClientObject client,
+  ) async {
     final confirmed = await showConfirmDialog(
       context: context,
       title: 'Remove Client',
@@ -1669,13 +1801,15 @@ class _ClientsTab extends ConsumerWidget {
       await repo.removeClient(client.id);
       ref.invalidate(clientsForPartitionProvider(partitionId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Client removed')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Client removed')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -1689,8 +1823,7 @@ class _ClientsTab extends ConsumerWidget {
       error: (error, _) => _ErrorState(
         message: 'Failed to load clients',
         detail: error.toString(),
-        onRetry: () =>
-            ref.invalidate(clientsForPartitionProvider(partitionId)),
+        onRetry: () => ref.invalidate(clientsForPartitionProvider(partitionId)),
       ),
       data: (clients) => Column(
         children: [
@@ -1724,22 +1857,33 @@ class _ClientsTab extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final client = clients[index];
                   return ExpansionTile(
-                    leading: Icon(Icons.key_outlined,
-                        size: 20, color: AppColors.tertiary),
-                    title: Text(client.name,
-                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    leading: Icon(
+                      Icons.key_outlined,
+                      size: 20,
+                      color: AppColors.tertiary,
+                    ),
+                    title: Text(
+                      client.name,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
                     subtitle: Text(
-                        'Type: ${client.type} · Scopes: ${client.scopes}',
-                        style: TextStyle(
-                            fontSize: 11, color: AppColors.onSurfaceMuted)),
+                      'Type: ${client.type} · Scopes: ${client.scopes}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.onSurfaceMuted,
+                      ),
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         StateBadge(client.state),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: Icon(Icons.delete_outline,
-                              size: 18, color: AppColors.error),
+                          icon: Icon(
+                            Icons.delete_outline,
+                            size: 18,
+                            color: AppColors.error,
+                          ),
                           tooltip: 'Remove',
                           onPressed: () => _remove(context, ref, client),
                         ),
@@ -1755,13 +1899,25 @@ class _ClientsTab extends ConsumerWidget {
                             _SADetailRow('Type', client.type),
                             _SADetailRow('Scopes', client.scopes),
                             if (client.grantTypes.isNotEmpty)
-                              _SADetailRow('Grant Types', client.grantTypes.join(', ')),
+                              _SADetailRow(
+                                'Grant Types',
+                                client.grantTypes.join(', '),
+                              ),
                             if (client.responseTypes.isNotEmpty)
-                              _SADetailRow('Response Types', client.responseTypes.join(', ')),
+                              _SADetailRow(
+                                'Response Types',
+                                client.responseTypes.join(', '),
+                              ),
                             if (client.redirectUris.isNotEmpty)
-                              _SADetailRow('Redirect URIs', client.redirectUris.join('\n')),
+                              _SADetailRow(
+                                'Redirect URIs',
+                                client.redirectUris.join('\n'),
+                              ),
                             if (client.audiences.isNotEmpty)
-                              _SADetailRow('Audiences', client.audiences.join(', ')),
+                              _SADetailRow(
+                                'Audiences',
+                                client.audiences.join(', '),
+                              ),
                           ],
                         ),
                       ),
@@ -1820,8 +1976,8 @@ class _GrantAccessDialogState extends State<_GrantAccessDialog> {
       final name = (nameField != null && nameField.hasStringValue())
           ? nameField.stringValue
           : profile.contacts.isNotEmpty
-              ? profile.contacts.first.detail
-              : profile.id;
+          ? profile.contacts.first.detail
+          : profile.id;
       setState(() {
         _profileIdCtl.text = profile.id;
         _profileName = name;
@@ -1845,9 +2001,12 @@ class _GrantAccessDialogState extends State<_GrantAccessDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Search by contact (email or phone)',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.onSurfaceMuted)),
+            Text(
+              'Search by contact (email or phone)',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -1869,15 +2028,18 @@ class _GrantAccessDialogState extends State<_GrantAccessDialog> {
                       ? const SizedBox(
                           height: 18,
                           width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2))
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Text('Search'),
                 ),
               ],
             ),
             if (_error != null) ...[
               const SizedBox(height: 8),
-              Text(_error!,
-                  style: TextStyle(color: AppColors.error, fontSize: 12)),
+              Text(
+                _error!,
+                style: TextStyle(color: AppColors.error, fontSize: 12),
+              ),
             ],
             if (_profileName != null) ...[
               const SizedBox(height: 12),
@@ -1893,20 +2055,29 @@ class _GrantAccessDialogState extends State<_GrantAccessDialog> {
                       style: TextStyle(color: AppColors.tertiary),
                     ),
                   ),
-                  title: Text(_profileName!,
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
-                  subtitle: Text(_profileIdCtl.text,
-                      style: const TextStyle(
-                          fontFamily: 'monospace', fontSize: 11)),
+                  title: Text(
+                    _profileName!,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text(
+                    _profileIdCtl.text,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                    ),
+                  ),
                 ),
               ),
             ],
             const SizedBox(height: 16),
             const Divider(),
             const SizedBox(height: 8),
-            Text('Or enter Profile ID directly',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.onSurfaceMuted)),
+            Text(
+              'Or enter Profile ID directly',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: _profileIdCtl,
@@ -2085,23 +2256,25 @@ class _CreateClientDialogState extends State<_CreateClientDialog> {
         ElevatedButton(
           onPressed: () {
             if (!_formKey.currentState!.validate()) return;
-            Navigator.of(context).pop(_CreateClientResult(
-              name: _nameCtl.text.trim(),
-              type: _type,
-              scopes: _scopesCtl.text.trim(),
-              grantTypes: _grantTypesCtl.text.trim().isNotEmpty
-                  ? _grantTypesCtl.text.trim()
-                  : null,
-              responseTypes: _responseTypesCtl.text.trim().isNotEmpty
-                  ? _responseTypesCtl.text.trim()
-                  : null,
-              redirectUris: _redirectUrisCtl.text.trim().isNotEmpty
-                  ? _redirectUrisCtl.text.trim()
-                  : null,
-              audiences: _audiencesCtl.text.trim().isNotEmpty
-                  ? _audiencesCtl.text.trim()
-                  : null,
-            ));
+            Navigator.of(context).pop(
+              _CreateClientResult(
+                name: _nameCtl.text.trim(),
+                type: _type,
+                scopes: _scopesCtl.text.trim(),
+                grantTypes: _grantTypesCtl.text.trim().isNotEmpty
+                    ? _grantTypesCtl.text.trim()
+                    : null,
+                responseTypes: _responseTypesCtl.text.trim().isNotEmpty
+                    ? _responseTypesCtl.text.trim()
+                    : null,
+                redirectUris: _redirectUrisCtl.text.trim().isNotEmpty
+                    ? _redirectUrisCtl.text.trim()
+                    : null,
+                audiences: _audiencesCtl.text.trim().isNotEmpty
+                    ? _audiencesCtl.text.trim()
+                    : null,
+              ),
+            );
           },
           child: const Text('Create'),
         ),
@@ -2124,18 +2297,22 @@ class _SADetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ),
           Expanded(
-            child: SelectableText(value,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontFamily: 'monospace',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500)),
+            child: SelectableText(
+              value,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontFamily: 'monospace',
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ],
       ),
@@ -2162,17 +2339,19 @@ class _PlaceholderTab extends StatelessWidget {
         children: [
           Icon(icon, size: 48, color: AppColors.onSurfaceMuted),
           const SizedBox(height: 12),
-          Text(title,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: AppColors.onSurfaceMuted)),
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.onSurfaceMuted),
+          ),
           const SizedBox(height: 8),
-          Text(subtitle,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: AppColors.onSurfaceMuted)),
+          Text(
+            subtitle,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+          ),
         ],
       ),
     );
@@ -2200,11 +2379,12 @@ class _ErrorState extends StatelessWidget {
           const SizedBox(height: 12),
           Text(message, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 8),
-          Text(detail,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: AppColors.onSurfaceMuted)),
+          Text(
+            detail,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+          ),
           if (onRetry != null) ...[
             const SizedBox(height: 12),
             OutlinedButton.icon(

@@ -17,20 +17,21 @@ class Breadcrumb extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Text(
                 '/',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.onSurfaceMuted,
+                ),
               ),
             ),
           Text(
             items[i],
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: i == items.length - 1
-                      ? AppColors.onSurface
-                      : AppColors.onSurfaceMuted,
-                  fontWeight: i == items.length - 1 ? FontWeight.w500 : FontWeight.w400,
-                ),
+              color: i == items.length - 1
+                  ? AppColors.onSurface
+                  : AppColors.onSurfaceMuted,
+              fontWeight: i == items.length - 1
+                  ? FontWeight.w500
+                  : FontWeight.w400,
+            ),
           ),
         ],
       ],

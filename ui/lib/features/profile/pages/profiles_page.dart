@@ -14,11 +14,7 @@ import '../data/profile_repository.dart';
 import '../widgets/profile_badge.dart';
 
 class ProfilesPage extends ConsumerWidget {
-  const ProfilesPage({
-    super.key,
-    required this.service,
-    required this.feature,
-  });
+  const ProfilesPage({super.key, required this.service, required this.feature});
 
   final ServiceDefinition service;
   final SubFeatureDefinition feature;
@@ -36,14 +32,17 @@ class ProfilesPage extends ConsumerWidget {
           children: [
             Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 16),
-            Text('Failed to load profiles',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Failed to load profiles',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
-            Text(error.toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              error.toString(),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: () => ref.invalidate(profilesProvider(query)),
@@ -91,27 +90,29 @@ class ProfilesPage extends ConsumerWidget {
               return null;
             }),
             cells: [
-              DataCell(Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: typeColor.withValues(alpha: 0.15),
-                    child: Text(
-                      name.isNotEmpty
-                          ? name.substring(0, 1).toUpperCase()
-                          : '?',
-                      style: TextStyle(
-                        color: typeColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+              DataCell(
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: typeColor.withValues(alpha: 0.15),
+                      child: Text(
+                        name.isNotEmpty
+                            ? name.substring(0, 1).toUpperCase()
+                            : '?',
+                        style: TextStyle(
+                          color: typeColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(name),
-                ],
-              )),
+                    const SizedBox(width: 10),
+                    Text(name),
+                  ],
+                ),
+              ),
               DataCell(ColorBadge(typeLabel, typeColor)),
               DataCell(Text('${profile.contacts.length}')),
               DataCell(StateBadge(profile.state)),
@@ -128,9 +129,7 @@ class ProfilesPage extends ConsumerWidget {
           ),
         ],
         editTitle: (profile) => 'Edit ${profileDisplayName(profile)}',
-        editValuesExtractor: (profile) => {
-          'state': profile.state.name,
-        },
+        editValuesExtractor: (profile) => {'state': profile.state.name},
         onSave: (profile, values) {
           debugPrint('Save profile: $values');
         },
@@ -141,7 +140,10 @@ class ProfilesPage extends ConsumerWidget {
   }
 
   Future<void> _createProfile(
-      BuildContext context, WidgetRef ref, String query) async {
+    BuildContext context,
+    WidgetRef ref,
+    String query,
+  ) async {
     final values = await showEditDialog(
       context: context,
       title: 'New Profile',
@@ -165,16 +167,13 @@ class ProfilesPage extends ConsumerWidget {
     if (values == null || !context.mounted) return;
     try {
       final typeStr = values['type'] ?? 'PERSON';
-      final type = ProfileType.values
-              .where((t) => t.name == typeStr)
-              .firstOrNull ??
+      final type =
+          ProfileType.values.where((t) => t.name == typeStr).firstOrNull ??
           ProfileType.PERSON;
       final name = values['name'] ?? '';
       Struct? properties;
       if (name.isNotEmpty) {
-        properties = Struct(fields: {
-          'name': Value(stringValue: name),
-        });
+        properties = Struct(fields: {'name': Value(stringValue: name)});
       }
       final repo = await ref.read(profileRepositoryProvider.future);
       await repo.create(
@@ -184,14 +183,15 @@ class ProfilesPage extends ConsumerWidget {
       );
       ref.invalidate(profilesProvider(query));
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile created')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Profile created')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -224,10 +224,7 @@ class _ProfileDetail extends StatelessWidget {
               backgroundColor: typeColor.withValues(alpha: 0.15),
               child: Text(
                 name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
-                style: TextStyle(
-                  color: typeColor,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(color: typeColor, fontWeight: FontWeight.w600),
               ),
             ),
             const SizedBox(width: 12),
@@ -235,15 +232,19 @@ class _ProfileDetail extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
-                  Text(profile.id,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceMuted,
-                          fontFamily: 'monospace')),
+                  Text(
+                    name,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    profile.id,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -255,11 +256,12 @@ class _ProfileDetail extends StatelessWidget {
         const SizedBox(height: 16),
         // Contacts
         if (profile.contacts.isNotEmpty) ...[
-          Text('Contacts',
-              style: Theme.of(context)
-                  .textTheme
-                  .labelMedium
-                  ?.copyWith(fontWeight: FontWeight.w500)),
+          Text(
+            'Contacts',
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
+          ),
           const SizedBox(height: 8),
           for (final contact in profile.contacts)
             Padding(
@@ -275,12 +277,17 @@ class _ProfileDetail extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(contact.detail,
-                        style: Theme.of(context).textTheme.bodySmall),
+                    child: Text(
+                      contact.detail,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ),
                   if (contact.verified)
-                    const Icon(Icons.verified,
-                        size: 14, color: AppColors.success),
+                    const Icon(
+                      Icons.verified,
+                      size: 14,
+                      color: AppColors.success,
+                    ),
                 ],
               ),
             ),
@@ -288,11 +295,12 @@ class _ProfileDetail extends StatelessWidget {
         ],
         // Addresses
         if (profile.addresses.isNotEmpty) ...[
-          Text('Addresses',
-              style: Theme.of(context)
-                  .textTheme
-                  .labelMedium
-                  ?.copyWith(fontWeight: FontWeight.w500)),
+          Text(
+            'Addresses',
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
+          ),
           const SizedBox(height: 8),
           for (final address in profile.addresses)
             Padding(
@@ -300,8 +308,11 @@ class _ProfileDetail extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.location_on_outlined,
-                      size: 16, color: AppColors.onSurfaceMuted),
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: AppColors.onSurfaceMuted,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -345,18 +356,20 @@ class _DetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ),
           Expanded(
-            child: Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w500)),
+            child: Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),

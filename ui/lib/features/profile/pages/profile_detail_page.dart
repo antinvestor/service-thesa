@@ -13,8 +13,10 @@ import '../data/device_repository.dart';
 import '../data/profile_repository.dart';
 
 /// Single profile detail provider.
-final profileDetailProvider =
-    FutureProvider.family<ProfileObject, String>((ref, profileId) async {
+final profileDetailProvider = FutureProvider.family<ProfileObject, String>((
+  ref,
+  profileId,
+) async {
   final repo = await ref.watch(profileRepositoryProvider.future);
   return repo.getById(profileId);
 });
@@ -39,14 +41,17 @@ class ProfileDetailPage extends ConsumerWidget {
           children: [
             Icon(Icons.error_outline, size: 48, color: AppColors.error),
             const SizedBox(height: 16),
-            Text('Failed to load profile',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Failed to load profile',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
-            Text(error.toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              error.toString(),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: () => ref.invalidate(profileDetailProvider(profileId)),
@@ -63,10 +68,7 @@ class ProfileDetailPage extends ConsumerWidget {
 }
 
 class _ProfileDetailContent extends ConsumerWidget {
-  const _ProfileDetailContent({
-    required this.profile,
-    required this.profileId,
-  });
+  const _ProfileDetailContent({required this.profile, required this.profileId});
 
   final ProfileObject profile;
   final String profileId;
@@ -80,8 +82,8 @@ class _ProfileDetailContent extends ConsumerWidget {
   }
 
   Future<void> _editProfile(BuildContext context, WidgetRef ref) async {
-    final currentName = profile.hasProperties() &&
-            profile.properties.fields.containsKey('name')
+    final currentName =
+        profile.hasProperties() && profile.properties.fields.containsKey('name')
         ? profile.properties.fields['au_name']!.stringValue
         : '';
     final values = await showEditDialog(
@@ -112,20 +114,20 @@ class _ProfileDetailContent extends ConsumerWidget {
       final name = values['name'] ?? '';
       Struct? properties;
       if (name.isNotEmpty) {
-        properties = Struct(fields: {
-          'name': Value(stringValue: name),
-        });
+        properties = Struct(fields: {'name': Value(stringValue: name)});
       }
       await repo.update(id: profileId, state: state, properties: properties);
       ref.invalidate(profileDetailProvider(profileId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Profile updated')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Profile updated')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -171,25 +173,26 @@ class _ProfileDetailContent extends ConsumerWidget {
               children: [
                 StateBadge(profile.state),
                 _TypeBadge(profile.type.name),
-                SelectableText('ID: ${profile.id}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'monospace',
-                        color: AppColors.onSurfaceMuted)),
+                SelectableText(
+                  'ID: ${profile.id}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
+                    color: AppColors.onSurfaceMuted,
+                  ),
+                ),
                 if (profile.contacts.isNotEmpty)
                   Text(
                     '${profile.contacts.length} contact${profile.contacts.length == 1 ? '' : 's'}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: AppColors.onSurfaceMuted),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                    ),
                   ),
                 if (profile.addresses.isNotEmpty)
                   Text(
                     '${profile.addresses.length} address${profile.addresses.length == 1 ? '' : 'es'}',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: AppColors.onSurfaceMuted),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                    ),
                   ),
               ],
             ),
@@ -249,50 +252,60 @@ class _OverviewTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Profile details + properties side by side
-          LayoutBuilder(builder: (context, constraints) {
-            final wide = constraints.maxWidth > 700;
-            final detailCard = _buildCard(
-              context,
-              title: 'Profile Details',
-              icon: Icons.person_outlined,
-              child: Column(children: [
-                _OvRow('Name', _displayName),
-                _OvRow('Type', profile.type.name),
-                _OvRow('State', profile.state.name),
-                _OvRow('ID', profile.id),
-              ]),
-            );
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth > 700;
+              final detailCard = _buildCard(
+                context,
+                title: 'Profile Details',
+                icon: Icons.person_outlined,
+                child: Column(
+                  children: [
+                    _OvRow('Name', _displayName),
+                    _OvRow('Type', profile.type.name),
+                    _OvRow('State', profile.state.name),
+                    _OvRow('ID', profile.id),
+                  ],
+                ),
+              );
 
-            final propCard = (profile.hasProperties() &&
-                    profile.properties.fields.isNotEmpty)
-                ? _buildCard(
-                    context,
-                    title: 'Properties',
-                    icon: Icons.data_object,
-                    child: Column(
-                      children: [
-                        for (final e in profile.properties.fields.entries)
-                          _OvRow(e.key, _fmtValue(e.value)),
-                      ],
-                    ),
-                  )
-                : null;
+              final propCard =
+                  (profile.hasProperties() &&
+                      profile.properties.fields.isNotEmpty)
+                  ? _buildCard(
+                      context,
+                      title: 'Properties',
+                      icon: Icons.data_object,
+                      child: Column(
+                        children: [
+                          for (final e in profile.properties.fields.entries)
+                            _OvRow(e.key, _fmtValue(e.value)),
+                        ],
+                      ),
+                    )
+                  : null;
 
-            if (wide && propCard != null) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              if (wide && propCard != null) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: detailCard),
+                    const SizedBox(width: 16),
+                    Expanded(child: propCard),
+                  ],
+                );
+              }
+              return Column(
                 children: [
-                  Expanded(child: detailCard),
-                  const SizedBox(width: 16),
-                  Expanded(child: propCard),
+                  detailCard,
+                  if (propCard != null) ...[
+                    const SizedBox(height: 16),
+                    propCard,
+                  ],
                 ],
               );
-            }
-            return Column(children: [
-              detailCard,
-              if (propCard != null) ...[const SizedBox(height: 16), propCard],
-            ]);
-          }),
+            },
+          ),
           const SizedBox(height: 16),
 
           // Contacts summary
@@ -317,19 +330,24 @@ class _OverviewTab extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(c.detail,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(fontWeight: FontWeight.w500)),
+                            child: Text(
+                              c.detail,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(fontWeight: FontWeight.w500),
+                            ),
                           ),
                           if (c.verified)
-                            Icon(Icons.verified,
-                                size: 14, color: AppColors.success)
+                            Icon(
+                              Icons.verified,
+                              size: 14,
+                              color: AppColors.success,
+                            )
                           else
-                            Icon(Icons.pending_outlined,
-                                size: 14,
-                                color: AppColors.onSurfaceMuted),
+                            Icon(
+                              Icons.pending_outlined,
+                              size: 14,
+                              color: AppColors.onSurfaceMuted,
+                            ),
                         ],
                       ),
                     ),
@@ -351,8 +369,11 @@ class _OverviewTab extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Row(
                         children: [
-                          Icon(Icons.location_on_outlined,
-                              size: 16, color: AppColors.onSurfaceMuted),
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: AppColors.onSurfaceMuted,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -361,9 +382,7 @@ class _OverviewTab extends StatelessWidget {
                                 if (a.city.isNotEmpty) a.city,
                                 if (a.country.isNotEmpty) a.country,
                               ].join(', '),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(fontWeight: FontWeight.w500),
                             ),
                           ),
@@ -390,8 +409,12 @@ class _OverviewTab extends StatelessWidget {
     return '—';
   }
 
-  Widget _buildCard(BuildContext context,
-      {required String title, required IconData icon, required Widget child}) {
+  Widget _buildCard(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -403,15 +426,18 @@ class _OverviewTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [
-              Icon(icon, size: 18, color: AppColors.tertiary),
-              const SizedBox(width: 8),
-              Text(title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600)),
-            ]),
+            Row(
+              children: [
+                Icon(icon, size: 18, color: AppColors.tertiary),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
             child,
           ],
@@ -435,18 +461,20 @@ class _OvRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 100,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ),
           Expanded(
-            child: SelectableText(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w500)),
+            child: SelectableText(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),
@@ -485,19 +513,24 @@ class _ContactsTab extends ConsumerWidget {
       );
       ref.invalidate(profileDetailProvider(profileId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Contact added')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Contact added')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   Future<void> _verifyContact(
-      BuildContext context, WidgetRef ref, ContactObject contact) async {
+    BuildContext context,
+    WidgetRef ref,
+    ContactObject contact,
+  ) async {
     try {
       final repo = await ref.read(profileRepositoryProvider.future);
       // Step 1: Create verification (sends code)
@@ -536,21 +569,27 @@ class _ContactsTab extends ConsumerWidget {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(
-                    'Verification failed (${result.checkAttempts} attempts)')),
+              content: Text(
+                'Verification failed (${result.checkAttempts} attempts)',
+              ),
+            ),
           );
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   Future<void> _removeContact(
-      BuildContext context, WidgetRef ref, ContactObject contact) async {
+    BuildContext context,
+    WidgetRef ref,
+    ContactObject contact,
+  ) async {
     final confirmed = await showConfirmDialog(
       context: context,
       title: 'Remove Contact',
@@ -563,13 +602,15 @@ class _ContactsTab extends ConsumerWidget {
       await repo.removeContact(contact.id);
       ref.invalidate(profileDetailProvider(profileId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Contact removed')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Contact removed')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -599,8 +640,11 @@ class _ContactsTab extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.contact_phone_outlined,
-                      size: 48, color: Colors.grey),
+                  Icon(
+                    Icons.contact_phone_outlined,
+                    size: 48,
+                    color: Colors.grey,
+                  ),
                   SizedBox(height: 12),
                   Text('No contacts'),
                 ],
@@ -623,31 +667,48 @@ class _ContactsTab extends ConsumerWidget {
                     size: 20,
                     color: AppColors.tertiary,
                   ),
-                  title: Text(contact.detail,
-                      style: const TextStyle(fontWeight: FontWeight.w500)),
+                  title: Text(
+                    contact.detail,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
                   subtitle: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(contact.type.name,
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.onSurfaceMuted)),
+                      Text(
+                        contact.type.name,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.onSurfaceMuted,
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       if (contact.verified)
-                        Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(Icons.verified,
-                              size: 14, color: AppColors.success),
-                          const SizedBox(width: 4),
-                          Text('Verified',
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.verified,
+                              size: 14,
+                              color: AppColors.success,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Verified',
                               style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.success)),
-                        ])
-                      else
-                        Text('Unverified',
-                            style: TextStyle(
                                 fontSize: 11,
-                                color: AppColors.onSurfaceMuted)),
+                                color: AppColors.success,
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Text(
+                          'Unverified',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.onSurfaceMuted,
+                          ),
+                        ),
                     ],
                   ),
                   trailing: Row(
@@ -657,32 +718,33 @@ class _ContactsTab extends ConsumerWidget {
                         TextButton.icon(
                           onPressed: () =>
                               _verifyContact(context, ref, contact),
-                          icon: const Icon(Icons.verified_outlined,
-                              size: 16),
-                          label: const Text('Verify',
-                              style: TextStyle(fontSize: 12)),
+                          icon: const Icon(Icons.verified_outlined, size: 16),
+                          label: const Text(
+                            'Verify',
+                            style: TextStyle(fontSize: 12),
+                          ),
                         ),
                       IconButton(
-                        icon: Icon(Icons.delete_outline,
-                            size: 18, color: AppColors.error),
+                        icon: Icon(
+                          Icons.delete_outline,
+                          size: 18,
+                          color: AppColors.error,
+                        ),
                         tooltip: 'Remove',
-                        onPressed: () =>
-                            _removeContact(context, ref, contact),
+                        onPressed: () => _removeContact(context, ref, contact),
                       ),
                     ],
                   ),
                   children: [
                     Padding(
-                      padding:
-                          const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _OvRow('Contact ID', contact.id),
                           _OvRow('Type', contact.type.name),
                           _OvRow('Detail', contact.detail),
-                          _OvRow('Verified',
-                              contact.verified ? 'Yes' : 'No'),
+                          _OvRow('Verified', contact.verified ? 'Yes' : 'No'),
                           _OvRow('State', contact.state.name),
                         ],
                       ),
@@ -738,13 +800,15 @@ class _AddressesTab extends ConsumerWidget {
       );
       ref.invalidate(profileDetailProvider(profileId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Address added')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Address added')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -774,7 +838,11 @@ class _AddressesTab extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.location_on_outlined, size: 48, color: Colors.grey),
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 48,
+                    color: Colors.grey,
+                  ),
                   SizedBox(height: 12),
                   Text('No addresses'),
                 ],
@@ -794,48 +862,55 @@ class _AddressesTab extends ConsumerWidget {
                   addr.country,
                 ].where((s) => s.isNotEmpty).join(', ');
                 return ExpansionTile(
-                  leading: Icon(Icons.location_on_outlined,
-                      size: 20, color: AppColors.tertiary),
+                  leading: Icon(
+                    Icons.location_on_outlined,
+                    size: 20,
+                    color: AppColors.tertiary,
+                  ),
                   title: Text(
-                      addr.name.isNotEmpty ? addr.name : 'Address',
-                      style:
-                          const TextStyle(fontWeight: FontWeight.w500)),
-                  subtitle: Text(parts.isNotEmpty ? parts : '—',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.onSurfaceMuted)),
+                    addr.name.isNotEmpty ? addr.name : 'Address',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text(
+                    parts.isNotEmpty ? parts : '—',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.onSurfaceMuted,
+                    ),
+                  ),
                   trailing: addr.latitude != 0 || addr.longitude != 0
                       ? Tooltip(
                           message:
                               '${addr.latitude.toStringAsFixed(5)}, ${addr.longitude.toStringAsFixed(5)}',
-                          child: Icon(Icons.my_location,
-                              size: 16, color: AppColors.tertiary),
+                          child: Icon(
+                            Icons.my_location,
+                            size: 16,
+                            color: AppColors.tertiary,
+                          ),
                         )
                       : null,
                   children: [
                     Padding(
-                      padding:
-                          const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (addr.name.isNotEmpty)
-                            _OvRow('Name', addr.name),
+                          if (addr.name.isNotEmpty) _OvRow('Name', addr.name),
                           if (addr.house.isNotEmpty)
                             _OvRow('House', addr.house),
                           if (addr.street.isNotEmpty)
                             _OvRow('Street', addr.street),
-                          if (addr.area.isNotEmpty)
-                            _OvRow('Area', addr.area),
-                          if (addr.city.isNotEmpty)
-                            _OvRow('City', addr.city),
+                          if (addr.area.isNotEmpty) _OvRow('Area', addr.area),
+                          if (addr.city.isNotEmpty) _OvRow('City', addr.city),
                           if (addr.country.isNotEmpty)
                             _OvRow('Country', addr.country),
                           if (addr.postcode.isNotEmpty)
                             _OvRow('Postcode', addr.postcode),
                           if (addr.latitude != 0 || addr.longitude != 0)
-                            _OvRow('Coordinates',
-                                '${addr.latitude.toStringAsFixed(5)}, ${addr.longitude.toStringAsFixed(5)}'),
+                            _OvRow(
+                              'Coordinates',
+                              '${addr.latitude.toStringAsFixed(5)}, ${addr.longitude.toStringAsFixed(5)}',
+                            ),
                         ],
                       ),
                     ),
@@ -868,15 +943,18 @@ class _DevicesTab extends ConsumerWidget {
           children: [
             Icon(Icons.error_outline, size: 36, color: AppColors.error),
             const SizedBox(height: 12),
-            Text('Failed to load devices',
-                style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              'Failed to load devices',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             const SizedBox(height: 8),
-            Text(error.toString(),
-                textAlign: TextAlign.center,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              error.toString(),
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () =>
@@ -955,7 +1033,8 @@ class _DeviceTile extends StatelessWidget {
         ],
       ),
       onTap: () => context.go(
-          '/services/profile/profiles/$profileId/devices/${device.id}'),
+        '/services/profile/profiles/$profileId/devices/${device.id}',
+      ),
     );
   }
 }
@@ -963,9 +1042,10 @@ class _DeviceTile extends StatelessWidget {
 // ─── Roster Tab ──────────────────────────────────────────────────────────────
 
 /// Provider for roster entries of a profile.
-final _rosterProvider =
-    FutureProvider.family<List<RosterObject>, String>(
-        (ref, profileId) async {
+final _rosterProvider = FutureProvider.family<List<RosterObject>, String>((
+  ref,
+  profileId,
+) async {
   final repo = await ref.watch(profileRepositoryProvider.future);
   return repo.searchRoster(profileId: profileId);
 });
@@ -976,7 +1056,10 @@ class _RosterTab extends ConsumerWidget {
   final String profileId;
 
   Future<void> _removeEntry(
-      BuildContext context, WidgetRef ref, RosterObject entry) async {
+    BuildContext context,
+    WidgetRef ref,
+    RosterObject entry,
+  ) async {
     final confirmed = await showConfirmDialog(
       context: context,
       title: 'Remove Roster Entry',
@@ -989,14 +1072,15 @@ class _RosterTab extends ConsumerWidget {
       await repo.removeRoster(entry.id);
       ref.invalidate(_rosterProvider(profileId));
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Roster entry removed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Roster entry removed')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -1015,11 +1099,12 @@ class _RosterTab extends ConsumerWidget {
             const SizedBox(height: 12),
             Text('Failed to load roster'),
             const SizedBox(height: 8),
-            Text(error.toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            Text(
+              error.toString(),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () => ref.invalidate(_rosterProvider(profileId)),
@@ -1035,15 +1120,15 @@ class _RosterTab extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Row(
               children: [
-                Text('${entries.length} roster entries',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: AppColors.onSurfaceMuted)),
+                Text(
+                  '${entries.length} roster entries',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.onSurfaceMuted,
+                  ),
+                ),
                 const Spacer(),
                 OutlinedButton.icon(
-                  onPressed: () =>
-                      ref.invalidate(_rosterProvider(profileId)),
+                  onPressed: () => ref.invalidate(_rosterProvider(profileId)),
                   icon: const Icon(Icons.refresh, size: 16),
                   label: const Text('Refresh'),
                 ),
@@ -1056,8 +1141,7 @@ class _RosterTab extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.contacts_outlined,
-                        size: 48, color: Colors.grey),
+                    Icon(Icons.contacts_outlined, size: 48, color: Colors.grey),
                     SizedBox(height: 12),
                     Text('No roster entries'),
                     SizedBox(height: 4),
@@ -1086,37 +1170,47 @@ class _RosterTab extends ConsumerWidget {
                       size: 20,
                       color: AppColors.tertiary,
                     ),
-                    title: Text(contact.detail,
-                        style:
-                            const TextStyle(fontWeight: FontWeight.w500)),
+                    title: Text(
+                      contact.detail,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
                     subtitle: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(contact.type.name,
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.onSurfaceMuted)),
+                        Text(
+                          contact.type.name,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.onSurfaceMuted,
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         if (contact.verified)
-                          Icon(Icons.verified,
-                              size: 14, color: AppColors.success)
+                          Icon(
+                            Icons.verified,
+                            size: 14,
+                            color: AppColors.success,
+                          )
                         else
-                          Icon(Icons.pending_outlined,
-                              size: 14,
-                              color: AppColors.onSurfaceMuted),
+                          Icon(
+                            Icons.pending_outlined,
+                            size: 14,
+                            color: AppColors.onSurfaceMuted,
+                          ),
                       ],
                     ),
                     trailing: IconButton(
-                      icon: Icon(Icons.delete_outline,
-                          size: 18, color: AppColors.error),
+                      icon: Icon(
+                        Icons.delete_outline,
+                        size: 18,
+                        color: AppColors.error,
+                      ),
                       tooltip: 'Remove',
-                      onPressed: () =>
-                          _removeEntry(context, ref, entry),
+                      onPressed: () => _removeEntry(context, ref, entry),
                     ),
                     children: [
                       Padding(
-                        padding:
-                            const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1124,8 +1218,7 @@ class _RosterTab extends ConsumerWidget {
                             _OvRow('Profile ID', entry.profileId),
                             _OvRow('Contact', contact.detail),
                             _OvRow('Type', contact.type.name),
-                            _OvRow('Verified',
-                                contact.verified ? 'Yes' : 'No'),
+                            _OvRow('Verified', contact.verified ? 'Yes' : 'No'),
                           ],
                         ),
                       ),
@@ -1161,11 +1254,13 @@ class _TypeBadge extends StatelessWidget {
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(label,
-          style: Theme.of(context)
-              .textTheme
-              .labelSmall
-              ?.copyWith(color: color, fontWeight: FontWeight.w600)),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -1190,4 +1285,3 @@ class _PresenceDot extends StatelessWidget {
     );
   }
 }
-

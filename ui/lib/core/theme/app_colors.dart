@@ -18,7 +18,7 @@ class AppColors {
     300: Color(0xFFA3ABC4), // T70
     200: Color(0xFFBEC6E0), // T80
     100: Color(0xFFDAE2FD), // T90
-    50: Color(0xFFEEF0FF),  // T95
+    50: Color(0xFFEEF0FF), // T95
   });
 
   // ── Secondary: #475569 ────────────────────────────────────────────────

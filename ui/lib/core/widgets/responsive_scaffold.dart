@@ -6,9 +6,10 @@ import 'app_sidebar.dart';
 import 'responsive_layout.dart';
 
 /// Provider for sidebar collapsed state.
-final sidebarCollapsedProvider = NotifierProvider<SidebarCollapsedNotifier, bool>(
-  SidebarCollapsedNotifier.new,
-);
+final sidebarCollapsedProvider =
+    NotifierProvider<SidebarCollapsedNotifier, bool>(
+      SidebarCollapsedNotifier.new,
+    );
 
 class SidebarCollapsedNotifier extends Notifier<bool> {
   @override

@@ -60,16 +60,24 @@ void registerTrustageService() {
           'avg_duration_ms',
         ],
         charts: [
-          ChartConfig.timeSeries('execution_volume',
-              label: 'Execution Volume'),
-          ChartConfig.distribution('execution_status',
-              groupBy: 'status', label: 'By Status'),
-          ChartConfig.distribution('workflow_usage',
-              groupBy: 'workflow', label: 'By Workflow'),
+          ChartConfig.timeSeries('execution_volume', label: 'Execution Volume'),
+          ChartConfig.distribution(
+            'execution_status',
+            groupBy: 'status',
+            label: 'By Status',
+          ),
+          ChartConfig.distribution(
+            'workflow_usage',
+            groupBy: 'workflow',
+            label: 'By Workflow',
+          ),
         ],
         tables: [
-          TableConfig.topN('top_workflows',
-              label: 'Most Used Workflows', limit: 10),
+          TableConfig.topN(
+            'top_workflows',
+            label: 'Most Used Workflows',
+            limit: 10,
+          ),
         ],
       ),
       featureBuilders: {

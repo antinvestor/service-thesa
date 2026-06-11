@@ -10,7 +10,11 @@ class ReportsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenSize = screenSizeOf(context);
-    final crossCount = screenSize == ScreenSize.mobile ? 1 : screenSize == ScreenSize.tablet ? 2 : 3;
+    final crossCount = screenSize == ScreenSize.mobile
+        ? 1
+        : screenSize == ScreenSize.tablet
+        ? 2
+        : 3;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -146,9 +150,9 @@ class _ReportCard extends StatelessWidget {
                 child: Text(
                   status,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: isReady ? AppColors.success : AppColors.warning,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: isReady ? AppColors.success : AppColors.warning,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -167,7 +171,11 @@ class _ReportCard extends StatelessWidget {
               ],
               const Spacer(),
               if (isReady)
-                Icon(Icons.download_outlined, size: 18, color: AppColors.tertiary),
+                Icon(
+                  Icons.download_outlined,
+                  size: 18,
+                  color: AppColors.tertiary,
+                ),
             ],
           ),
         ],

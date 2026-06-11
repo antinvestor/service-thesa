@@ -16,8 +16,7 @@ typedef ProfileAddress = ({
 });
 
 /// Provider that extracts all addresses from loaded profiles into a flat list.
-final addressesProvider =
-    FutureProvider<List<ProfileAddress>>((ref) async {
+final addressesProvider = FutureProvider<List<ProfileAddress>>((ref) async {
   final profiles = await ref.watch(profilesProvider('').future);
   final addresses = <ProfileAddress>[];
   for (final profile in profiles) {
@@ -89,16 +88,23 @@ class AddressesPage extends ConsumerWidget {
             return null;
           }),
           cells: [
-            DataCell(Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.location_on_outlined,
-                    size: 16, color: AppColors.tertiary),
-                const SizedBox(width: 8),
-                Text(pa.address.name.isNotEmpty ? pa.address.name : 'Address',
-                    style: const TextStyle(fontWeight: FontWeight.w500)),
-              ],
-            )),
+            DataCell(
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: AppColors.tertiary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    pa.address.name.isNotEmpty ? pa.address.name : 'Address',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
             DataCell(Text(parts.isNotEmpty ? parts : '—')),
             DataCell(ProfileBadge(profileId: pa.profileId, compact: true)),
           ],
@@ -137,19 +143,23 @@ class _AddressDetail extends StatelessWidget {
                 color: AppColors.tertiary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.location_on_outlined,
-                  size: 24, color: AppColors.tertiary),
+              child: Icon(
+                Icons.location_on_outlined,
+                size: 24,
+                color: AppColors.tertiary,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(addr.name.isNotEmpty ? addr.name : 'Address',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    addr.name.isNotEmpty ? addr.name : 'Address',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   ProfileBadge(profileId: pa.profileId, compact: true),
                 ],
               ),
@@ -166,8 +176,10 @@ class _AddressDetail extends StatelessWidget {
         const SizedBox(height: 4),
         ProfileBadge(profileId: pa.profileId),
         if (addr.latitude != 0 || addr.longitude != 0)
-          _Row('Coordinates',
-              '${addr.latitude.toStringAsFixed(5)}, ${addr.longitude.toStringAsFixed(5)}'),
+          _Row(
+            'Coordinates',
+            '${addr.latitude.toStringAsFixed(5)}, ${addr.longitude.toStringAsFixed(5)}',
+          ),
       ],
     );
   }
@@ -187,18 +199,20 @@ class _Row extends StatelessWidget {
         children: [
           SizedBox(
             width: 100,
-            child: Text(label,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted)),
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
           ),
           Expanded(
-            child: Text(value,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w500)),
+            child: Text(
+              value,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),

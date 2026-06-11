@@ -46,25 +46,26 @@ void registerGeolocationService() {
     ServiceRegistration(
       definition: geolocationServiceDef,
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
-            service: 'geolocation',
-            title: 'Geolocation Analytics',
-            metrics: [
-              'total_areas',
-              'total_routes',
-              'geo_events',
-              'active_trackers',
-            ],
-            charts: [
-              ChartConfig.timeSeries('geo_event_volume',
-                  label: 'Geo Events'),
-              ChartConfig.distribution('event_types',
-                  groupBy: 'event_type', label: 'By Event Type'),
-            ],
-            tables: [
-              TableConfig.topN('top_areas',
-                  label: 'Most Active Areas', limit: 10),
-            ],
+        service: 'geolocation',
+        title: 'Geolocation Analytics',
+        metrics: [
+          'total_areas',
+          'total_routes',
+          'geo_events',
+          'active_trackers',
+        ],
+        charts: [
+          ChartConfig.timeSeries('geo_event_volume', label: 'Geo Events'),
+          ChartConfig.distribution(
+            'event_types',
+            groupBy: 'event_type',
+            label: 'By Event Type',
           ),
+        ],
+        tables: [
+          TableConfig.topN('top_areas', label: 'Most Active Areas', limit: 10),
+        ],
+      ),
       featureBuilders: {
         'areas': (context, service, feature) => const AreaListScreen(),
         'routes': (context, service, feature) => const RouteListScreen(),

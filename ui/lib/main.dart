@@ -16,8 +16,6 @@ import 'package:antinvestor_ui_files/antinvestor_ui_files.dart'
     show filesTransportProvider;
 import 'package:antinvestor_ui_geolocation/antinvestor_ui_geolocation.dart'
     show geolocationTransportProvider;
-import 'package:antinvestor_ui_ledger/antinvestor_ui_ledger.dart'
-    show ledgerTransportProvider;
 import 'package:antinvestor_ui_notification/antinvestor_ui_notification.dart'
     show notificationTransportProvider;
 import 'package:antinvestor_ui_payment/antinvestor_ui_payment.dart'
@@ -176,13 +174,6 @@ Future<void> main() async {
           return RuntimeTransport(
             runtime: runtime,
             baseUrl: Uri.parse(ApiConfig.paymentBaseUrl),
-          );
-        }),
-        ledgerTransportProvider.overrideWith((ref) {
-          final runtime = ref.watch(authRuntimeProvider);
-          return RuntimeTransport(
-            runtime: runtime,
-            baseUrl: Uri.parse(ApiConfig.ledgerBaseUrl),
           );
         }),
         billingTransportProvider.overrideWith((ref) {

@@ -46,27 +46,29 @@ void registerNotificationService() {
     ServiceRegistration(
       definition: notificationServiceDef,
       analyticsBuilder: (context, service) => const AnalyticsDashboard(
-            service: 'notification',
-            title: 'Notification Analytics',
-            metrics: [
-              'total_sent',
-              'delivery_rate',
-              'open_rate',
-              'failed_count',
-            ],
-            charts: [
-              ChartConfig.timeSeries('notifications_sent',
-                  label: 'Notifications Sent'),
-              ChartConfig.distribution('notification_channels',
-                  groupBy: 'channel', label: 'By Channel'),
-              ChartConfig.distribution('notification_status',
-                  groupBy: 'status', label: 'By Status'),
-            ],
-            tables: [
-              TableConfig.topN('top_templates',
-                  label: 'Top Templates', limit: 10),
-            ],
+        service: 'notification',
+        title: 'Notification Analytics',
+        metrics: ['total_sent', 'delivery_rate', 'open_rate', 'failed_count'],
+        charts: [
+          ChartConfig.timeSeries(
+            'notifications_sent',
+            label: 'Notifications Sent',
           ),
+          ChartConfig.distribution(
+            'notification_channels',
+            groupBy: 'channel',
+            label: 'By Channel',
+          ),
+          ChartConfig.distribution(
+            'notification_status',
+            groupBy: 'status',
+            label: 'By Status',
+          ),
+        ],
+        tables: [
+          TableConfig.topN('top_templates', label: 'Top Templates', limit: 10),
+        ],
+      ),
       featureBuilders: {
         'notifications': (context, service, feature) =>
             const notif_lib.NotificationInboxScreen(),

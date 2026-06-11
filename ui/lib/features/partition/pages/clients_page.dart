@@ -10,11 +10,7 @@ import '../../../core/theme/app_colors.dart';
 /// current version of `antinvestor_api_tenancy`. This page will be
 /// implemented once the API is updated.
 class ClientsPage extends ConsumerWidget {
-  const ClientsPage({
-    super.key,
-    required this.service,
-    required this.feature,
-  });
+  const ClientsPage({super.key, required this.service, required this.feature});
 
   final ServiceDefinition service;
   final SubFeatureDefinition feature;
@@ -29,18 +25,16 @@ class ClientsPage extends ConsumerWidget {
           const SizedBox(height: 16),
           Text(
             'OAuth2 Clients',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
             'Client management will be available in a future API update.',
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: AppColors.onSurfaceMuted),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.onSurfaceMuted),
           ),
         ],
       ),

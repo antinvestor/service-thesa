@@ -22,11 +22,7 @@ final userInfoProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
 });
 
 class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
-  const AppHeader({
-    super.key,
-    this.onMenuTap,
-    this.showMenuButton = false,
-  });
+  const AppHeader({super.key, this.onMenuTap, this.showMenuButton = false});
 
   final VoidCallback? onMenuTap;
   final bool showMenuButton;
@@ -70,26 +66,36 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
           // Action icons — hide on very narrow screens
           if (!isCompact) ...[
             // Live notification badge from antinvestor_ui_notification
-            Consumer(builder: (context, ref, _) {
-              final profileId = ref.watch(jwtTenantContextProvider).whenOrNull(
-                    data: (ctx) => ctx.profileId,
-                  ) ?? '';
-              return IconButton(
-                onPressed: () => context.go('/services/notification/notifications'),
-                tooltip: 'Notifications',
-                icon: NotificationBadge(
-                  recipientId: profileId,
-                  child: Icon(Icons.notifications_outlined,
-                      size: 22, color: AppColors.onSurfaceMuted),
-                ),
-              );
-            }),
+            Consumer(
+              builder: (context, ref, _) {
+                final profileId =
+                    ref
+                        .watch(jwtTenantContextProvider)
+                        .whenOrNull(data: (ctx) => ctx.profileId) ??
+                    '';
+                return IconButton(
+                  onPressed: () =>
+                      context.go('/services/notification/notifications'),
+                  tooltip: 'Notifications',
+                  icon: NotificationBadge(
+                    recipientId: profileId,
+                    child: Icon(
+                      Icons.notifications_outlined,
+                      size: 22,
+                      color: AppColors.onSurfaceMuted,
+                    ),
+                  ),
+                );
+              },
+            ),
             _HeaderIconButton(icon: Icons.history, tooltip: 'History'),
             _HeaderIconButton(icon: Icons.apps, tooltip: 'Apps'),
             const SizedBox(width: 8),
           ],
           // User avatar section
-          Flexible(child: _UserAvatar(ref: ref, compact: isCompact)),
+          Flexible(
+            child: _UserAvatar(ref: ref, compact: isCompact),
+          ),
         ],
       ),
     );
@@ -142,8 +148,11 @@ class _GlobalSearchFieldState extends ConsumerState<_GlobalSearchField> {
         hintText: widget.compact
             ? 'Search...'
             : 'Search by name, contact, or ID...',
-        prefixIcon: const Icon(Icons.search,
-            size: 20, color: AppColors.onSurfaceMuted),
+        prefixIcon: const Icon(
+          Icons.search,
+          size: 20,
+          color: AppColors.onSurfaceMuted,
+        ),
         suffixIcon: _controller.text.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.clear, size: 18),
@@ -242,14 +251,18 @@ class _UserAvatar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(name,
-                    style: Theme.of(context).textTheme.titleSmall,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1),
-                Text(subtitle,
-                    style: Theme.of(context).textTheme.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1),
+                Text(
+                  name,
+                  style: Theme.of(context).textTheme.titleSmall,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ],
             ),
           ),
@@ -260,9 +273,9 @@ class _UserAvatar extends StatelessWidget {
           child: Text(
             initials.isNotEmpty ? initials : 'A',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],
