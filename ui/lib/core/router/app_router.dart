@@ -1,3 +1,31 @@
+import 'package:antinvestor_ui_audit/antinvestor_ui_audit.dart'
+    show AuditRouteModule;
+import 'package:antinvestor_ui_billing/antinvestor_ui_billing.dart'
+    show BillingRouteModule;
+import 'package:antinvestor_ui_core/antinvestor_ui_core.dart'
+    show RouteModule;
+import 'package:antinvestor_ui_device/antinvestor_ui_device.dart'
+    show DeviceRouteModule;
+import 'package:antinvestor_ui_files/antinvestor_ui_files.dart'
+    show FilesRouteModule;
+import 'package:antinvestor_ui_fort/antinvestor_ui_fort.dart'
+    show FortRouteModule;
+import 'package:antinvestor_ui_geolocation/antinvestor_ui_geolocation.dart'
+    show GeolocationRouteModule;
+import 'package:antinvestor_ui_ledger/antinvestor_ui_ledger.dart'
+    show LedgerRouteModule;
+import 'package:antinvestor_ui_notification/antinvestor_ui_notification.dart'
+    show NotificationRouteModule;
+import 'package:antinvestor_ui_payment/antinvestor_ui_payment.dart'
+    show PaymentRouteModule;
+import 'package:antinvestor_ui_profile/antinvestor_ui_profile.dart'
+    show ProfileRouteModule;
+import 'package:antinvestor_ui_settings/antinvestor_ui_settings.dart'
+    show SettingsRouteModule;
+import 'package:antinvestor_ui_tenancy/antinvestor_ui_tenancy.dart'
+    show TenancyRouteModule;
+import 'package:antinvestor_ui_trustage/antinvestor_ui_trustage.dart'
+    show TrustageRouteModule;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -95,10 +123,29 @@ GoRouter createAppRouter(Ref ref, {String initialLocation = '/'}) {
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: DashboardPage()),
           ),
-          GoRoute(
-            path: '/settings',
-            redirect: (context, state) => '/services/settings/all',
-          ),
+          // Package route modules own their canonical paths (/notifications,
+          // /payments, /profiles, /files, /billing, /settings, /services/audit,
+          // /services/tenancy, /services/fort, …). Their screens hard-navigate
+          // to these paths, so every module must be merged here — otherwise
+          // buttons like Compose or Send Payment dead-end on "no routes for
+          // location". Declared BEFORE /services/:serviceId so module-owned
+          // literal /services/* trees win over the generic parametric route.
+          for (final RouteModule module in [
+            AuditRouteModule(),
+            BillingRouteModule(),
+            DeviceRouteModule(),
+            FilesRouteModule(),
+            FortRouteModule(),
+            GeolocationRouteModule(),
+            LedgerRouteModule(),
+            NotificationRouteModule(),
+            PaymentRouteModule(),
+            ProfileRouteModule(),
+            SettingsRouteModule(),
+            TenancyRouteModule(),
+            TrustageRouteModule(),
+          ])
+            ...module.buildRoutes(),
           GoRoute(
             path: '/services/:serviceId',
             pageBuilder: (context, state) {
