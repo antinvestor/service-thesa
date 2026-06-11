@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 
 import '../config/redirect_uri.dart';
 import '../services/api_config.dart';
+import 'desktop_loopback_auth_stub.dart'
+    if (dart.library.io) 'desktop_loopback_auth_io.dart';
 
 /// Localhost loopback used by flutter_appauth on desktop platforms.
 const String _kDesktopLoopbackUri = 'http://localhost:5173/auth/callback';
@@ -42,6 +44,9 @@ AuthConfig buildThesaAuthConfig() => AuthConfig(
     'service_setting',
     'service_file',
     'service_trustage',
+    // The Thesa BFF itself — its analytics endpoints verify tokens with
+    // audience service_thesa.
+    'service_thesa',
   ],
 );
 
@@ -49,4 +54,11 @@ AuthConfig buildThesaAuthConfig() => AuthConfig(
 ///
 /// Call once at app start and override `authRuntimeProvider` with the
 /// resulting instance so every consumer shares the same runtime.
-AuthRuntime buildThesaRuntime() => createAuthRuntime(buildThesaAuthConfig());
+AuthRuntime buildThesaRuntime() {
+  final AuthConfig config = buildThesaAuthConfig();
+  // On Linux/Windows with a localhost redirect, drive the OAuth leg
+  // through the system browser + loopback server instead of the embedded
+  // webview (which intermittently deadlocks before its window appears).
+  configureDesktopLoopbackAuth(config.redirectUri ?? '');
+  return createAuthRuntime(config);
+}

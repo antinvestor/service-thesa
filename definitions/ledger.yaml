@@ -117,7 +117,7 @@ pages:
         type: form
         form_id: ledger.create_account_form
         capabilities:
-          - "ledger:create"
+          - "ledger:manage"
 
   - id: ledger.transactions
     title: Transactions
@@ -194,7 +194,7 @@ pages:
           type: command
           command_id: ledger.reverseTransaction
           capabilities:
-            - "ledger:reverse"
+            - "transaction:manage"
           confirmation:
             title: Reverse Transaction
             message: "Are you sure you want to reverse this transaction?"
@@ -217,7 +217,7 @@ pages:
         type: form
         form_id: ledger.create_transaction_form
         capabilities:
-          - "ledger:create"
+          - "ledger:manage"
 
   - id: ledger.account_detail
     title: "Account: {name}"
@@ -268,7 +268,7 @@ forms:
   - id: ledger.create_account_form
     title: Create Account
     capabilities:
-      - "ledger:create"
+      - "ledger:manage"
     submit_command: ledger.createAccount
     success_route: /ledger/accounts
     success_message: Account created successfully.
@@ -313,7 +313,7 @@ forms:
   - id: ledger.create_transaction_form
     title: Create Transaction
     capabilities:
-      - "ledger:create"
+      - "ledger:manage"
     submit_command: ledger.createTransaction
     success_route: /ledger/transactions
     success_message: Transaction created successfully.
@@ -366,7 +366,7 @@ forms:
 commands:
   - id: ledger.createAccount
     capabilities:
-      - "ledger:create"
+      - "ledger:manage"
     operation:
       type: openapi
       operation_id: createAccount
@@ -382,7 +382,7 @@ commands:
 
   - id: ledger.createTransaction
     capabilities:
-      - "ledger:create"
+      - "ledger:manage"
     operation:
       type: openapi
       operation_id: createTransaction
@@ -401,7 +401,7 @@ commands:
 
   - id: ledger.reverseTransaction
     capabilities:
-      - "ledger:reverse"
+      - "transaction:manage"
     operation:
       type: openapi
       operation_id: reverseTransaction

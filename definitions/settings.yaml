@@ -7,14 +7,14 @@ navigation:
   order: 8
   group: bottom
   capabilities:
-    - "settings:view"
+    - "setting:view"
   children:
     - label: All Settings
       icon: tune
       route: /settings
       page_id: settings.list
       capabilities:
-        - "settings:view"
+        - "setting:view"
       order: 1
 
 pages:
@@ -23,7 +23,7 @@ pages:
     route: /settings
     layout: table
     capabilities:
-      - "settings:view"
+      - "setting:view"
     breadcrumb:
       - label: Home
         route: /
@@ -78,7 +78,7 @@ pages:
           type: form
           form_id: settings.edit_form
           capabilities:
-            - "settings:edit"
+            - "setting:manage"
       default_sort: module
       sort_dir: asc
       page_size: 25
@@ -87,7 +87,7 @@ forms:
   - id: settings.edit_form
     title: Edit Setting
     capabilities:
-      - "settings:edit"
+      - "setting:manage"
     submit_command: settings.update
     load_source:
       operation_id: getSetting
@@ -124,7 +124,7 @@ forms:
 commands:
   - id: settings.update
     capabilities:
-      - "settings:edit"
+      - "setting:manage"
     operation:
       type: openapi
       operation_id: updateSetting
@@ -142,7 +142,7 @@ searches:
   - id: settings.search
     domain: settings
     capabilities:
-      - "settings:view"
+      - "setting:view"
     operation:
       type: openapi
       operation_id: listSettings

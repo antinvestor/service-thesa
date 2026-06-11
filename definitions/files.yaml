@@ -6,14 +6,14 @@ navigation:
   icon: folder
   order: 7
   capabilities:
-    - "files:view"
+    - "content:view"
   children:
     - label: All Files
       icon: insert_drive_file
       route: /files
       page_id: files.list
       capabilities:
-        - "files:view"
+        - "content:view"
       order: 1
 
 pages:
@@ -22,7 +22,7 @@ pages:
     route: /files
     layout: table
     capabilities:
-      - "files:view"
+      - "content:view"
     breadcrumb:
       - label: Home
         route: /
@@ -93,7 +93,7 @@ pages:
           type: command
           command_id: files.share
           capabilities:
-            - "files:share"
+            - "file_access:manage"
         - id: delete_file
           label: Delete
           icon: delete
@@ -101,7 +101,7 @@ pages:
           type: command
           command_id: files.delete
           capabilities:
-            - "files:delete"
+            - "content:delete"
           confirmation:
             title: Delete File
             message: "Are you sure you want to delete {name}?"
@@ -119,13 +119,13 @@ pages:
         type: form
         form_id: files.upload_form
         capabilities:
-          - "files:upload"
+          - "content:upload"
 
 forms:
   - id: files.upload_form
     title: Upload File
     capabilities:
-      - "files:upload"
+      - "content:upload"
     submit_command: files.upload
     success_route: /files
     success_message: File uploaded successfully.
@@ -155,7 +155,7 @@ forms:
 commands:
   - id: files.upload
     capabilities:
-      - "files:upload"
+      - "content:upload"
     operation:
       type: sdk
       handler: files.upload
@@ -169,7 +169,7 @@ commands:
 
   - id: files.delete
     capabilities:
-      - "files:delete"
+      - "content:delete"
     operation:
       type: openapi
       operation_id: deleteFile
@@ -183,7 +183,7 @@ commands:
 
   - id: files.share
     capabilities:
-      - "files:share"
+      - "file_access:manage"
     operation:
       type: openapi
       operation_id: shareFile
@@ -199,7 +199,7 @@ searches:
   - id: files.search
     domain: files
     capabilities:
-      - "files:view"
+      - "content:view"
     operation:
       type: openapi
       operation_id: listFiles

@@ -39,6 +39,8 @@ import 'app.dart';
 import 'core/auth/migration.dart';
 import 'core/auth/runtime_provider.dart';
 import 'core/config/url_strategy.dart';
+import 'core/config/webview_title_bar_stub.dart'
+    if (dart.library.io) 'core/config/webview_title_bar_io.dart';
 import 'core/networking/runtime_transport.dart';
 import 'core/services/api_config.dart';
 import 'core/services/permission_checker.dart';
@@ -56,7 +58,15 @@ import 'features/settings/settings_service.dart';
 import 'features/trustage/trustage_service.dart';
 import 'features/fort/fort_service.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
+  // On Linux/Windows the OAuth webview re-launches this executable with
+  // `web_view_title_bar <id>` args to render the auth window's title bar.
+  // Hand that engine over to desktop_webview_window instead of booting
+  // the full admin console.
+  if (runDesktopWebViewTitleBar(args)) {
+    return;
+  }
+
   WidgetsFlutterBinding.ensureInitialized();
   configureUrlStrategy();
 
