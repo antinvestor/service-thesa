@@ -94,7 +94,7 @@ dependencies:
   antinvestor_ui_payment: ^0.2.1
   antinvestor_ui_ledger: ^0.3.0
   antinvestor_ui_billing: ^0.2.1
-  antinvestor_ui_notification: ^0.3.1
+  antinvestor_ui_notification: ^0.3.3
   antinvestor_ui_files: ^0.3.1
   antinvestor_ui_tenancy: ^0.3.1
   antinvestor_ui_audit: ^0.3.1

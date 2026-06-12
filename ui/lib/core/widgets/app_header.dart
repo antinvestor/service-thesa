@@ -88,8 +88,11 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
                 );
               },
             ),
-            _HeaderIconButton(icon: Icons.history, tooltip: 'History'),
-            _HeaderIconButton(icon: Icons.apps, tooltip: 'Apps'),
+            _HeaderIconButton(
+              icon: Icons.history,
+              tooltip: 'Audit trail',
+              onPressed: () => context.go('/services/audit/log'),
+            ),
             const SizedBox(width: 8),
           ],
           // User avatar section
@@ -144,6 +147,13 @@ class _GlobalSearchFieldState extends ConsumerState<_GlobalSearchField> {
       onChanged: (value) {
         ref.read(globalSearchQueryProvider.notifier).update(value.trim());
       },
+      // The query currently filters the profiles list — jump there on
+      // submit so searching from any page produces visible results.
+      onSubmitted: (value) {
+        if (value.trim().isNotEmpty) {
+          context.go('/services/profile/profiles');
+        }
+      },
       decoration: InputDecoration(
         hintText: widget.compact
             ? 'Search...'
@@ -170,15 +180,20 @@ class _GlobalSearchFieldState extends ConsumerState<_GlobalSearchField> {
 }
 
 class _HeaderIconButton extends StatelessWidget {
-  const _HeaderIconButton({required this.icon, required this.tooltip});
+  const _HeaderIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
 
   final IconData icon;
   final String tooltip;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: () {},
+      onPressed: onPressed,
       icon: Icon(icon, size: 22, color: AppColors.onSurfaceMuted),
       tooltip: tooltip,
       splashRadius: 18,
