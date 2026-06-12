@@ -34,6 +34,7 @@ import '../../features/auth/data/auth_state_provider.dart';
 import '../../features/auth/ui/login_page.dart';
 import '../../features/auth/ui/splash_page.dart';
 import '../../features/dashboard/dashboard_page.dart';
+import '../../features/support/support_page.dart';
 import '../../features/profile/pages/device_detail_page.dart';
 import '../services/service_registry.dart';
 import '../widgets/responsive_scaffold.dart';
@@ -122,6 +123,14 @@ GoRouter createAppRouter(Ref ref, {String initialLocation = '/'}) {
             path: '/',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: DashboardPage()),
+          ),
+          // Sidebar Support item — informational page (contacts, docs,
+          // version) so the route resolves instead of "no routes for
+          // location: /support".
+          GoRoute(
+            path: '/support',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SupportPage()),
           ),
           // Package route modules own their canonical paths (/notifications,
           // /payments, /profiles, /files, /billing, /settings, /services/audit,
