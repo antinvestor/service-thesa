@@ -141,8 +141,27 @@ class RuntimeTransport implements connect.Transport {
         res = await completer.future;
       }
 
+      // The underlying HTTP client transparently decompresses gzip
+      // responses but leaves `content-encoding: gzip` (and the original
+      // `content-length`) on the headers. If we forward those, the Connect
+      // protocol parser sees `content-encoding: gzip` and tries to
+      // decompress the already-plain body, failing with "unsupported
+      // response encoding gzip" — which broke every unary RPC whose
+      // response was large enough for the server to gzip (tenant/partition
+      // detail, etc.). Drop those headers, mirroring connectrpc's own io
+      // transport. Web is unaffected (the browser strips them already).
+      final gzipped = res.headers.entries.any((e) =>
+          e.key.toLowerCase() == 'content-encoding' &&
+          e.value.toLowerCase().contains('gzip'));
       final responseHeaders = connect.Headers();
-      res.headers.forEach(responseHeaders.add);
+      res.headers.forEach((name, value) {
+        final lower = name.toLowerCase();
+        if (gzipped &&
+            (lower == 'content-encoding' || lower == 'content-length')) {
+          return;
+        }
+        responseHeaders.add(name, value);
+      });
 
       return connect.HttpResponse(
         res.status,
