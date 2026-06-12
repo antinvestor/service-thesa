@@ -50,6 +50,9 @@ AuthConfig buildThesaAuthConfig() => AuthConfig(
     // Audit trail service — backs the dashboard activity feed and the
     // audit log screens.
     'service_audit',
+    // Geolocation service — backs the Areas, Routes, Events and geo
+    // analytics screens.
+    'service_geolocation',
   ],
 );
 
