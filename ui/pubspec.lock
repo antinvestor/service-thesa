@@ -165,10 +165,10 @@ packages:
     dependency: "direct main"
     description:
       name: antinvestor_ui_audit
-      sha256: "30382643036d87adfc3d56b4fc34bdf5ced2c7a30f410b185cf7ff4496127f68"
+      sha256: c6fd175f5bc4f755c155798690b596adb60f884d47751012e5edfe84ca962694
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.1"
+    version: "0.3.2"
   antinvestor_ui_billing:
     dependency: "direct main"
     description:
@@ -181,10 +181,10 @@ packages:
     dependency: "direct main"
     description:
       name: antinvestor_ui_core
-      sha256: "613afa136b9a8eb612537a5a3d78e8482f588cf7f855dd34b79478184598e775"
+      sha256: "20cd4811dce4a9da6efaa9f95371055e78d08f12ac6d7dff43420f7c029476bf"
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.0"
+    version: "0.5.1"
   antinvestor_ui_device:
     dependency: "direct main"
     description:
@@ -229,10 +229,10 @@ packages:
     dependency: "direct main"
     description:
       name: antinvestor_ui_notification
-      sha256: b9370348226568f3fa065fe0843bcd855cc8ef23e20e9fdf38de17aeeb772445
+      sha256: c468a211e9dc7efba02066e931f3b0c398e63fd86973d668e9b46558add890f7
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.3"
+    version: "0.3.4"
   antinvestor_ui_payment:
     dependency: "direct main"
     description:

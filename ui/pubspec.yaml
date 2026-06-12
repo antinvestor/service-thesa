@@ -86,7 +86,7 @@ dependencies:
   http: ^1.6.0
 
   # ── Antinvestor UI Libraries (published on pub.dev) ───────────────────────
-  antinvestor_ui_core: ^0.5.0
+  antinvestor_ui_core: ^0.5.1
   antinvestor_ui_profile: ^0.2.5
   antinvestor_ui_device: ^0.3.0
   antinvestor_ui_settings: ^0.3.0
@@ -94,10 +94,10 @@ dependencies:
   antinvestor_ui_payment: ^0.2.1
   antinvestor_ui_ledger: ^0.3.0
   antinvestor_ui_billing: ^0.2.1
-  antinvestor_ui_notification: ^0.3.3
+  antinvestor_ui_notification: ^0.3.4
   antinvestor_ui_files: ^0.3.1
   antinvestor_ui_tenancy: ^0.3.1
-  antinvestor_ui_audit: ^0.3.1
+  antinvestor_ui_audit: ^0.3.2
   antinvestor_ui_trustage: ^0.1.1
   antinvestor_ui_fort: ^0.1.1
 
