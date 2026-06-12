@@ -93,17 +93,21 @@ class TenantPicker extends ConsumerWidget {
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
+                      )
+                    else
+                      // Fall back to the raw partition id only when no
+                      // human-readable name resolved. Showing both lines
+                      // overflowed the fixed-height header chip by ~7px.
+                      Text(
+                        effectiveCtx.partitionId,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontFamily: 'monospace',
+                          color: AppColors.onSurfaceMuted,
+                        ),
                       ),
-                    Text(
-                      effectiveCtx.partitionId,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontFamily: 'monospace',
-                        color: AppColors.onSurfaceMuted,
-                      ),
-                    ),
                   ],
                 ),
               ),
