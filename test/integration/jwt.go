@@ -13,7 +13,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/pitabwire/frame/security"
+	"github.com/pitabwire/frame/v2/security"
 )
 
 const testKeyID = "test-key-1"
@@ -72,7 +72,7 @@ func newTokenIssuer(t *testing.T) *tokenIssuer {
 		privateKey: key,
 		jwksServer: srv,
 		issuer:     "https://auth.test.thesa.dev",
-		audience:   "service_thesa",
+		audience:   "https://api.test.thesa.dev/thesa",
 		jwkData:    string(jwkSetData),
 	}
 }
@@ -87,8 +87,8 @@ func (ti *tokenIssuer) GetOauth2WellKnownJwkData() string {
 	return ti.jwkData
 }
 
-func (ti *tokenIssuer) GetVerificationAudience() []string {
-	return []string{ti.audience}
+func (ti *tokenIssuer) GetResourceAudience() string {
+	return ti.audience
 }
 
 func (ti *tokenIssuer) GetVerificationIssuer() string {

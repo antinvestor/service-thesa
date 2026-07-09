@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	frameconfig "github.com/pitabwire/frame/config"
+	frameconfig "github.com/pitabwire/frame/v2/config"
 	"gopkg.in/yaml.v3"
 )
 

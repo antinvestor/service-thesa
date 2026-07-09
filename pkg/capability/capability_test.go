@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pitabwire/frame/config"
-	"github.com/pitabwire/frame/frametests"
-	"github.com/pitabwire/frame/frametests/definition"
-	"github.com/pitabwire/frame/frametests/deps/testoryketo"
-	"github.com/pitabwire/frame/security"
-	"github.com/pitabwire/frame/security/authorizer"
+	"github.com/pitabwire/frame/v2/config"
+	"github.com/pitabwire/frame/v2/frametests"
+	"github.com/pitabwire/frame/v2/frametests/definition"
+	"github.com/pitabwire/frame/v2/frametests/deps/testoryketo"
+	"github.com/pitabwire/frame/v2/security"
+	"github.com/pitabwire/frame/v2/security/authorizer"
 	"github.com/stretchr/testify/suite"
 
 	thesaconfig "github.com/antinvestor/service-thesa/pkg/config"

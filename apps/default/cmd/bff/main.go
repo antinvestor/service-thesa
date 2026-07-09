@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/pitabwire/frame"
-	"github.com/pitabwire/frame/security/interceptors/httptor"
-	frameversion "github.com/pitabwire/frame/version"
+	"github.com/pitabwire/frame/v2"
+	"github.com/pitabwire/frame/v2/security/interceptors/httptor"
+	frameversion "github.com/pitabwire/frame/v2/version"
 	"github.com/pitabwire/util"
 
 	"github.com/antinvestor/service-thesa/pkg/analytics"

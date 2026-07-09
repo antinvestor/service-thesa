@@ -17,9 +17,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pitabwire/frame/security/interceptors/httptor"
-	"github.com/pitabwire/frame/security/openid"
+	"github.com/pitabwire/frame/v2/security/interceptors/httptor"
+	"github.com/pitabwire/frame/v2/security/openid"
 
+	"github.com/antinvestor/service-thesa/model"
 	"github.com/antinvestor/service-thesa/pkg/analytics"
 	"github.com/antinvestor/service-thesa/pkg/capability"
 	"github.com/antinvestor/service-thesa/pkg/command"
@@ -30,7 +31,6 @@ import (
 	"github.com/antinvestor/service-thesa/pkg/openapi"
 	"github.com/antinvestor/service-thesa/pkg/search"
 	"github.com/antinvestor/service-thesa/pkg/transport"
-	"github.com/antinvestor/service-thesa/model"
 )
 
 // TestHarness encapsulates a fully wired BFF instance with mock backends
@@ -292,7 +292,7 @@ func NewTestHarness(t *testing.T, opts ...HarnessOption) *TestHarness {
 	}
 
 	// Step 11: Build router with full middleware chain using Frame's authenticator.
-	authenticator := openid.NewJwtTokenAuthenticator(h.issuer)
+	authenticator := openid.NewJwtTokenAuthenticator(t.Context(), h.issuer)
 	authenticate := func(next http.Handler) http.Handler {
 		return httptor.AuthenticationMiddleware(next, authenticator)
 	}
