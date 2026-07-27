@@ -69,7 +69,7 @@ specs:
 
 services:
   tenancy-svc:
-    base_url: "https://tenancy.stawi.org"
+    base_url: "https://api.stawi.org/partition"
     authorization_namespace: "service_tenancy"
     timeout: 10s
     pagination:
@@ -87,7 +87,7 @@ services:
       idempotent_only: true
 
   profile-svc:
-    base_url: "https://profile.stawi.org"
+    base_url: "https://api.stawi.org/profile"
     authorization_namespace: "service_profile"
     timeout: 10s
     pagination:
@@ -105,7 +105,7 @@ services:
       idempotent_only: true
 
   notification-svc:
-    base_url: "https://notification.stawi.org"
+    base_url: "https://api.stawi.org/notification"
     authorization_namespace: "service_notification"
     timeout: 15s
     pagination:
@@ -123,7 +123,7 @@ services:
       idempotent_only: true
 
   payment-svc:
-    base_url: "https://payment.stawi.org"
+    base_url: "https://api.stawi.org/payment"
     authorization_namespace: "service_payment"
     timeout: 15s
     pagination:
@@ -141,7 +141,7 @@ services:
       idempotent_only: true
 
   files-svc:
-    base_url: "https://files.stawi.org"
+    base_url: "https://api.stawi.org/files"
     authorization_namespace: "service_file"
     timeout: 30s
     circuit_breaker:
@@ -155,7 +155,7 @@ services:
       idempotent_only: true
 
   settings-svc:
-    base_url: "https://settings.stawi.org"
+    base_url: "https://api.stawi.org/settings"
     authorization_namespace: "service_setting"
     timeout: 10s
     circuit_breaker:
@@ -169,7 +169,7 @@ services:
       idempotent_only: true
 
   chat-svc:
-    base_url: "https://chat.stawi.org"
+    base_url: "https://api.stawi.org/chat"
     authorization_namespace: "service_chat"
     timeout: 15s
     pagination:
@@ -187,7 +187,7 @@ services:
       idempotent_only: true
 
   ledger-svc:
-    base_url: "https://ledger.stawi.org"
+    base_url: "https://api.stawi.org/ledger"
     authorization_namespace: "service_ledger"
     timeout: 10s
     pagination:
@@ -205,7 +205,7 @@ services:
       idempotent_only: true
 
   commerce-svc:
-    base_url: "https://commerce.stawi.org"
+    base_url: "https://api.stawi.org/commerce"
     authorization_namespace: "service_commerce"
     timeout: 10s
     pagination:
@@ -223,7 +223,7 @@ services:
       idempotent_only: true
 
   property-svc:
-    base_url: "https://property.stawi.org"
+    base_url: "https://api.stawi.org/property"
     authorization_namespace: "service_property"
     timeout: 10s
     pagination:
@@ -241,7 +241,7 @@ services:
       idempotent_only: true
 
   foundry-svc:
-    base_url: "https://foundry.stawi.org"
+    base_url: "https://api.stawi.org/foundry"
     authorization_namespace: "service_foundry"
     timeout: 30s
     pagination:
@@ -259,7 +259,7 @@ services:
       idempotent_only: true
 
   redirect-svc:
-    base_url: "https://redirect.stawi.org"
+    base_url: "https://api.stawi.org/redirect"
     authorization_namespace: "service_redirect"
     timeout: 10s
     pagination:
