@@ -4,20 +4,19 @@
 ///
 /// Each service URL resolves in this priority order:
 ///   1. Explicit per-service env var (e.g. `PROFILE_URL=https://profile.custom.io`)
-///   2. Shared base URL + service path  (e.g. `API_BASE_URL=https://api.example.com` → `.../profile`)
-///   3. Built-in default               (`https://api.stawi.org/profile`)
+///   2. Subdomain of the platform apex  (e.g. `API_BASE_URL=https://stawi.org` → `https://profile.stawi.org`)
+///   3. Built-in default               (`https://profile.stawi.org`)
 ///
-/// This means you can:
-/// - Set `API_BASE_URL` once to point all services at a single gateway.
-/// - Override individual services that live on a different host.
+/// `API_BASE_URL` may be either the apex (`https://stawi.org`) or the legacy
+/// gateway host (`https://api.stawi.org`); both resolve to service subdomains.
 ///
 /// ```sh
-/// # All services behind one gateway:
-/// flutter run --dart-define=API_BASE_URL=https://api.example.com
+/// # All services under stawi.org subdomains:
+/// flutter run --dart-define=API_BASE_URL=https://stawi.org
 ///
 /// # Same, but notification lives elsewhere:
-/// flutter run \
-///   --dart-define=API_BASE_URL=https://api.example.com \
+/// flutter run \\
+///   --dart-define=API_BASE_URL=https://stawi.org \\
 ///   --dart-define=NOTIFICATION_URL=https://notify.internal.io
 /// ```
 class ApiConfig {
@@ -25,99 +24,103 @@ class ApiConfig {
 
   // ── Shared base URL ─────────────────────────────────────────────────────
 
-  /// When set, provides the default base for all service endpoints.
-  /// Individual `*_URL` vars take precedence over this.
-  ///
-  /// Also exposed publicly as [apiBaseUrl] for callers (e.g. the auth
-  /// runtime config) that need the shared origin directly.
+  /// Platform apex or legacy gateway host. Prefer `https://stawi.org`.
   static const String _apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api.stawi.org',
+    defaultValue: 'https://stawi.org',
   );
 
-  /// Shared base URL for all Antinvestor services. Equivalent to the
-  /// `API_BASE_URL` dart-define; falls back to `https://api.stawi.org`.
+  /// Shared base URL for callers that need the platform origin.
   static const String apiBaseUrl = _apiBaseUrl;
 
+  /// Build `https://{service}.{apex}` from [apiBaseUrl].
+  /// Strips a leading `api.` gateway label when present.
+  static String serviceUrl(String service) {
+    final uri = Uri.parse(_apiBaseUrl);
+    var host = uri.host;
+    if (host.startsWith('api.')) {
+      host = host.substring(4);
+    }
+    if (host.isEmpty) {
+      host = 'stawi.org';
+    }
+    return 'https://$service.$host';
+  }
+
   // ── Per-service endpoint overrides ──────────────────────────────────────
-  //
-  // Each constant first checks for an explicit env var. If empty (not
-  // supplied), it falls back to `_apiBaseUrl + /path`.
 
   static const String _tenancyExplicit = String.fromEnvironment('TENANCY_URL');
   static String get tenancyBaseUrl =>
-      _tenancyExplicit.isNotEmpty ? _tenancyExplicit : '$_apiBaseUrl/tenancy';
+      _tenancyExplicit.isNotEmpty ? _tenancyExplicit : serviceUrl('tenancy');
 
   static const String _profileExplicit = String.fromEnvironment('PROFILE_URL');
   static String get profileBaseUrl =>
-      _profileExplicit.isNotEmpty ? _profileExplicit : '$_apiBaseUrl/profile';
+      _profileExplicit.isNotEmpty ? _profileExplicit : serviceUrl('profile');
 
   static const String _deviceExplicit = String.fromEnvironment('DEVICE_URL');
   static String get deviceBaseUrl =>
-      _deviceExplicit.isNotEmpty ? _deviceExplicit : '$_apiBaseUrl/devices';
+      _deviceExplicit.isNotEmpty ? _deviceExplicit : serviceUrl('devices');
 
   static const String _geolocationExplicit = String.fromEnvironment(
     'GEOLOCATION_URL',
   );
   static String get geolocationBaseUrl => _geolocationExplicit.isNotEmpty
       ? _geolocationExplicit
-      : '$_apiBaseUrl/geolocation';
+      : serviceUrl('geolocation');
 
   static const String _notificationExplicit = String.fromEnvironment(
     'NOTIFICATION_URL',
   );
   static String get notificationBaseUrl => _notificationExplicit.isNotEmpty
       ? _notificationExplicit
-      : '$_apiBaseUrl/notification';
+      : serviceUrl('notification');
 
   static const String _paymentExplicit = String.fromEnvironment('PAYMENT_URL');
   static String get paymentBaseUrl =>
-      _paymentExplicit.isNotEmpty ? _paymentExplicit : '$_apiBaseUrl/payment';
+      _paymentExplicit.isNotEmpty ? _paymentExplicit : serviceUrl('payment');
 
   static const String _ledgerExplicit = String.fromEnvironment('LEDGER_URL');
   static String get ledgerBaseUrl =>
-      _ledgerExplicit.isNotEmpty ? _ledgerExplicit : '$_apiBaseUrl/ledger';
+      _ledgerExplicit.isNotEmpty ? _ledgerExplicit : serviceUrl('ledger');
 
   static const String _settingsExplicit = String.fromEnvironment(
     'SETTINGS_URL',
   );
   static String get settingsBaseUrl => _settingsExplicit.isNotEmpty
       ? _settingsExplicit
-      : '$_apiBaseUrl/settings';
+      : serviceUrl('settings');
 
   static const String _billingExplicit = String.fromEnvironment('BILLING_URL');
   static String get billingBaseUrl =>
-      _billingExplicit.isNotEmpty ? _billingExplicit : '$_apiBaseUrl/billing';
+      _billingExplicit.isNotEmpty ? _billingExplicit : serviceUrl('billing');
 
   static const String _filesExplicit = String.fromEnvironment('FILES_URL');
   static String get filesBaseUrl =>
-      _filesExplicit.isNotEmpty ? _filesExplicit : '$_apiBaseUrl/files';
+      _filesExplicit.isNotEmpty ? _filesExplicit : serviceUrl('files');
 
   static const String _auditExplicit = String.fromEnvironment('AUDIT_URL');
   static String get auditBaseUrl =>
-      _auditExplicit.isNotEmpty ? _auditExplicit : '$_apiBaseUrl/audit';
+      _auditExplicit.isNotEmpty ? _auditExplicit : serviceUrl('audit');
 
   static const String _trustageExplicit = String.fromEnvironment(
     'TRUSTAGE_URL',
   );
   static String get trustageBaseUrl => _trustageExplicit.isNotEmpty
       ? _trustageExplicit
-      : '$_apiBaseUrl/trustage';
+      : serviceUrl('trustage');
 
   static const String _fortExplicit = String.fromEnvironment('FORT_URL');
   static String get fortBaseUrl =>
-      _fortExplicit.isNotEmpty ? _fortExplicit : '$_apiBaseUrl/fort';
+      _fortExplicit.isNotEmpty ? _fortExplicit : serviceUrl('fort');
 
   static const String _thesaExplicit = String.fromEnvironment('THESA_URL');
 
   /// Thesa BFF base URL for analytics and other aggregation APIs.
   static String get thesaBaseUrl =>
-      _thesaExplicit.isNotEmpty ? _thesaExplicit : '$_apiBaseUrl/thesa';
+      _thesaExplicit.isNotEmpty ? _thesaExplicit : serviceUrl('thesa');
 
   // ── All endpoints (for iteration / diagnostics) ─────────────────────────
 
-  /// Returns a map of service name → resolved endpoint URL.
-  /// Useful for debugging and health checks.
   static Map<String, String> get allEndpoints => {
     'tenancy': tenancyBaseUrl,
     'profile': profileBaseUrl,
@@ -141,22 +144,15 @@ class ApiConfig {
     'OAUTH2_ISSUER_URL',
     defaultValue: 'https://oauth2.stawi.org',
   );
-  // Defaults to the STAGING "Thesa Studio Development" client so dev and
-  // staging builds (e.g. the thesa0.web.app Firebase deploy) hit the staging
-  // tenancy. Production builds override this via --dart-define=OAUTH2_CLIENT_ID
-  // (see ui-build-prod in the Makefile).
   static const String oauth2ClientId = String.fromEnvironment(
     'OAUTH2_CLIENT_ID',
     defaultValue: 'd8gueekpf2tfslum7lpg',
   );
 
-  // ── OAuth2 redirect URI ─────────────────────────────────────────────────
-
-  /// Explicit redirect URI override. When set, takes precedence over
-  /// automatic web-origin detection and the localhost fallback.
   static const String oauth2RedirectUri = String.fromEnvironment(
     'OAUTH2_REDIRECT_URI',
   );
+
 
   // ── Connection settings ─────────────────────────────────────────────────
 
