@@ -31,8 +31,9 @@ void configureDesktopLoopbackAuth(String redirectUri) {
       !uri.hasPort) {
     return;
   }
-  FlutterWebAuth2Platform.instance =
-      _LoopbackServerAuth('http://${uri.host}:${uri.port}');
+  FlutterWebAuth2Platform.instance = _LoopbackServerAuth(
+    'http://${uri.host}:${uri.port}',
+  );
 }
 
 /// Wraps [FlutterWebAuth2ServerPlugin], substituting the full loopback
@@ -51,12 +52,11 @@ class _LoopbackServerAuth extends FlutterWebAuth2Platform {
     required String url,
     required String callbackUrlScheme,
     required Map<String, dynamic> options,
-  }) =>
-      _server.authenticate(
-        url: url,
-        callbackUrlScheme: _callbackOrigin,
-        options: options,
-      );
+  }) => _server.authenticate(
+    url: url,
+    callbackUrlScheme: _callbackOrigin,
+    options: options,
+  );
 
   @override
   Future<void> clearAllDanglingCalls() => _server.clearAllDanglingCalls();

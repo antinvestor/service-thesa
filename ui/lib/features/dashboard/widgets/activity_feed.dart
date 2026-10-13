@@ -98,8 +98,7 @@ class _ActivityFeedState extends ConsumerState<ActivityFeed> {
                   )
                 : Column(
                     children: [
-                      for (final entry in entries)
-                        _ActivityTile(entry: entry),
+                      for (final entry in entries) _ActivityTile(entry: entry),
                     ],
                   ),
           ),
