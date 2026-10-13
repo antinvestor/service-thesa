@@ -2,8 +2,7 @@ import 'package:antinvestor_ui_audit/antinvestor_ui_audit.dart'
     show AuditRouteModule;
 import 'package:antinvestor_ui_billing/antinvestor_ui_billing.dart'
     show BillingRouteModule;
-import 'package:antinvestor_ui_core/antinvestor_ui_core.dart'
-    show RouteModule;
+import 'package:antinvestor_ui_core/antinvestor_ui_core.dart' show RouteModule;
 import 'package:antinvestor_ui_device/antinvestor_ui_device.dart'
     show DeviceRouteModule;
 import 'package:antinvestor_ui_files/antinvestor_ui_files.dart'

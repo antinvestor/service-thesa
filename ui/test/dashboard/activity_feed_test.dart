@@ -71,9 +71,7 @@ void main() {
 
   testWidgets('empty audit trail renders the empty state', (tester) async {
     await tester.pumpWidget(
-      _wrap([
-        auditEntriesProvider.overrideWith((ref, params) async => []),
-      ]),
+      _wrap([auditEntriesProvider.overrideWith((ref, params) async => [])]),
     );
     await tester.pump();
 

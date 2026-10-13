@@ -150,9 +150,11 @@ class RuntimeTransport implements connect.Transport {
       // response was large enough for the server to gzip (tenant/partition
       // detail, etc.). Drop those headers, mirroring connectrpc's own io
       // transport. Web is unaffected (the browser strips them already).
-      final gzipped = res.headers.entries.any((e) =>
-          e.key.toLowerCase() == 'content-encoding' &&
-          e.value.toLowerCase().contains('gzip'));
+      final gzipped = res.headers.entries.any(
+        (e) =>
+            e.key.toLowerCase() == 'content-encoding' &&
+            e.value.toLowerCase().contains('gzip'),
+      );
       final responseHeaders = connect.Headers();
       res.headers.forEach((name, value) {
         final lower = name.toLowerCase();

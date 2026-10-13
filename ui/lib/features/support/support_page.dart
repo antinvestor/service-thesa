@@ -66,8 +66,9 @@ class SupportPage extends StatelessWidget {
               const SizedBox(height: 24),
               Text(
                 'Antinvestor Admin Console',
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: AppColors.onSurfaceMuted),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.onSurfaceMuted,
+                ),
               ),
             ],
           ),
@@ -108,8 +109,9 @@ class SupportPage extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: AppColors.onSurfaceMuted),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.onSurfaceMuted,
+                      ),
                     ),
                   ],
                 ),

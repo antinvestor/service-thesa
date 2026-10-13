@@ -59,7 +59,10 @@ void registerFilesService() {
         // file_service_* metrics the files service exposes.
         metrics: ['uploads', 'downloads', 'upload_bytes', 'download_bytes'],
         charts: [
-          ChartConfig.timeSeries('file_service_uploads_total', label: 'Uploads'),
+          ChartConfig.timeSeries(
+            'file_service_uploads_total',
+            label: 'Uploads',
+          ),
           ChartConfig.timeSeries(
             'file_service_downloads_total',
             label: 'Downloads',
